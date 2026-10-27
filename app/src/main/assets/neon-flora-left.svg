@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 900" aria-hidden="true">
+<defs><linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e46cff"/><stop offset="1" stop-color="#8565ff"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="4"/></filter></defs>
+<g fill="none" stroke="#ad5bf4" stroke-width="3" stroke-opacity=".55">
+<path d="M10 860 Q180 600 78 420 Q30 270 135 95"/>
+</g>
+<g fill="url(#leaf)" fill-opacity=".60" stroke="#f7b4ff" stroke-opacity=".65" stroke-width="1.5">
+<path d="M78 420 Q-5 338 35 294 Q89 324 78 420Z"/><path d="M80 405 Q160 317 185 351 Q150 415 80 405Z"/>
+<path d="M119 610 Q30 552 49 507 Q116 513 119 610Z"/><path d="M120 600 Q197 524 219 566 Q191 605 120 600Z"/>
+<path d="M108 232 Q31 169 64 132 Q128 164 108 232Z"/><path d="M112 226 Q181 144 202 188 Q175 231 112 226Z"/>
+</g>
+<g transform="translate(185 290)" stroke="#89f5ff" stroke-width="3" fill="#9cefff" fill-opacity=".78">
+<path d="M0 5 Q-30 -33 -57 -20 Q-35 4 -8 13 Q-5 30 0 31 Q5 30 8 13 Q35 4 57 -20 Q30 -33 0 5Z"/>
+</g><g transform="translate(135 710) scale(.9)" stroke="#ffa2df" stroke-width="3" fill="#ff92e0" fill-opacity=".78"><path d="M0 5 Q-30 -33 -57 -20 Q-35 4 -8 13 Q-5 30 0 31 Q5 30 8 13 Q35 4 57 -20 Q30 -33 0 5Z"/></g>
+</svg>
