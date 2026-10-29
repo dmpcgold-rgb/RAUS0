@@ -1,5 +1,16 @@
 # RAUSO — Österreich erleben, Leute kennenlernen
 
+## RAUSO 2.4.0 – Neon-Orange-Design und Wien-Highlights
+
+- Referenzorientiertes Neon-Orange-Design: strukturierter schwarzer Carbon-Hintergrund, leuchtende orangefarbene Rahmen, Verlaufstexte, Header mit Designschnellauswahl, Landschafts-Hero, Neon-Vögel, sechsteilige untere Navigation, Karten und Filter.
+- Bestehende Extras bleiben erhalten: authentifizierte Profile, private Profilfotos mit Freigabe, orangene Teilnahmebestätigung, Merkliste mit orangenen Herzen, Familienbereiche, Treffen, Nachrichten und sonstige vorhandene Module.
+- Standarddesign wird einmalig beim Update auf Neon Orange gestellt; danach kann der Nutzer andere Designs weiterhin manuell einstellen.
+- Im Abschnitt **Wien & Umgebung** erscheinen vier nachgeprüfte Wiener Restaurants und zwei Thermen im Wiener Raum, mit Adressen und Kartenlinks. Die manuell ausgewählten Highlights sind ausdrücklich **nicht** durch den eingestellten Suchradius gefiltert. Live-Ortssuche per OpenStreetMap bleibt separat aktiv.
+- Fotografische Hintergrundbilder sind **illustrativ** und mit „Symbolbild“ gekennzeichnet. Sie zeigen nicht notwendig die konkrete Einrichtung. Der Landschafts-Hero erfordert für sein extern geladenes Bild eine Internetverbindung; bei Ausfall erscheint der dunkle Verlauf.
+- Original-Paketname `at.rauso.app` bleibt erhalten. Android-Version `2.4.0`, `versionCode=28`.
+- GitHub Actions erstellt eine **Debug-APK**. Diese ist nicht automatisch mit bestehenden, anders signierten RAUSO-Installationen updatekompatibel. Für dauerhafte Release-Updates ist ein eigener und sicher verwahrter Release-Signierschlüssel erforderlich.
+
+
 Android-Prototyp mit Restaurants, Thermen, Ausflügen, gemeinsamen Unternehmungen, Likes, Freunden, Nachrichten und optionalem Dating ab 18.
 
 ## Was funktioniert in der Demo?
