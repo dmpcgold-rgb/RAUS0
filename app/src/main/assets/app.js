@@ -120,6 +120,37 @@ window.addEventListener('keydown',event=>{
 function fmt(d){return new Intl.DateTimeFormat('de-AT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Vienna'}).format(new Date(d))}
 function km(a,b,c,d){const R=6371,rad=x=>x*Math.PI/180,dy=rad(c-a),dx=rad(d-b),v=Math.sin(dy/2)**2+Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dx/2)**2;return R*2*Math.atan2(Math.sqrt(v),Math.sqrt(1-v))}
 function osmLink(p){return `https://www.openstreetmap.org/?mlat=${encodeURIComponent(p.lat)}&mlon=${encodeURIComponent(p.lon)}#map=16/${encodeURIComponent(p.lat)}/${encodeURIComponent(p.lon)}`}
+
+let rausoGps=null;
+function rausoReferencePoint(){return rausoGps||regionData[state.region]||null}
+function rausoDistanceLabel(place){
+ const p=rausoReferencePoint(),latitude=Number(place.lat),longitude=Number(place.lon);
+ if(!p||!Number.isFinite(latitude)||!Number.isFinite(longitude)||!latitude||!longitude)return '– km';
+ const distance=km(p[0],p[1],latitude,longitude);
+ return (rausoGps?'':'≈')+(distance<10?distance.toFixed(1):Math.round(distance).toString())+' km';
+}
+function rausoDistanceOrigin(){return rausoGps?'Luftlinie ab deinem Standort':'Ungefähre Luftlinie ab Zentrum der gewählten Region'}
+function rausoSiteUrl(place){
+ let u=String(place.website||place.source||'').trim();
+ if(/^https:\/\//i.test(u))return u;
+ if(/^http:\/\//i.test(u))return 'https://'+u.slice(7);
+ if(/^www\./i.test(u))return 'https://'+u;
+ if(Number(place.lat)&&Number(place.lon))return osmLink(place);
+ return 'https://www.openstreetmap.org/search?query='+encodeURIComponent((place.name||place.title||'')+' '+(place.addr||place.region||''));
+}
+function rausoOpenPlace(place){window.location.assign(rausoSiteUrl(place))}
+function rausoRequestLocation(){
+ const btn=$('distanceLocation');
+ if(!navigator.geolocation){toast('Standort nicht verfügbar. Entfernung ab der gewählten Region.');return}
+ if(btn)btn.disabled=true;
+ navigator.geolocation.getCurrentPosition(position=>{
+  rausoGps=[position.coords.latitude,position.coords.longitude];
+  if(btn){btn.disabled=false;btn.textContent='📍 Standort aktiv'}
+  renderPlaces();toast('Standort aktiviert. Entfernungen als Luftlinie.')
+ },()=>{if(btn)btn.disabled=false;toast('Standort nicht freigegeben. Luftlinie ab gewählter Region.')},
+ {enableHighAccuracy:false,timeout:13000,maximumAge:300000})
+}
+
 function buildQuery(){const [lat,lon]=regionData[state.region],r=state.radius,expr=cats[state.cat].expr;const terms=expr.split(';').filter(Boolean).map(t=>t.includes('RADIUS')?t.replaceAll('RADIUS',r).replaceAll('LAT',lat).replaceAll('LON',lon):`nwr(around:${r},${lat},${lon})${t}`).join(';')+';';return `[out:json][timeout:24];(${terms});out center 180;`}
 function nearestSamples(){return []}
 async function queryPlaces(){state.placeLoading=true;state.placesLive=false;const key=`osm:${state.region}:${state.radius}:${state.cat}`;const last=cache[key];
@@ -188,12 +219,12 @@ function renderCollections(){updateBookmarkShortcut();
 
 /* Curated, individually checked real addresses. Illustration imagery is not a venue photo. */
 const rausoViennaPicks = [
- {id:'verified-vienna-figlmueller-wollzeile',name:'Figlmüller Wollzeile',addr:'Wollzeile 5, 1010 Wien',region:'Wien',type:'Wiener Schnitzel',category:'restaurants',short:'Wiener Küche · Innenstadt',source:'https://www.figlmueller.at/lage-kontakt/'},
- {id:'verified-vienna-plachutta-wollzeile',name:'Plachutta Wollzeile',addr:'Wollzeile 38, 1010 Wien',region:'Wien',type:'Wiener Küche',category:'restaurants',short:'Tafelspitz & Wiener Klassiker',source:'https://www.plachutta.at/restaurants/'},
- {id:'verified-vienna-lugeck',name:'Lugeck',addr:'Lugeck 4, 1010 Wien',region:'Wien',type:'Wiener Küche',category:'restaurants',short:'Wirtshaus · Wiener Innenstadt',source:'https://www.lugeck.com/'},
- {id:'verified-vienna-melker-stiftskeller',name:'Melker Stiftskeller',addr:'Schottengasse 3, 1010 Wien',region:'Wien',type:'Österreichisches Gasthaus',category:'restaurants',short:'Historischer Keller · Wirtshaus',source:'https://www.openstreetmap.org/search?query=Melker%20Stiftskeller%20Wien'},
- {id:'verified-vienna-therme-wien',name:'Therme Wien',addr:'Kurbadstraße 14, 1100 Wien',region:'Wien · Oberlaa',type:'Therme & Wellness',category:'thermen',short:'Thermalbaden · U1 Oberlaa',source:'https://thermewien.at/kontakt/'},
- {id:'verified-baden-roemertherme',name:'Römertherme Baden',addr:'Brusattiplatz 4, 2500 Baden',region:'Baden bei Wien',type:'Therme & Wellness',category:'thermen',short:'Thermalwasser · Baden bei Wien',source:'https://www.openstreetmap.org/search?query=R%C3%B6mertherme%20Baden'}
+ {id:'verified-vienna-figlmueller-wollzeile',lat:48.20942,lon:16.37484,website:'https://www.figlmueller.at/',name:'Figlmüller Wollzeile',addr:'Wollzeile 5, 1010 Wien',region:'Wien',type:'Wiener Schnitzel',category:'restaurants',short:'Wiener Küche · Innenstadt',source:'https://www.figlmueller.at/lage-kontakt/'},
+ {id:'verified-vienna-plachutta-wollzeile',lat:48.20755,lon:16.37876,website:'https://www.plachutta.at/restaurants/',name:'Plachutta Wollzeile',addr:'Wollzeile 38, 1010 Wien',region:'Wien',type:'Wiener Küche',category:'restaurants',short:'Tafelspitz & Wiener Klassiker',source:'https://www.plachutta.at/restaurants/'},
+ {id:'verified-vienna-lugeck',lat:48.20970,lon:16.37515,website:'https://www.lugeck.com/',name:'Lugeck',addr:'Lugeck 4, 1010 Wien',region:'Wien',type:'Wiener Küche',category:'restaurants',short:'Wirtshaus · Wiener Innenstadt',source:'https://www.lugeck.com/'},
+ {id:'verified-vienna-melker-stiftskeller',lat:48.2122736,lon:16.363614,website:'https://www.melkerstiftskeller.at/',name:'Melker Stiftskeller',addr:'Schottengasse 3, 1010 Wien',region:'Wien',type:'Österreichisches Gasthaus',category:'restaurants',short:'Historischer Keller · Wirtshaus',source:'https://www.openstreetmap.org/search?query=Melker%20Stiftskeller%20Wien'},
+ {id:'verified-vienna-therme-wien',lat:48.1437114,lon:16.4010266,website:'https://thermewien.at/',name:'Therme Wien',addr:'Kurbadstraße 14, 1100 Wien',region:'Wien · Oberlaa',type:'Therme & Wellness',category:'thermen',short:'Thermalbaden · U1 Oberlaa',source:'https://thermewien.at/kontakt/'},
+ {id:'verified-baden-roemertherme',lat:48.0082,lon:16.2316,website:'https://www.roemertherme.at/',name:'Römertherme Baden',addr:'Brusattiplatz 4, 2500 Baden',region:'Baden bei Wien',type:'Therme & Wellness',category:'thermen',short:'Thermalwasser · Baden bei Wien',source:'https://www.openstreetmap.org/search?query=R%C3%B6mertherme%20Baden'}
 ];
 let rausoShowAllHighlights=false;
 function renderViennaHighlights(){
