@@ -72,6 +72,13 @@ public class MainActivity extends Activity {
   getWindow().getDecorView().setSystemUiVisibility(0);
   WebViewAssetLoader loader=new WebViewAssetLoader.Builder().addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
   web=new WebView(this);
+  // Android shares text with apps chosen explicitly by the user.
+  web.addJavascriptInterface(new Object(){
+   @android.webkit.JavascriptInterface public void shareText(String text){
+    if(text==null||text.length()==0||text.length()>1500)return;
+    runOnUiThread(()->{Intent share=new Intent(Intent.ACTION_SEND);share.setType("text/plain");share.putExtra(Intent.EXTRA_TEXT,text);startActivity(Intent.createChooser(share,"Unternehmung teilen"));});
+   }
+  },"RAUSOShare");
   // Keep app content below Android's status bar (clock, signal and battery).
   web.setBackgroundColor(Color.rgb(9,9,10));
   web.setOnApplyWindowInsetsListener((view,insets)->{
@@ -171,6 +178,7 @@ public class MainActivity extends Activity {
   setIntent(intent);
   if(web!=null && intent.getData()!=null)web.loadUrl(authTarget(intent));
  }
+ @Override protected void onResume(){super.onResume();if(web!=null)web.post(()->{web.requestApplyInsets();applyWebSafeArea();});}
  @Override protected void onSaveInstanceState(Bundle out){if(web!=null)web.saveState(out);super.onSaveInstanceState(out);}
  @Override protected void onDestroy(){
   if(Build.VERSION.SDK_INT>=33 && androidBackCallback!=null)

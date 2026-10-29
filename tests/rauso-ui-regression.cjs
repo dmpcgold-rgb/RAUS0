@@ -1,0 +1,17 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const html=fs.readFileSync('app/src/main/assets/index.html','utf8');
+const js=fs.readFileSync('app/src/main/assets/app.js','utf8');
+const css=fs.readFileSync('app/src/main/assets/style.css','utf8');
+const java=fs.readFileSync('app/src/main/java/at/rauso/app/MainActivity.java','utf8');
+for(const id of ['headerFriends','heroBookmarks','heroGoing','heroOrganized','accountShortcut','messagesContent'])assert(html.includes('id="'+id+'"'),'Missing '+id);
+for(const id of ['headerBookmarks','heroDiscover','heroConnect','heroExperience','wishlistShortcut'])assert(!html.includes('id="'+id+'"'),'Legacy '+id);
+assert(html.includes('data-cat="anime"')&&html.includes('value="anime"'));
+assert(js.includes("anime:{icon:'★'")&&js.includes('openFriendsPanel')&&js.includes('data-featured-create'));
+assert(js.includes("state.meetFilter='going'")&&js.includes("state.meetFilter='organized'"));
+assert(js.includes('RAUSOShare')&&java.includes('Intent.createChooser'));
+assert(js.includes("privateMode?'Privater Treffpunkt"));
+assert(!html.includes('📍')&&!js.includes('📍'));
+for(const t of ['orange','purple','carbon','rainbow','light'])assert(css.includes('html[data-rauso-theme="'+t+'"]{--rauso-glow:'));
+console.log('RAUSO category, UI, navigation, native share and theme checks passed');

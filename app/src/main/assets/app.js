@@ -26,6 +26,7 @@ const cats = {
  kultur:{icon:'🏛️',expr:'["tourism"~"^(museum|gallery)$"]'},
  uebernachten:{icon:'🛏️',expr:'["tourism"~"^(hotel|hostel|guest_house|camp_site)$"]'},
  sport:{icon:'🚴',expr:'["leisure"~"^(sports_centre|fitness_centre|swimming_pool)$"]'},
+ anime:{icon:'★',expr:'["shop"~"^(anime|comics)$"]'},
  familie:{icon:'👨‍👩‍👧',expr:'["leisure"~"^(playground|park)$"]'}
 };
 const samplePlaces = [
@@ -146,7 +147,7 @@ function rausoRequestLocation(){
  if(btn)btn.disabled=true;
  navigator.geolocation.getCurrentPosition(position=>{
   rausoGps=[position.coords.latitude,position.coords.longitude];
-  if(btn){btn.disabled=false;btn.textContent='📍 Standort aktiv'}
+  if(btn){btn.disabled=false;btn.textContent='★ Standort aktiv'}
   renderPlaces();toast('Standort aktiviert. Entfernungen als Luftlinie.')
  },()=>{if(btn)btn.disabled=false;toast('Standort nicht freigegeben. Luftlinie ab gewählter Region.')},
  {enableHighAccuracy:false,timeout:13000,maximumAge:300000})
@@ -200,10 +201,8 @@ async function loadBookmarks(){
 }
 function updateBookmarkShortcut(){
  const total=Object.keys(state.bookmarks||{}).length;
- const button=$('wishlistShortcut');
- if(button){button.textContent='★ Merkliste ('+total+')';button.setAttribute('aria-label',total+' gemerkte Orte und Treffen öffnen');}
- const header=$('headerBookmarks');
- if(header){header.setAttribute('aria-label','Merkliste öffnen, '+total+' Einträge');header.title='Merkliste: '+total;}
+ const button=$('heroBookmarks');
+ if(button){button.textContent='★ Merkliste ('+total+')';button.setAttribute('aria-label','Merkliste mit '+total+' Einträgen öffnen');}
 }
 
 function rausoOpenBookmark(item){
@@ -217,7 +216,7 @@ function rausoOpenBookmark(item){
  const name=event.title||item.title,where=event.place_name||item.subtitle;
  let dateText='';
  try{if(event.starts_at)dateText=fmt(event.starts_at)}catch{}
- modal('Ausflug · '+name,'<div class="stack"><p class="quiet">📍 '+esc(where||'Treffpunkt auf Anfrage')+'</p>'+
+ modal('Ausflug · '+name,'<div class="stack"><p class="quiet">★ '+esc(where||'Treffpunkt auf Anfrage')+'</p>'+
   (dateText?'<p>📅 '+esc(dateText)+'</p>':'')+
   (event.description?'<p>'+esc(event.description)+'</p>':'')+
   '<button id="bookmarkViewEvents" class="primary-btn">Zur Unternehmung</button>'+
@@ -227,7 +226,7 @@ function rausoOpenBookmark(item){
  if($('bookmarkViewOrganizer'))$('bookmarkViewOrganizer').onclick=()=>{
    const author=availablePeople().find(p=>String(p.id)===String(event.author_id));
    if(!author){toast('Das Profil dieses Mitglieds ist derzeit nicht sichtbar.');return}
-   modal('Profil · '+(author.display_name||'Mitglied'),'<div class="stack"><p>📍 '+esc(author.city||'Österreich')+'</p><p>'+esc(author.bio||'Kein Profiltext')+'</p></div>')
+   modal('Profil · '+(author.display_name||'Mitglied'),'<div class="stack"><p>★ '+esc(author.city||'Österreich')+'</p><p>'+esc(author.bio||'Kein Profiltext')+'</p></div>')
  };
 }
 function renderCollections(){
@@ -268,8 +267,8 @@ function renderViennaHighlights(){
   const liked=isBookmarked('place',p.id);
   const label=p.category==='thermen'?'♨ Thermen':'🍽 Restaurants';
   return '<article class="featured-card rauso-place-link" data-featured-open="'+esc(p.id)+'" tabindex="0" role="link" title="Website von '+esc(p.name)+' öffnen">'+
-   '<div class="featured-image '+(p.category==='thermen'?'therme':'restaurant')+'"></div>'+
-   '<span class="featured-map venue-distance" title="'+esc(rausoDistanceOrigin())+'">📍 '+esc(rausoDistanceLabel(p))+'</span>'+
+   '<div class="featured-image rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-featured-create="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen">☆ Unternehmung starten</button></div>'+
+   '<span class="featured-map venue-distance" title="'+esc(rausoDistanceOrigin())+'">★ '+esc(rausoDistanceLabel(p))+'</span>'+
    '<div class="featured-text"><h4>'+esc(p.name)+'</h4><p>'+esc(p.short)+'</p>'+
    '<span class="featured-cat '+(p.category==='thermen'?'thermal':'')+'">'+esc(label)+'</span></div>'+
    '<button type="button" class="featured-heart heart-btn star-btn '+(liked?'is-liked':'')+'" '+
@@ -281,6 +280,7 @@ function renderViennaHighlights(){
   card.onclick=e=>{if(!e.target.closest('button'))open()};
   card.onkeydown=e=>{if(e.target===card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();open()}}
  });
+ el.querySelectorAll('[data-featured-create]').forEach(b=>b.onclick=e=>{e.stopPropagation();const p=rausoViennaPicks.find(x=>x.id===b.dataset.featuredCreate);if(p)createOuting(p)});
  el.querySelectorAll('[data-featured-like]').forEach(b=>b.onclick=e=>{
   e.stopPropagation();const item=rausoViennaPicks.find(x=>x.id===b.dataset.featuredLike);
   if(item)toggleBookmark('place',item)
@@ -303,11 +303,11 @@ function renderPlaces(){
  $('places').innerHTML=filtered.length?filtered.slice(0,100).map(p=>{
   const liked=isBookmarked('place',p.id);
   return '<article class="place-card rauso-place-link" data-place-open="'+esc(p.id)+'" tabindex="0" role="link" title="'+esc(p.name)+' – '+(p.website?'Website':'Karte')+' öffnen">'+
-   '<div class="place-cover '+esc(state.cat)+'"><span class="place-cover-label">Symbolbild</span></div>'+
-   '<span class="venue-distance osm-distance" title="'+esc(rausoDistanceOrigin())+'">📍 '+esc(rausoDistanceLabel(p))+'</span>'+
+   '<div class="place-cover rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-with="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen">☆ Unternehmung starten</button></div>'+
+   '<span class="venue-distance osm-distance" title="'+esc(rausoDistanceOrigin())+'">★ '+esc(rausoDistanceLabel(p))+'</span>'+
    '<div class="place-header"><div class="place-emoji">'+cats[state.cat].icon+'</div><div class="place-body">'+
    '<h3>'+esc(p.name)+'</h3><p class="place-sub">'+esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')+'</p></div></div>'+
-   '<div class="place-actions"><button class="small-btn" data-with="'+esc(p.id)+'" aria-label="Treffen an diesem Ort erstellen">＋ Treffen</button>'+
+   '<div class="place-actions">'+
    '<button class="small-btn heart-btn star-btn '+(liked?'is-liked':'')+'" data-favorite="'+esc(p.id)+'" aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" aria-pressed="'+liked+'">'+(liked?'★':'☆')+'</button></div></article>';
  }).join(''):'<div class="empty"><strong>Keine Orte gefunden</strong>Versuche eine andere Kategorie oder einen größeren Umkreis.</div>';
  $('places').querySelectorAll('[data-place-open]').forEach(card=>{
@@ -328,7 +328,7 @@ function renderPlaces(){
 function drawMap(places){if(!window.L){$('mapView').innerHTML='<div class="empty">Karte benötigt eine Internetverbindung.</div>';return}const center=regionData[state.region];if(!state.map){state.map=L.map('map',{zoomControl:false}).setView(center,11);L.control.zoom({position:'bottomright'}).addTo(state.map);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap-Mitwirkende',maxZoom:18}).addTo(state.map);state.markers=L.layerGroup().addTo(state.map)}state.map.setView(center,11);state.markers.clearLayers();places.slice(0,100).forEach(p=>L.marker([p.lat,p.lon]).bindPopup(`<strong>${esc(p.name)}</strong>`).addTo(state.markers));setTimeout(()=>state.map.invalidateSize(),150)}
 function showMap(){state.mapOpen=!state.mapOpen;$('mapView').classList.toggle('hidden',!state.mapOpen);$('mapToggle').textContent=state.mapOpen?'≡ Liste':'◫ Karte';if(state.mapOpen)drawMap(state.places)}
 function eventList(){return demoMode()?state.demoEvents:state.outings}
-function renderEventCard(e){const r=demoMode()?(state.demoReactions[e.id]||''):(e.mineReaction||'');const t=transportMeta[e.transport_mode]||transportMeta.auto;const privateMode=e.visibility==='private';const offering=e.transport_mode==='auto' && e.ride_role==='offer';const detail=offering&&e.seats_offered?`${e.seats_offered} Plätze`:'';return `<article class="event-card ${r==='going'?'event-joined':''}" data-outing-id="${esc(e.id)}"><div class="event-top"><span class="pill">${esc(privateMode?'🏡 Privat':cats[e.category]?.icon||'📍')} ${esc(privateMode?meetingMeta[e.meeting_type]||'Privates Treffen':e.category||'Ausflug')}</span><span class="event-date">${esc(fmt(e.starts_at))}</span></div><h3>${esc(e.title)}</h3><div class="event-meta">📍 ${esc(e.place_name)}<br><button type="button" class="event-author-link" data-event-organizer="${esc(e.id)}" title="Veranstalterprofil öffnen">👤 ${esc(e.author||'RAUSO-Mitglied')} <span aria-hidden="true">›</span></button>${e.authorOnline?' · 🟢 Online':''}${e.family_friendly?' · 👨‍👩‍👧 Familienfreundlich':''}</div><p class="event-descr">${esc(e.description||'')}</p>${e.attendance?'<p class="quiet">Teilnahmen: '+e.attendance.going+' zugesagt</p>':''}<div class="event-transport"><span>${t[0]} ${t[1]}</span>${detail?`<span>💺 ${esc(detail)}</span>`:''}${e.departure_place?`<span>↗ ${esc(e.departure_place)}</span>`:''}</div>${privateMode?'<div class="locked-note">🔐 Privatadresse nicht öffentlich; erst nach bestätigter Teilnahme teilen.</div>':''}<div class="event-actions"><button class="small-btn heart-btn star-btn ${isBookmarked('outing',e.id)?'is-liked':''}" data-react="${esc(e.id)}" data-type="like" aria-pressed="${isBookmarked('outing',e.id)}">${isBookmarked('outing',e.id)?'★':'☆'}</button><button class="small-btn join-btn ${r==='going'?'is-joined':''}" data-react="${esc(e.id)}" data-type="going" aria-pressed="${r==='going'?'true':'false'}">${r==='going'?'✓ Du bist dabei':'✓ Bin dabei'}</button>${!demoMode()&&e.author_id!==myId()?`<button class="small-btn event-friend" data-friend-outing="${esc(e.id)}">👥 Freundschaft</button>`:'' }<button class="small-btn" data-share="${esc(e.id)}">↗ Teilen</button><button class="small-btn" data-incident="${esc(e.id)}">🛡 Melden</button></div></article>`}
+function renderEventCard(e){const r=demoMode()?(state.demoReactions[e.id]||''):(e.mineReaction||'');const t=transportMeta[e.transport_mode]||transportMeta.auto;const privateMode=e.visibility==='private';const offering=e.transport_mode==='auto' && e.ride_role==='offer';const detail=offering&&e.seats_offered?`${e.seats_offered} Plätze`:'';return `<article class="event-card ${r==='going'?'event-joined':''}" data-outing-id="${esc(e.id)}"><div class="event-top"><span class="pill">${esc(privateMode?'🏡 Privat':cats[e.category]?.icon||'★')} ${esc(privateMode?meetingMeta[e.meeting_type]||'Privates Treffen':e.category||'Ausflug')}</span><span class="event-date">${esc(fmt(e.starts_at))}</span></div><h3>${esc(e.title)}</h3><div class="event-meta">★ ${esc(e.place_name)}<br><button type="button" class="event-author-link" data-event-organizer="${esc(e.id)}" title="Veranstalterprofil öffnen">👤 ${esc(e.author||'RAUSO-Mitglied')} <span aria-hidden="true">›</span></button>${e.authorOnline?' · 🟢 Online':''}${e.family_friendly?' · 👨‍👩‍👧 Familienfreundlich':''}</div><p class="event-descr">${esc(e.description||'')}</p>${e.attendance?'<p class="quiet">Teilnahmen: '+e.attendance.going+' zugesagt</p>':''}<div class="event-transport"><span>${t[0]} ${t[1]}</span>${detail?`<span>💺 ${esc(detail)}</span>`:''}${e.departure_place?`<span>↗ ${esc(e.departure_place)}</span>`:''}</div>${privateMode?'<div class="locked-note">🔐 Privatadresse nicht öffentlich; erst nach bestätigter Teilnahme teilen.</div>':''}<div class="event-actions"><button class="small-btn heart-btn star-btn ${isBookmarked('outing',e.id)?'is-liked':''}" data-react="${esc(e.id)}" data-type="like" aria-pressed="${isBookmarked('outing',e.id)}">${isBookmarked('outing',e.id)?'★':'☆'}</button><button class="small-btn join-btn ${r==='going'?'is-joined':''}" data-react="${esc(e.id)}" data-type="going" aria-pressed="${r==='going'?'true':'false'}">${r==='going'?'✓ Du bist dabei':'✓ Bin dabei'}</button>${!demoMode()&&e.author_id!==myId()?`<button class="small-btn event-friend" data-friend-outing="${esc(e.id)}">👥 Freundschaft</button>`:'' }<button class="small-btn" data-share="${esc(e.id)}">↗ Teilen</button><button class="small-btn" data-incident="${esc(e.id)}">🛡 Melden</button></div></article>`}
 async function openEventOrganizerProfile(outingId){
  const outing=eventList().find(event=>String(event.id)===String(outingId));
  if(!outing){toast('Veranstaltung nicht gefunden.');return}
@@ -396,7 +396,7 @@ function renderMyMeetings(){
  const reaction=meetingReaction(e),isOwn=e.author_id===myId(),t=transportMeta[e.transport_mode]||transportMeta.auto;
  const status=isOwn?'✦ Von dir organisiert':'✓ Deine Teilnahme zugesagt';
  const statusClass=isOwn?'organized':'going';
- return `<article class="meeting-card"><div class="meeting-card-head"><span class="meeting-status ${statusClass}">${status}</span><span class="meeting-date">${new Date(e.starts_at).toLocaleDateString('de-AT',{day:'2-digit',month:'short',year:'numeric',timeZone:'Europe/Vienna'})}</span></div><h3>${esc(e.title)}</h3><div class="meeting-detail">🕒 ${esc(fmt(e.starts_at).split(', ').pop())}</div><div class="meeting-detail">📍 ${esc(e.place_name)}</div><div class="meeting-detail">👤 ${isOwn?'Du organisierst':esc(e.author||'RAUSO-Mitglied')}</div><div class="meeting-detail">${t[0]} ${t[1]}${e.departure_place?' · Start: '+esc(e.departure_place):''}${e.seats_offered&&e.ride_role==='offer'?' · '+esc(e.seats_offered)+' Mitfahrplätze':''}</div>${e.visibility==='private'?'<p class="locked-note">🔒 Privatadresse wird nicht öffentlich gezeigt.</p>':''}<div class="meeting-actions"><button class="small-btn" data-open-meeting="${esc(e.id)}">Treffen ansehen ↗</button>${!isOwn&&reaction==='going'&&Date.parse(e.starts_at)>now?`<button class="small-btn" data-remove-meeting="${esc(e.id)}">Zusage zurücknehmen</button>`:''}</div></article>`;
+ return `<article class="meeting-card"><div class="meeting-card-head"><span class="meeting-status ${statusClass}">${status}</span><span class="meeting-date">${new Date(e.starts_at).toLocaleDateString('de-AT',{day:'2-digit',month:'short',year:'numeric',timeZone:'Europe/Vienna'})}</span></div><h3>${esc(e.title)}</h3><div class="meeting-detail">🕒 ${esc(fmt(e.starts_at).split(', ').pop())}</div><div class="meeting-detail">★ ${esc(e.place_name)}</div><div class="meeting-detail">👤 ${isOwn?'Du organisierst':esc(e.author||'RAUSO-Mitglied')}</div><div class="meeting-detail">${t[0]} ${t[1]}${e.departure_place?' · Start: '+esc(e.departure_place):''}${e.seats_offered&&e.ride_role==='offer'?' · '+esc(e.seats_offered)+' Mitfahrplätze':''}</div>${e.visibility==='private'?'<p class="locked-note">🔒 Privatadresse wird nicht öffentlich gezeigt.</p>':''}<div class="meeting-actions"><button class="small-btn" data-open-meeting="${esc(e.id)}">Treffen ansehen ↗</button>${!isOwn&&reaction==='going'&&Date.parse(e.starts_at)>now?`<button class="small-btn" data-remove-meeting="${esc(e.id)}">Zusage zurücknehmen</button>`:''}</div></article>`;
  }).join(''):'<div class="empty"><strong>Hier ist noch nichts geplant.</strong>Wenn du bei einem Treffen „Bin dabei“ auswählst oder selbst eines erstellst, erscheint es hier automatisch.<div style="margin-top:13px"><button id="browseFromMeetings" class="primary-btn">Treffen entdecken</button></div></div>'}`;
  root.querySelectorAll('[data-open-meeting]').forEach(b=>b.onclick=()=>openMeetingFromMine(b.dataset.openMeeting));
  root.querySelectorAll('[data-remove-meeting]').forEach(b=>b.onclick=()=>{const e=eventList().find(x=>x.id===b.dataset.removeMeeting);if(e)reactOuting(e.id,meetingReaction(e))});
@@ -406,7 +406,7 @@ function openMeetingFromMine(id){
  const event=eventList().find(e=>e.id===id);if(!event)return;
  if(Date.parse(event.starts_at)<Date.now()-3600000){
    const travel=transportMeta[event.transport_mode]||transportMeta.auto;
-   modal('Vergangenes Treffen',`<div class="stack"><h3>${esc(event.title)}</h3><div class="meeting-detail">🕒 ${esc(fmt(event.starts_at))}</div><div class="meeting-detail">📍 ${esc(event.place_name)}</div><div class="meeting-detail">👤 ${esc(event.author||'Mitglied')}</div><div class="meeting-detail">${travel[0]} ${travel[1]}</div><p class="quiet">${esc(event.description||'')}</p><p class="helper-text">Dieses Treffen liegt in der Vergangenheit.</p></div>`);return;
+   modal('Vergangenes Treffen',`<div class="stack"><h3>${esc(event.title)}</h3><div class="meeting-detail">🕒 ${esc(fmt(event.starts_at))}</div><div class="meeting-detail">★ ${esc(event.place_name)}</div><div class="meeting-detail">👤 ${esc(event.author||'Mitglied')}</div><div class="meeting-detail">${travel[0]} ${travel[1]}</div><p class="quiet">${esc(event.description||'')}</p><p class="helper-text">Dieses Treffen liegt in der Vergangenheit.</p></div>`);return;
  }
  state.eventMode='all';switchTab('events');
  const el=Array.from(document.querySelectorAll('#eventList [data-outing-id]')).find(x=>x.dataset.outingId===id);
@@ -414,7 +414,16 @@ function openMeetingFromMine(id){
  el.classList.add('meeting-highlight');el.scrollIntoView({block:'center',behavior:'smooth'});
 }
 function renderFamily(){const events=eventList().filter(e=>e.family_friendly && Date.parse(e.starts_at)>Date.now()-3600000);$('familyEvents').innerHTML=(demoMode()?'<div class="status-banner">Beispielangebote. Alle Treffenden müssen als Erwachsene geprüft werden. Kinder erhalten kein eigenes Konto.</div>':'')+(events.length?events.map(renderEventCard).join(''):'<div class="empty">Noch keine Familientreffen. Erstelle selbst eines.</div>');wireEventButtons($('familyEvents'),events)}
-async function shareOuting(e){const share={title:`RAUSO: ${e.title}`,text:`${e.title} · ${e.place_name} · ${fmt(e.starts_at)}`};if(navigator.share){try{await navigator.share(share)}catch{}}else if(navigator.clipboard){await navigator.clipboard.writeText(share.text);toast('Treffen-Informationen kopiert.')}else toast(share.text)}
+async function shareOuting(e){
+ const privateMode=e.visibility==='private';
+ const text='★ RAUSO Unternehmung: '+String(e.title||'Treffen')+'\n'+
+  'Wann: '+fmt(e.starts_at)+'\nWo: '+(privateMode?'Privater Treffpunkt – nach Zusage erfragen':String(e.place_name||'Treffpunkt offen'));
+ if(window.RAUSOShare?.shareText){window.RAUSOShare.shareText(text);return}
+ if(navigator.share){try{await navigator.share({title:'RAUSO Unternehmung',text});return}catch(err){if(err?.name==='AbortError')return}}
+ modal('Unternehmung teilen','<div class="stack"><p class="quiet">Per WhatsApp teilen oder Einladung kopieren.</p><button class="primary-btn" id="shareWhatsApp">WhatsApp</button><button class="outline-btn" id="shareCopy">Text kopieren</button></div>');
+ $('shareWhatsApp').onclick=()=>{window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');closeModal()};
+ $('shareCopy').onclick=async()=>{try{await navigator.clipboard.writeText(text);toast('Einladung kopiert')}catch{toast('Kopieren fehlgeschlagen')}closeModal()};
+}
 async function reactOuting(id,type){
  if(type==='like'){const item=eventList().find(x=>x.id===id);if(item)await toggleBookmark('outing',item);return}
  if(!mustVerify('Teilnahme und Reaktionen'))return;
@@ -485,6 +494,27 @@ async function loadSocial(){
 }
 function availablePeople(){const blocked=demoMode()?Object.keys(state.demoBlocks).filter(k=>state.demoBlocks[k]):state.blocks.map(x=>x.blocker_id===myId()?x.blocked_id:x.blocker_id);return (demoMode()?demoPeople:state.people).filter(p=>!blocked.includes(p.id))}
 function connection(p){if(demoMode())return state.demoConnections[p.id]||'';const c=state.connections.find(c=>c.sender_id===p.id||c.receiver_id===p.id);return c?.status||''}
+
+async function openFriendsPanel(){
+ if(!state.user){showAuth();return}
+ await loadSocial();
+ const connections=state.connections.filter(c=>c.sender_id===myId()||c.recipient_id===myId());
+ const received=connections.filter(c=>c.status==='pending'&&c.recipient_id===myId());
+ const sent=connections.filter(c=>c.status==='pending'&&c.sender_id===myId());
+ const friends=connections.filter(c=>c.status==='accepted');
+ const idOf=c=>c.sender_id===myId()?c.recipient_id:c.sender_id;
+ const person=id=>state.people.find(p=>p.id===id)||{id,display_name:'RAUSO-Mitglied',city:''};
+ function member(c,action){const p=person(idOf(c));return '<div class="profile-row">'+avatar(p)+'<div class="profile-meta"><strong>'+esc(p.display_name)+'</strong><small>'+esc(p.city||'Österreich')+'</small></div>'+action(p)+'</div>'}
+ const incoming=received.map(c=>member(c,p=>'<button type="button" class="small-btn" data-friend-accept="'+esc(p.id)+'">Annehmen</button><button type="button" class="small-btn" data-friend-decline="'+esc(p.id)+'">Ablehnen</button>')).join('');
+ const accepted=friends.map(c=>member(c,p=>'<button type="button" class="small-btn" data-friend-chat="'+esc(p.id)+'">✉ Chat</button>')).join('');
+ const outgoing=sent.map(c=>member(c,()=>'<span class="quiet">Anfrage gesendet</span>')).join('');
+ modal('Freunde & Anfragen','<div class="stack rauso-friends-panel"><p class="quiet">'+friends.length+' Freunde · '+received.length+' neue Anfragen</p><h3>Freundschaftsanfragen ('+received.length+')</h3>'+(incoming||'<p class="quiet">Keine neuen Anfragen.</p>')+'<h3>Meine Freunde ('+friends.length+')</h3>'+(accepted||'<p class="quiet">Noch keine bestätigten Freunde.</p>')+'<h3>Gesendete Anfragen ('+sent.length+')</h3>'+(outgoing||'<p class="quiet">Keine offenen Anfragen.</p>')+'<button type="button" class="outline-btn" id="findFriends">Freunde suchen</button></div>');
+ const root=$('modalRoot');
+ root.querySelectorAll('[data-friend-accept]').forEach(b=>b.onclick=async()=>{await acceptContact(b.dataset.friendAccept);await openFriendsPanel()});
+ root.querySelectorAll('[data-friend-decline]').forEach(b=>b.onclick=async()=>{await declineContact(b.dataset.friendDecline);await openFriendsPanel()});
+ root.querySelectorAll('[data-friend-chat]').forEach(b=>b.onclick=()=>{const id=b.dataset.friendChat;closeModal();openChat(id)});
+ $('findFriends').onclick=()=>{closeModal();switchTab('messages');$('rausoFindPeople').open=true;$('peopleSearch')?.focus()};
+}
 function connectionRow(p){const status=connection(p),mine=demoMode()?status==='pending-out':state.connections.some(c=>c.sender_id===myId()&&c.receiver_id===p.id&&c.status==='pending');let action=status==='accepted'?`<button class="small-btn" data-chat="${esc(p.id)}">✉ Chat</button>`:(status==='pending-in'||(status==='pending'&&!mine))?`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`:(status==='pending'||status==='pending-out')?'<span class="quiet">Anfrage gesendet</span>':`<button class="small-btn" data-add="${esc(p.id)}">＋ Kontakt</button>`;if(demoMode()&&status==='pending-in')action=`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`;
  return `<div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')}</small></div>${action}<button class="small-btn" aria-label="Mehr Optionen" data-options="${esc(p.id)}">⋯</button></div>`}
 
@@ -502,7 +532,7 @@ function rausoUpdateMessageBadge(){
  if(button)button.setAttribute('aria-label',num?num+' ungelesene Nachrichten':'Nachrichten');
 }
 function rausoMessageDate(value){
- try{return new Date(value).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit'})}catch{return ''}
+ try{const d=new Date(value);return d.toDateString()===new Date().toDateString()?rausoMessageTime(value):d.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit'})}catch{return ''}
 }
 function rausoMessageTime(value){
  try{return new Date(value).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})}catch{return ''}
@@ -544,7 +574,7 @@ function rausoChatRows(){
   if(!list.has(other))list.set(other,{id:other,last:m,unread:0});
   if(m.recipient_id===myId()&&!m.read_at)list.get(other).unread++;
  }
- return [...list.values()].sort((a,b)=>Date.parse(b.last.created_at)-Date.parse(a.last.created_at));
+ return [...list.values()].sort((a,b)=>Number(b.unread>0)-Number(a.unread>0)||Date.parse(b.last.created_at)-Date.parse(a.last.created_at));
 }
 function renderInboxRows(){
  const target=$('rausoInboxRows');if(!target)return;
@@ -568,7 +598,7 @@ function renderInboxRows(){
    '<small>'+(mine?'Du: ':'')+esc(last.body.length>60?last.body.slice(0,60)+'…':last.body)+'</small></span>'+
    '<span class="rauso-chat-tail"><span class="rauso-chat-time">'+esc(rausoMessageDate(last.created_at))+'</span>'+
    (item.unread?'<span class="rauso-unread-count">'+item.unread+'</span>':'')+
-   '<span class="rauso-read-status '+cls+'">'+rausoReadLabel(last)+'</span></span></button>';
+   (mine?'<span class="rauso-read-status '+cls+'" title="'+rausoReadLabel(last)+'">✓</span>':'')+'</span></button>';
  }).join(''):'<div class="inbox-empty">Keine Gespräche in dieser Ansicht.</div>';
  target.querySelectorAll('[data-inbox-chat]').forEach(btn=>btn.onclick=()=>openChat(btn.dataset.inboxChat));
 }
@@ -579,7 +609,7 @@ function renderMessages(){
  const el=$('messagesContent');if(!el)return;
  el.innerHTML=
   (demoMode()?'<div class="status-banner">Vorschau: Nachrichten werden nicht an andere Personen gesendet. <button class="small-btn" id="contactsLogin">Jetzt anmelden</button></div>':'')+
-  '<div class="surface"><div class="rauso-inbox-summary"><div><h2 class="inbox-overview-heading">Nachrichten</h2>'+
+  '<div class="surface"><div class="rauso-inbox-summary"><div><h2 class="inbox-overview-heading">Chats</h2>'+
   '<p class="quiet">'+rows.length+' Gespräche · '+unread+' ungelesen</p></div>'+
   '<button type="button" class="primary-btn" id="chooseChatRecipient">＋ Schreiben</button></div>'+
   '<div class="rauso-inbox-tabs">'+
@@ -587,9 +617,9 @@ function renderMessages(){
    '<button type="button" data-inbox-view="unread" class="'+(rausoInboxView==='unread'?'active':'')+'">Ungelesen ('+unread+')</button>'+
    '<button type="button" data-inbox-view="contacts" class="'+(rausoInboxView==='contacts'?'active':'')+'">Kontakte</button></div>'+
   '<div class="searchbox rauso-message-search"><span>⌕</span><input type="search" id="inboxSearch" autocomplete="off" placeholder="Nachricht oder Name suchen" value="'+esc(rausoInboxSearch)+'"></div>'+
-  '<p class="rauso-chat-hint"><span class="rauso-read-status unread">✓ Rot: ungelesen</span> · <span class="rauso-read-status read">✓ Grün: gelesen</span></p>'+
+  '<p class="rauso-chat-hint">Ungelesene Chats zuerst · Rot / Grün: Lesestatus gesendeter Nachrichten</p>'+
   '<div id="rausoInboxRows" class="rauso-inbox-list"></div></div>'+
-  '<details class="surface" id="rausoFindPeople"><summary>👥 Menschen finden und Freundschaftsanfragen senden</summary>'+
+  '<details class="surface" id="rausoFindPeople"><summary>★ Freunde finden und Anfragen senden</summary>'+
   '<div class="searchbox"><span>⌕</span><input id="peopleSearch" placeholder="Name oder Stadt suchen" autocomplete="off"></div>'+
   '<div id="peopleRows">'+(list.length?list.map(connectionRow).join(''):'<div class="empty">Noch keine Mitglieder gefunden.</div>')+'</div></details>';
  renderInboxRows();
@@ -714,7 +744,7 @@ async function dateLike(id){if(!mustVerify('Dating-Likes'))return;if(demoMode())
 async function setDating(enabled,adult){if(enabled&&!mustVerify('Dating aktivieren'))return;try{if(demoMode()){state.demoProfile={...state.demoProfile,dating_enabled:enabled,adult_confirmed:adult};persist()}else{const {error}=await api.from('rauso_profiles').update({dating_enabled:enabled,adult_confirmed:enabled?adult:profile().adult_confirmed}).eq('id',myId());if(error)throw error;state.profile={...state.profile,dating_enabled:enabled,adult_confirmed:adult}}renderDating();renderProfile();toast(enabled?'Dating aktiviert.':'Dating deaktiviert.')}catch(err){toast(err.message)}}
 function renderProfile(){const p=profile();$('profileContent').innerHTML=`<div class="surface stack"><div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')} · ${demoMode()?'Demo-Vorschau':'RAUSO-Mitglied'}</small></div></div><form id="profileForm" class="stack"><div class="input-group"><label for="myName">Anzeigename</label><input id="myName" minlength="2" maxlength="40" required  value="${esc(p.display_name)}"></div><div class="input-group"><label for="myCity">Wohnort / Region</label><input id="myCity" maxlength="80" value="${esc(p.city)}"></div><div class="input-group"><label for="myBio">Über mich</label><textarea id="myBio" maxlength="500">${esc(p.bio)}</textarea></div><button class="primary-btn" type="submit">Profil speichern</button></form></div><div class="section-head"><h2>Mein Konto</h2></div><div class="surface stack"><button id="reportSafety" class="safety-action">🛡 Sicherheitsfall melden · Notfall 133 / 112</button><p class="quiet">${demoMode()?'Alle sozialen Daten und Musterprofile sind lokale Vorschau.':'Angemeldet als '+esc(state.user?.email||'')}</p>${demoMode()?'<button class="outline-btn" id="loginBtn">Konto erstellen / Anmelden</button>':'<button class="outline-btn" id="logoutBtn">Abmelden</button>'}<button class="outline-btn" id="mySaved">♡ Gemerkte Orte (${state.favorites.size})</button><button class="outline-btn" id="deleteLocal">Lokale Testdaten löschen</button><p class="quiet">RAUSO v${APP_VERSION} · Ortsdaten © OpenStreetMap</p></div>`;
  $('profileForm').onsubmit=saveProfile;$('reportSafety').onclick=()=>openSafetyReport(null);$('mySaved').onclick=()=>{switchTab('collections')};$('deleteLocal').onclick=()=>{if(confirm('Testdaten auf diesem Gerät wirklich löschen?')){localStorage.removeItem(STORE);location.reload()}};if(demoMode())$('loginBtn').onclick=showAuth;else $('logoutBtn').onclick=logout;injectProfileExtras()}
-async function saveProfile(e){e.preventDefault();const name=$('myName').value.trim();if(!rausoValidDisplayName(name)){toast('Bitte einen eigenen Profilnamen mit 2–40 Zeichen eingeben.');$('myName').focus();return}const data={display_name:name,city:$('myCity').value.trim(),bio:$('myBio').value.trim()};try{if(demoMode()){state.demoProfile={...state.demoProfile,...data};persist()}else{const {error}=await api.from('rauso_profiles').upsert({id:myId(),...data});if(error)throw error;state.profile={...state.profile,...data}}toast('Profil gespeichert.');renderProfile();injectProfileExtras();addMoreLink();addAppearanceLink();addReadiness()}catch(err){toast(err.message)}}
+async function saveProfile(e){e.preventDefault();const name=$('myName').value.trim();if(!rausoValidDisplayName(name)){toast('Bitte einen eigenen Profilnamen mit 2–40 Zeichen eingeben.');$('myName').focus();return}const data={display_name:name,city:$('myCity').value.trim(),bio:$('myBio').value.trim()};try{if(demoMode()){state.demoProfile={...state.demoProfile,...data};persist()}else{const {error}=await api.from('rauso_profiles').upsert({id:myId(),...data});if(error)throw error;state.profile={...state.profile,...data}}toast('Profil gespeichert.');updateHeaderAccount();renderProfile();injectProfileExtras();addMoreLink();addAppearanceLink();addReadiness()}catch(err){toast(err.message)}}
 function rausoValidDisplayName(value){
  const name=String(value||'').trim();
  return name.length>=2 && name.length<=40 && !['RAUSO-Mitglied','Mein RAUSO-Profil'].includes(name);
@@ -809,9 +839,9 @@ function attachRausoRealtime(){
 }
 async function refreshUser(){
  const {data:{user}}=await api.auth.getUser();
- state.user=user||null;attachRausoRealtime();updateHeaderAccount();
+ state.user=user||null;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
  if(!user){
-  state.profile=null;rausoInboxMessages=[];rausoUpdateMessageBadge();renderMessages();return
+  state.profile=null;state.profilePhotoUrl=null;updateHeaderAccount();rausoInboxMessages=[];rausoUpdateMessageBadge();renderMessages();return
  }
  const {data,error}=await api.from('rauso_profiles').select('*').eq('id',user.id).maybeSingle();
  if(error)console.error(error);
@@ -984,6 +1014,7 @@ async function renderProfilePhotos(){
  }));
  const first=rows.find(x=>x.is_primary)||rows[0];
  state.profilePhotoUrl=first?.url||null;
+ updateHeaderAccount();
  const header=document.querySelector('#profileContent .profile-row .avatar');
  if(header&&state.profilePhotoUrl){
   header.innerHTML='<img src="'+esc(state.profilePhotoUrl)+'" alt="Profilbild">';
@@ -1042,12 +1073,10 @@ $('uiSave').onclick=()=>{uiPref.theme=document.querySelector('input[name="theme"
 function updateHeaderAccount(){
  const logged=!!state.user;
  const label=$('accountShortcutLabel'),icon=$('accountShortcutIcon'),btn=$('accountShortcut');
- if(label)label.textContent=logged?'Mein Profil':'Anmelden';
- if(icon)icon.textContent=logged?'🙂':'↪';
- if(btn){
-  btn.setAttribute('aria-label',logged?'Mein Profil öffnen':'Anmelden');
-  btn.title=logged?'Mein Profil':'Anmelden';
- }
+ const name=logged?String(state.profile?.display_name||'Profil').trim():'Anmelden';
+ if(label)label.textContent=name;
+ if(icon){if(logged&&state.profilePhotoUrl){icon.innerHTML='<img class="rauso-header-photo" src="'+esc(state.profilePhotoUrl)+'" alt="">';}else icon.textContent=logged?name.slice(0,1).toUpperCase():'↪';}
+ if(btn){btn.setAttribute('aria-label',logged?'Profil von '+name+' öffnen':'Anmelden');btn.title=logged?name:'Anmelden';}
 }
 function openSettings(){
  modal('⚙ Einstellungen', '<div class="stack"><p class="quiet">Passe das Aussehen und die Startseite von RAUSO an.</p>'+
@@ -1117,11 +1146,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateOnli
 document.addEventListener('DOMContentLoaded',()=>{
  if(!uiPref.referenceDesign24){uiPref.theme='orange';uiPref.autoTheme=false;uiPref.referenceDesign24=true;saveUi()}
  setAppearance();init();addNavMore();addOfflineState();addAppearanceLink();addReadiness();
- if($('headerBookmarks'))$('headerBookmarks').onclick=()=>switchTab('collections');
- if($('wishlistShortcut'))$('wishlistShortcut').onclick=()=>switchTab('collections');
- if($('heroDiscover'))$('heroDiscover').onclick=()=>document.querySelector('.discover-heading')?.scrollIntoView({behavior:'smooth'});
- if($('heroConnect'))$('heroConnect').onclick=()=>switchTab('events');
- if($('heroExperience'))$('heroExperience').onclick=()=>switchTab('myMeetings');
+ if($('headerFriends'))$('headerFriends').onclick=openFriendsPanel;
+ if($('heroBookmarks'))$('heroBookmarks').onclick=()=>switchTab('collections');
+ if($('heroGoing'))$('heroGoing').onclick=()=>{state.meetFilter='going';switchTab('myMeetings')};
+ if($('heroOrganized'))$('heroOrganized').onclick=()=>{state.meetFilter='organized';switchTab('myMeetings')};
  if(uiPref.start!=='discover')switchTab(uiPref.start)
 });
 })();
