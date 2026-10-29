@@ -28,6 +28,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
+      - name: Check JavaScript syntax
+        run: |
+          node --check app/src/main/assets/app.js
+          node --check app/src/main/assets/config.js
+          node --check app/src/main/assets/features16.js
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
