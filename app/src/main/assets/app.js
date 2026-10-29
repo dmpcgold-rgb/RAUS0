@@ -481,8 +481,126 @@ function availablePeople(){const blocked=demoMode()?Object.keys(state.demoBlocks
 function connection(p){if(demoMode())return state.demoConnections[p.id]||'';const c=state.connections.find(c=>c.sender_id===p.id||c.receiver_id===p.id);return c?.status||''}
 function connectionRow(p){const status=connection(p),mine=demoMode()?status==='pending-out':state.connections.some(c=>c.sender_id===myId()&&c.receiver_id===p.id&&c.status==='pending');let action=status==='accepted'?`<button class="small-btn" data-chat="${esc(p.id)}">✉ Chat</button>`:(status==='pending-in'||(status==='pending'&&!mine))?`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`:(status==='pending'||status==='pending-out')?'<span class="quiet">Anfrage gesendet</span>':`<button class="small-btn" data-add="${esc(p.id)}">＋ Kontakt</button>`;if(demoMode()&&status==='pending-in')action=`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`;
  return `<div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')}</small></div>${action}<button class="small-btn" aria-label="Mehr Optionen" data-options="${esc(p.id)}">⋯</button></div>`}
-function renderMessages(){const list=availablePeople();$('messagesContent').innerHTML=`${demoMode()?'<div class="status-banner">Du bist nicht angemeldet. Die angezeigten Namen sind nur Beispielprofile. <button class="small-btn" id="contactsLogin">Jetzt anmelden</button></div>':''}<div class="surface"><div class="section-head"><h2>Menschen entdecken</h2></div><div class="searchbox"><span>⌕</span><input id="peopleSearch" placeholder="Namen oder Stadt suchen" autocomplete="off"></div><div id="peopleRows">${list.length?list.map(connectionRow).join(''):'<div class="empty">Noch keine Mitglieder gefunden.</div>'}</div></div><div class="section-head"><h2>Deine Chats</h2><button class="small-btn" id="chooseChatRecipient">＋ Nachricht schreiben</button></div><div class="surface">${list.filter(p=>connection(p)==='accepted'||mutualLike(p.id)).map(p=>`<div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>Privater Chat ${demoMode()?'· nur Vorschau':''}</small></div><button class="small-btn" data-chat="${esc(p.id)}">Öffnen →</button></div>`).join('')||'<div class="quiet">Nach Annahme einer Kontaktanfrage oder einem Dating-Match kannst du schreiben.</div>'}</div>`;
- $('peopleSearch').oninput=e=>{const q=e.target.value.toLowerCase();$('peopleRows').innerHTML=list.filter(p=>`${p.display_name} ${p.city}`.toLowerCase().includes(q)).map(connectionRow).join('')||'<div class="empty">Keine Treffer</div>';wirePeople($('peopleRows'))};wirePeople($('messagesContent'));$('chooseChatRecipient').onclick=chooseChatRecipient;if($('contactsLogin'))$('contactsLogin').onclick=showAuth}
+
+let rausoInboxMessages=[];
+let rausoInboxView='all';
+let rausoInboxBusy=false;
+let rausoInboxSearch='';
+function rausoReadColor(message){return message.read_at?'read':'unread'}
+function rausoReadLabel(message){return message.read_at?'✓ Gelesen':'✓ Ungelesen'}
+function rausoUpdateMessageBadge(){
+ const num=rausoInboxMessages.filter(m=>m.recipient_id===myId()&&!m.read_at).length;
+ const badge=$('messageUnreadBadge');
+ if(badge){badge.textContent=num>99?'99+':String(num);badge.classList.toggle('hidden',num===0)}
+ const button=document.querySelector('.nav-item[data-tab="messages"]');
+ if(button)button.setAttribute('aria-label',num?num+' ungelesene Nachrichten':'Nachrichten');
+}
+function rausoMessageDate(value){
+ try{return new Date(value).toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit'})}catch{return ''}
+}
+function rausoMessageTime(value){
+ try{return new Date(value).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})}catch{return ''}
+}
+async function loadMessageInbox(){
+ if(rausoInboxBusy)return;
+ if(!state.user){
+  const examples=[];
+  Object.entries(state.demoMessages||{}).forEach(([id,messages])=>
+   messages.forEach(m=>examples.push({...m,sender_id:m.sender_id||myId(),recipient_id:id})));
+  rausoInboxMessages=examples.sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));
+  rausoUpdateMessageBadge();
+  if(state.tab==='messages')renderMessages();
+  return;
+ }
+ rausoInboxBusy=true;
+ try{
+  const {data,error}=await api.from('rauso_messages')
+   .select('id,sender_id,recipient_id,body,created_at,read_at')
+   .or('sender_id.eq.'+myId()+',recipient_id.eq.'+myId())
+   .order('created_at',{ascending:false}).limit(400);
+  if(error){console.warn('Nachrichten:',error.message);if(state.tab==='messages')toast('Nachrichten konnten nicht geladen werden.');return}
+  rausoInboxMessages=data||[];
+  const missing=[...new Set(rausoInboxMessages.map(m=>m.sender_id===myId()?m.recipient_id:m.sender_id))]
+   .filter(pid=>!state.people.some(p=>p.id===pid));
+  if(missing.length){
+   const {data:people}=await api.from('rauso_profiles').select('id,display_name,city,bio').in('id',missing.slice(0,100));
+   if(people?.length)state.people=[...state.people,...people.filter(p=>!state.people.some(a=>a.id===p.id))];
+  }
+  rausoUpdateMessageBadge();
+  if(state.tab==='messages')renderMessages();
+ }finally{rausoInboxBusy=false}
+}
+function rausoChatRows(){
+ const list=new Map();
+ for(const m of rausoInboxMessages){
+  const other=m.sender_id===myId()?m.recipient_id:m.sender_id;
+  if(!other)continue;
+  if(!list.has(other))list.set(other,{id:other,last:m,unread:0});
+  if(m.recipient_id===myId()&&!m.read_at)list.get(other).unread++;
+ }
+ return [...list.values()].sort((a,b)=>Date.parse(b.last.created_at)-Date.parse(a.last.created_at));
+}
+function renderInboxRows(){
+ const target=$('rausoInboxRows');if(!target)return;
+ const rows=rausoChatRows().filter(row=>{
+  if(rausoInboxView==='unread'&&!row.unread)return false;
+  if(rausoInboxView==='contacts'){
+   const p=state.people.find(p=>p.id===row.id);
+   if(!p||connection(p)!=='accepted')return false;
+  }
+  const person=state.people.find(p=>p.id===row.id);
+  return (person?.display_name||row.id).toLocaleLowerCase('de-AT').includes(rausoInboxSearch.toLocaleLowerCase('de-AT'))||
+    row.last.body.toLocaleLowerCase('de-AT').includes(rausoInboxSearch.toLocaleLowerCase('de-AT'))
+ });
+ target.innerHTML=rows.length?rows.map(item=>{
+  const p=state.people.find(p=>p.id===item.id)||{id:item.id,display_name:'RAUSO-Mitglied',city:''};
+  const last=item.last;
+  const mine=last.sender_id===myId();
+  const cls=rausoReadColor(last);
+  return '<button type="button" class="rauso-chat-row '+(item.unread?'unread':'')+'" data-inbox-chat="'+esc(item.id)+'" aria-label="Chat mit '+esc(p.display_name)+' öffnen">'+
+   avatar(p)+'<span class="profile-meta"><strong>'+esc(p.display_name)+'</strong>'+
+   '<small>'+(mine?'Du: ':'')+esc(last.body.length>60?last.body.slice(0,60)+'…':last.body)+'</small></span>'+
+   '<span class="rauso-chat-tail"><span class="rauso-chat-time">'+esc(rausoMessageDate(last.created_at))+'</span>'+
+   (item.unread?'<span class="rauso-unread-count">'+item.unread+'</span>':'')+
+   '<span class="rauso-read-status '+cls+'">'+rausoReadLabel(last)+'</span></span></button>';
+ }).join(''):'<div class="inbox-empty">Keine Gespräche in dieser Ansicht.</div>';
+ target.querySelectorAll('[data-inbox-chat]').forEach(btn=>btn.onclick=()=>openChat(btn.dataset.inboxChat));
+}
+function renderMessages(){
+ const list=availablePeople();
+ const rows=rausoChatRows();
+ const unread=rausoInboxMessages.filter(m=>m.recipient_id===myId()&&!m.read_at).length;
+ const el=$('messagesContent');if(!el)return;
+ el.innerHTML=
+  (demoMode()?'<div class="status-banner">Vorschau: Nachrichten werden nicht an andere Personen gesendet. <button class="small-btn" id="contactsLogin">Jetzt anmelden</button></div>':'')+
+  '<div class="surface"><div class="rauso-inbox-summary"><div><h2 class="inbox-overview-heading">Nachrichten</h2>'+
+  '<p class="quiet">'+rows.length+' Gespräche · '+unread+' ungelesen</p></div>'+
+  '<button type="button" class="primary-btn" id="chooseChatRecipient">＋ Schreiben</button></div>'+
+  '<div class="rauso-inbox-tabs">'+
+   '<button type="button" data-inbox-view="all" class="'+(rausoInboxView==='all'?'active':'')+'">Alle</button>'+
+   '<button type="button" data-inbox-view="unread" class="'+(rausoInboxView==='unread'?'active':'')+'">Ungelesen ('+unread+')</button>'+
+   '<button type="button" data-inbox-view="contacts" class="'+(rausoInboxView==='contacts'?'active':'')+'">Kontakte</button></div>'+
+  '<div class="searchbox rauso-message-search"><span>⌕</span><input type="search" id="inboxSearch" autocomplete="off" placeholder="Nachricht oder Name suchen" value="'+esc(rausoInboxSearch)+'"></div>'+
+  '<p class="rauso-chat-hint"><span class="rauso-read-status unread">✓ Rot: ungelesen</span> · <span class="rauso-read-status read">✓ Grün: gelesen</span></p>'+
+  '<div id="rausoInboxRows" class="rauso-inbox-list"></div></div>'+
+  '<details class="surface" id="rausoFindPeople"><summary>👥 Menschen finden und Freundschaftsanfragen senden</summary>'+
+  '<div class="searchbox"><span>⌕</span><input id="peopleSearch" placeholder="Name oder Stadt suchen" autocomplete="off"></div>'+
+  '<div id="peopleRows">'+(list.length?list.map(connectionRow).join(''):'<div class="empty">Noch keine Mitglieder gefunden.</div>')+'</div></details>';
+ renderInboxRows();
+ el.querySelectorAll('[data-inbox-view]').forEach(btn=>btn.onclick=()=>{
+  rausoInboxView=btn.dataset.inboxView;renderMessages()
+ });
+ $('inboxSearch').oninput=e=>{rausoInboxSearch=e.target.value;renderInboxRows()};
+ $('peopleSearch').oninput=e=>{
+  const q=e.target.value.toLocaleLowerCase('de-AT');
+  $('peopleRows').innerHTML=list.filter(p=>((p.display_name||'')+' '+(p.city||'')).toLocaleLowerCase('de-AT').includes(q))
+   .map(connectionRow).join('')||'<div class="empty">Keine Treffer</div>';
+  wirePeople($('peopleRows'))
+ };
+ wirePeople($('peopleRows'));
+ $('chooseChatRecipient').onclick=chooseChatRecipient;
+ if($('contactsLogin'))$('contactsLogin').onclick=showAuth;
+}
 function chooseChatRecipient(){
  if(!state.user){showAuth();toast('Bitte zuerst anmelden, damit du echte Mitglieder auswählen kannst.');return}
  const contacts=availablePeople().filter(p=>connection(p)==='accepted');
@@ -512,10 +630,73 @@ async function requestEventFriendship(eventId){
  await requestContact(event.author_id);
 }
 function mutualLike(id){if(demoMode())return state.demoDatingLikes[id]==='match';return state.datingLikes.some(l=>l.liker_id===myId()&&l.liked_id===id)&&state.datingLikes.some(l=>l.liker_id===id&&l.liked_id===myId())}
-function openChat(id){const p=availablePeople().find(p=>p.id===id);if(!p)return;if(connection(p)!=='accepted'&&!mutualLike(id)){toast('Chat erst nach bestätigtem Kontakt oder gegenseitigem Dating-Like.');return}state.currentChat=id;modal(`Chat mit ${p.display_name}`,`<div id="chatMessages" class="chat-board"></div><form id="chatForm" class="sendline"><input id="chatInput" maxlength="2000" required placeholder="Nachricht schreiben …" autocomplete="off"><button type="submit">➤</button></form><p class="quiet">${demoMode()?'Demo: Die Nachrichten bleiben auf diesem Gerät und erreichen keine andere Person.':'Nur du und dein Kontakt können diese Nachrichten lesen.'}</p>`);loadChat();$('chatForm').onsubmit=sendChat}
-async function loadChat(){if(!$('chatMessages'))return;let msgs;if(demoMode())msgs=state.demoMessages[state.currentChat]||[];else{const {data,error}=await api.from('rauso_messages').select('*').or(`and(sender_id.eq.${myId()},recipient_id.eq.${state.currentChat}),and(sender_id.eq.${state.currentChat},recipient_id.eq.${myId()})`).order('created_at',{ascending:true}).limit(100);if(error){toast(error.message);return}msgs=data||[]}
- $('chatMessages').innerHTML=msgs.map(m=>`<div class="bubble ${m.sender_id===myId()?'mine':''}">${esc(m.body)}<small>${new Date(m.created_at).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})}</small></div>`).join('')||'<div class="quiet">Noch keine Nachrichten.</div>';$('chatMessages').scrollTop=$('chatMessages').scrollHeight}
-async function sendChat(e){e.preventDefault();if(!mustVerify('Nachrichten schreiben'))return;const body=$('chatInput').value.trim();if(!body||!state.currentChat)return;try{if(demoMode()){(state.demoMessages[state.currentChat]??=[]).push({sender_id:myId(),body,created_at:new Date().toISOString()});persist()}else{const {error}=await api.from('rauso_messages').insert({sender_id:myId(),recipient_id:state.currentChat,body});if(error)throw error}$('chatInput').value='';await loadChat()}catch(err){toast(err.message)}}
+function openChat(id){
+ let p=availablePeople().find(p=>p.id===id);
+ if(!p)p=state.people.find(p=>p.id===id);
+ if(!p)p={id,display_name:'RAUSO-Mitglied'};
+ const past=rausoInboxMessages.some(m=>m.sender_id===id||m.recipient_id===id);
+ if(connection(p)!=='accepted'&&!mutualLike(id)&&!past){
+  toast('Chat erst nach bestätigtem Kontakt oder gegenseitigem Dating-Like.');return
+ }
+ state.currentChat=id;
+ modal('Chat mit '+p.display_name,
+  '<div id="chatMessages" class="chat-board"></div>'+
+  '<form id="chatForm" class="sendline"><input id="chatInput" maxlength="2000" required placeholder="Nachricht schreiben …" autocomplete="off">'+
+  '<button type="submit">➤</button></form>'+
+  '<p class="quiet">'+(demoMode()?'Demo-Nachrichten sind nur lokal sichtbar.':'Rot = ungelesen, Grün = gelesen. Lesestatus wird nur beim Öffnen des Chats aktualisiert.')+'</p>');
+ loadChat();$('chatForm').onsubmit=sendChat
+}
+async function loadChat(){
+ const target=$('chatMessages'),chatId=state.currentChat;
+ if(!target||!chatId)return;
+ let messages;
+ if(demoMode()){
+  messages=state.demoMessages[chatId]||[];
+  for(const m of messages)if(m.sender_id!==myId()&&!m.read_at)m.read_at=new Date().toISOString();
+  persist()
+ }else{
+  const {data,error}=await api.from('rauso_messages').select('id,sender_id,recipient_id,body,created_at,read_at')
+   .or('and(sender_id.eq.'+myId()+',recipient_id.eq.'+chatId+'),and(sender_id.eq.'+chatId+',recipient_id.eq.'+myId()+')')
+   .order('created_at',{ascending:true}).limit(150);
+  if(error){toast(error.message);return}messages=data||[];
+  const unread=messages.filter(m=>m.recipient_id===myId()&&!m.read_at).map(m=>m.id);
+  if(unread.length&&state.currentChat===chatId&&$('chatMessages')){
+   const readAt=new Date().toISOString();
+   const {error:readError}=await api.from('rauso_messages').update({read_at:readAt})
+    .eq('recipient_id',myId()).in('id',unread);
+   if(!readError){
+    messages.forEach(m=>{if(unread.includes(m.id))m.read_at=readAt});
+   }else console.warn('Lesestatus:',readError.message);
+  }
+ }
+ if(!$('chatMessages')||state.currentChat!==chatId)return;
+ target.innerHTML=messages.map(m=>{
+  const mine=m.sender_id===myId();
+  return '<div class="bubble '+(mine?'mine':'')+'">'+esc(m.body)+
+   '<small>'+esc(rausoMessageTime(m.created_at))+
+   '<span class="rauso-read-status '+rausoReadColor(m)+'" title="'+(mine?'Empfänger':'Du')+
+   (m.read_at?' hat gelesen':' hat noch nicht gelesen')+'">'+rausoReadLabel(m)+'</span></small></div>';
+ }).join('')||'<div class="quiet">Noch keine Nachrichten.</div>';
+ target.scrollTop=target.scrollHeight;
+ loadMessageInbox()
+}
+async function sendChat(e){
+ e.preventDefault();
+ if(!mustVerify('Nachrichten schreiben'))return;
+ const input=$('chatInput');const body=input?.value.trim();if(!body||!state.currentChat)return;
+ try{
+  if(demoMode()){
+   (state.demoMessages[state.currentChat]??=[]).push({
+    sender_id:myId(),recipient_id:state.currentChat,body,created_at:new Date().toISOString(),read_at:null
+   });persist()
+  }else{
+   const {error}=await api.from('rauso_messages').insert({sender_id:myId(),recipient_id:state.currentChat,body});
+   if(error)throw error
+  }
+  if(input)input.value='';
+  await loadChat();
+ }catch(err){toast(err.message)}
+}
 function personOptions(id){const p=availablePeople().find(p=>p.id===id);if(!p)return;modal(`${p.display_name} · Optionen`,`<div class="stack"><p class="quiet">Du kannst Nutzer blockieren oder unangemessenes Verhalten melden.</p><button id="blockPerson" class="outline-btn">⛔ ${demoMode()?'Testprofil ausblenden':'Nutzer blockieren'}</button><button id="reportPerson" class="outline-btn">⚑ Profil melden</button></div>`);$('blockPerson').onclick=()=>blockPerson(id);$('reportPerson').onclick=()=>reportPerson(id)}
 async function blockPerson(id){try{if(demoMode()){state.demoBlocks[id]=true;persist()}else{const {error}=await api.from('blocks').insert({blocker_id:myId(),blocked_id:id});if(error)throw error;await loadSocial()}closeModal();renderMessages();toast('Profil ausgeblendet.')}catch(err){toast(err.message)}}
 function reportPerson(id){modal('Profil melden',`<form id="reportForm" class="stack"><div class="input-group"><label for="reason">Grund der Meldung</label><textarea id="reason" required minlength="5" maxlength="500" placeholder="Beschreibe das Problem"></textarea></div><button class="primary-btn" type="submit">Meldung senden</button></form>`);$('reportForm').onsubmit=async e=>{e.preventDefault();if(demoMode()){toast('Demo: Meldung wurde nicht an einen Server gesendet.');closeModal();return}const {error}=await api.from('reports').insert({reporter_id:myId(),target_id:id,reason:$('reason').value.trim()});if(error)toast(error.message);else{closeModal();toast('Meldung eingereicht.')}}}
