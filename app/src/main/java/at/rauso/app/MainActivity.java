@@ -64,6 +64,9 @@ public class MainActivity extends Activity {
  }
  @Override public void onCreate(Bundle state) {
   super.onCreate(state);
+  // Android 15/16 enforce edge-to-edge. Explicitly request window insets
+  // so RAUSO can place its content below system status/WLAN/battery icons.
+  if(Build.VERSION.SDK_INT>=30)getWindow().setDecorFitsSystemWindows(false);
   getWindow().setStatusBarColor(Color.rgb(9,9,10));
   getWindow().setNavigationBarColor(Color.rgb(9,9,10));
   getWindow().getDecorView().setSystemUiVisibility(0);
