@@ -573,6 +573,7 @@ async function addProfilePhoto(file){
  if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024||file.size===0){
   toast('Nur JPG, PNG oder WebP bis 5 MB.');return
  }
+ if(!confirm('Nur Fotos vollständig bekleideter Personen sind erlaubt. Keine Bikini-, Badebekleidungs-, Unterwäsche- oder Nacktbilder. Das Foto bleibt bis zur Moderation privat. Entspricht dein Foto dieser Regel?'))return;
  const path=myId()+'/'+crypto.randomUUID()+'.'+(file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg');
  try{
   const {data:existing,error:readError}=await api.from('profile_photos').select('id').eq('user_id',myId());
@@ -584,7 +585,7 @@ async function addProfilePhoto(file){
    user_id:myId(),storage_path:path,is_primary:(existing||[]).length===0,is_public:false
   });
   if(error){await api.storage.from('profile-photos').remove([path]);throw error}
-  toast('Profilfoto gespeichert – zunächst privat.');
+  toast('Foto gespeichert – es bleibt bis zur Prüfung privat.');
   await renderProfilePhotos()
  }catch(err){toast('Foto konnte nicht gespeichert werden: '+(err.message||String(err)))}
 }
@@ -601,7 +602,7 @@ async function makePrimaryProfilePhoto(row){
 async function renderProfilePhotos(){
  const zone=$('myPhotos');if(!zone)return;
  if(!state.user){zone.innerHTML='<p class="quiet">Für Profilfotos bitte anmelden.</p>';return}
- const {data,error}=await api.from('profile_photos').select('id,storage_path,is_primary,is_public,created_at')
+ const {data,error}=await api.from('profile_photos').select('id,storage_path,is_primary,is_public,moderation_status,created_at')
   .eq('user_id',myId()).order('created_at',{ascending:false});
  if(error){zone.innerHTML='<p class="status-banner">'+esc(error.message)+'</p>';return}
  const rows=await Promise.all((data||[]).map(async row=>{
@@ -620,14 +621,14 @@ async function renderProfilePhotos(){
   html+='<div class="photo-tile"><div class="photo-thumb">'+
    (row.url?'<img loading="lazy" src="'+esc(row.url)+'" alt="Profilfoto">':'<span>Bild nicht verfügbar</span>')+
    (row.is_primary?'<span class="profile-primary-label">★ Hauptbild</span>':'')+
-   '</div><div class="photo-controls">'+
+   '</div><p class="photo-review-status">'+(row.moderation_status==='approved'?'✓ Geprüft':row.moderation_status==='rejected'?'✕ Abgelehnt':'⏳ In Prüfung')+'</p><div class="photo-controls">'+
    '<button class="small-btn" data-main-photo="'+esc(row.id)+'" '+(row.is_primary?'disabled':'')+'>★ Hauptbild</button>'+
-   '<button class="small-btn '+(row.is_public?'photo-public':'')+'" data-public-photo="'+esc(row.id)+'">'+(row.is_public?'🌐 Sichtbar':'🔒 Privat')+'</button>'+
+   '<button class="small-btn '+(row.is_public?'photo-public':'')+'" data-public-photo="'+esc(row.id)+'" '+(row.moderation_status!=='approved'?'disabled':'')+'>'+(row.is_public?'🌐 Sichtbar':row.moderation_status==='approved'?'🔒 Privat':'⏳ Noch nicht geprüft')+'</button>'+
    '<button class="small-btn" data-delete-photo="'+esc(row.id)+'">Entfernen</button></div></div>'
  }
  html+='</div><label class="outline-btn photo-upload-btn">＋ Foto hinzufügen'+
   '<input id="photoPicker" type="file" accept="image/jpeg,image/png,image/webp" hidden '+(rows.length>=6?'disabled':'')+'></label>'+
-  '<p class="quiet">Bis zu 6 Fotos (je 5 MB). Neue Fotos sind privat. Nur ausdrücklich freigegebene Bilder sind für andere angemeldete Mitglieder sichtbar.</p>';
+  '<p class="quiet">Nur vollständig bekleidete Personen. Keine Bikini-, Badebekleidungs-, Unterwäsche- oder Nacktbilder. Neue Fotos sind privat und werden erst nach Moderation und deiner Freigabe sichtbar. Maximal 6 Fotos bis 5 MB.</p>';
  zone.innerHTML=html;
  const picker=$('photoPicker');if(picker)picker.onchange=e=>{const file=e.target.files?.[0];if(file)addProfilePhoto(file)};
  zone.querySelectorAll('[data-main-photo]').forEach(btn=>btn.onclick=()=>makePrimaryProfilePhoto(rows.find(x=>x.id===btn.dataset.mainPhoto)));
