@@ -199,11 +199,17 @@ function renderViennaHighlights(){
  el.innerHTML=list.map(p=>{
   const liked=isBookmarked('place',p.id);
   const mapUrl='https://www.openstreetmap.org/search?query='+encodeURIComponent(p.name+', '+p.addr);
-  return '<article class="featured-card"><div class="featured-image '+(p.category==='thermen'?'therme':'restaurant')+'"></div>'+
-   '<div class="featured-text"><h4>'+esc(p.name)+'</h4><p>'+esc(p.short)+'</p><p>'+esc(p.addr)+'</p>'+
-   '<div class="featured-actions"><button type="button" class="small-btn heart-btn '+(liked?'is-liked':'')+
-   '" aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" aria-pressed="'+liked+'" data-featured-like="'+esc(p.id)+'">'+(liked?'♥ Gemerkt':'♡ Merken')+'</button>'+
-   '<a class="small-btn" href="'+esc(mapUrl)+'" target="_blank" rel="noopener noreferrer">⌖ Karte</a></div></div></article>';
+  const label=p.category==='thermen'?'♨ Thermen':'🍽 Restaurants';
+  return '<article class="featured-card" title="'+esc(p.name+' · '+p.addr)+'">'+
+    '<div class="featured-image '+(p.category==='thermen'?'therme':'restaurant')+'"></div>'+
+    '<a class="featured-map small-btn" href="'+esc(mapUrl)+'" title="Adresse in Karte: '+esc(p.addr)+'" '+
+    'target="_blank" rel="noopener noreferrer">⌖ Karte</a>'+
+    '<div class="featured-text"><h4>'+esc(p.name)+'</h4><p>'+esc(p.short)+'</p>'+
+    '<span class="featured-cat '+(p.category==='thermen'?'thermal':'')+'">'+esc(label)+'</span></div>'+
+    '<button type="button" class="featured-heart heart-btn '+(liked?'is-liked':'')+'" '+
+    'aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" '+
+    'title="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" '+
+    'aria-pressed="'+liked+'" data-featured-like="'+esc(p.id)+'">'+(liked?'♥':'♡')+'</button></article>';
  }).join('');
  el.querySelectorAll('[data-featured-like]').forEach(b=>b.onclick=()=>{
   const p=rausoViennaPicks.find(v=>v.id===b.dataset.featuredLike);
@@ -224,7 +230,7 @@ function renderViennaHighlights(){
 
 function renderPlaces(){const filtered=state.places.filter(x=>`${x.name} ${x.region} ${x.type}`.toLowerCase().includes(state.query.toLowerCase()) && (!state.priceFilter || (state.priceFilter==='free'&&x.fee==='no') || (state.priceFilter==='priced'&&x.fee==='yes')));
  $('placeStatus').textContent=state.placesLive?`${filtered.length} Orte · OpenStreetMap · Angaben ohne Gewähr`:state.placeLoading?'Orte werden geladen …':`Keine Live-Daten geladen. Tippe auf „Orte laden“.`;
- $('places').innerHTML=filtered.length?filtered.slice(0,100).map(p=>`<article class="place-card"><div class="place-cover ${esc(state.cat)}"><span class="place-cover-label">Symbolbild</span></div><div class="place-header"><div class="place-emoji">${cats[state.cat].icon}</div><div class="place-body"><h3>${esc(p.name)}</h3><p class="place-sub">${esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')}</p><p class="place-sub">${esc(p.type||'Freizeitziel')} · ${p.fee==='no'?'Kostenlos laut OSM':p.fee==='yes'?'Kostenpflichtig laut OSM':'Preis nicht angegeben'}</p></div></div><div class="place-actions"><button class="small-btn heart-btn ${isBookmarked('place',p.id)?'is-liked':''}" data-favorite="${esc(p.id)}" aria-pressed="${isBookmarked('place',p.id)}">${isBookmarked('place',p.id)?'♥ Gemerkt':'♡ Merken'}</button><button class="small-btn" data-osm="${esc(p.id)}">↗ Karte</button><button class="small-btn" data-with="${esc(p.id)}">＋ Hier treffen</button></div></article>`).join(''):'<div class="empty"><strong>Keine Orte gefunden</strong>Versuche eine andere Kategorie oder einen größeren Umkreis.</div>';
+ $('places').innerHTML=filtered.length?filtered.slice(0,100).map(p=>`<article class="place-card"><div class="place-cover ${esc(state.cat)}"><span class="place-cover-label">Symbolbild</span></div><div class="place-header"><div class="place-emoji">${cats[state.cat].icon}</div><div class="place-body"><h3>${esc(p.name)}</h3><p class="place-sub">${esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')}</p><p class="place-sub">${esc(p.type||'Freizeitziel')} · ${p.fee==='no'?'Kostenlos laut OSM':p.fee==='yes'?'Kostenpflichtig laut OSM':'Preis nicht angegeben'}</p></div></div><div class="place-actions"><button class="small-btn heart-btn ${isBookmarked('place',p.id)?'is-liked':''}" data-favorite="${esc(p.id)}" aria-label="${isBookmarked('place',p.id)?'Aus Merkliste entfernen':'In Merkliste speichern'}" title="${isBookmarked('place',p.id)?'Aus Merkliste entfernen':'In Merkliste speichern'}" aria-pressed="${isBookmarked('place',p.id)}">${isBookmarked('place',p.id)?'♥':'♡'}</button><button class="small-btn" data-osm="${esc(p.id)}">↗ Karte</button><button class="small-btn" data-with="${esc(p.id)}" aria-label="Treffen bei diesem Ort erstellen">＋ Treffen</button></div></article>`).join(''):'<div class="empty"><strong>Keine Orte gefunden</strong>Versuche eine andere Kategorie oder einen größeren Umkreis.</div>';
  $('places').querySelectorAll('[data-favorite]').forEach(b=>b.onclick=()=>{const p=state.places.find(x=>String(x.id)===b.dataset.favorite);if(p)toggleBookmark('place',p)});
  $('places').querySelectorAll('[data-osm]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.osm);if(p)window.location.assign(osmLink(p))});
  $('places').querySelectorAll('[data-with]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.with);createOuting(p)});renderViennaHighlights();updateBookmarkShortcut();if(state.mapOpen)drawMap(filtered);
