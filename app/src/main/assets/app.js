@@ -1208,7 +1208,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.9.0';
+const APP_VERSION='2.9.1';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
@@ -1294,6 +1294,15 @@ document.addEventListener('DOMContentLoaded',()=>{
  setAppearance();init();addNavMore();addOfflineState();addReadiness();
  if($('headerFriends'))$('headerFriends').onclick=openFriendsPanel;
  if($('headerMessages'))$('headerMessages').onclick=()=>switchTab('messages');
+ document.querySelectorAll('[data-rauso-hero-go]').forEach(button=>{
+  button.onclick=()=>{
+   const destination=button.dataset.rausoHeroGo;
+   if(destination==='friends'){openFriendsPanel();return}
+   if(destination==='events'){switchTab('events');return}
+   switchTab('discover');
+   document.querySelector('.discover-heading')?.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+ });
 
  if($('heroGoing'))$('heroGoing').onclick=()=>{state.meetFilter='going';switchTab('myMeetings')};
  if($('heroOrganized'))$('heroOrganized').onclick=()=>{state.meetFilter='organized';switchTab('myMeetings')};
