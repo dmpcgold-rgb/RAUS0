@@ -935,3 +935,33 @@ html[data-rauso-theme="orange"] .photo-public[disabled]{opacity:.5;cursor:not-al
  html[data-rauso-theme="orange"] .face-profile-btn{padding:5px 7px}
  html[data-rauso-theme="orange"] .topbar-profile-label{font-size:10px}
 }
+
+
+/* RAUSO 2.6.1: system navigation-bar safe area (3-button and gesture modes).
+   Native activity supplies '--rauso-native-bottom'; standalone web uses env(). */
+:root { --rauso-native-bottom: 0px; }
+.bottomnav,
+html[data-rauso-theme="orange"] .bottomnav,
+html[data-rauso-theme="carbon"] .bottomnav,
+html[data-rauso-theme="purple"] .bottomnav,
+html[data-rauso-theme="rainbow"] .bottomnav,
+html[data-rauso-theme="light"] .bottomnav {
+ bottom: max(var(--rauso-native-bottom, 0px), env(safe-area-inset-bottom, 0px)) !important;
+ padding-bottom: 10px !important;
+ min-height: 72px;
+}
+#app main {
+ padding-bottom: calc(110px + max(var(--rauso-native-bottom, 0px), env(safe-area-inset-bottom, 0px))) !important;
+}
+#modalRoot .modal-overlay {
+ bottom: max(var(--rauso-native-bottom, 0px), env(safe-area-inset-bottom, 0px));
+}
+#modalRoot .modal {
+ max-height: calc(90dvh - max(var(--rauso-native-bottom, 0px), env(safe-area-inset-bottom, 0px)));
+}
+#toast {
+ bottom: calc(89px + max(var(--rauso-native-bottom, 0px), env(safe-area-inset-bottom, 0px))) !important;
+}
+@media (max-width: 400px) {
+ .bottomnav .nav-item { min-height: 56px; }
+}
