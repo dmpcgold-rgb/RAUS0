@@ -92,7 +92,7 @@ function switchTab(tab, recordHistory=true){
    rausoTabHistory.push(state.tab);
    if(rausoTabHistory.length>60)rausoTabHistory.shift();
  }
- state.tab=tab;if($('headerMessages'))$('headerMessages').classList.toggle('active',tab==='messages');document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();if($('headerBookmarks'))$('headerBookmarks').classList.toggle('active',tab==='collections')}
+ state.tab=tab;if($('headerMessages'))$('headerMessages').classList.toggle('active',tab==='messages');document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();}
 function rausoBack(){
  const dialog=document.querySelector('#modalRoot .modal-overlay');
  if(dialog){
@@ -202,8 +202,10 @@ async function loadBookmarks(){
 }
 function updateBookmarkShortcut(){
  const total=Object.keys(state.bookmarks||{}).length;
- const button=$('heroBookmarks');
- if(button){button.textContent='★ Merkliste ('+total+')';button.setAttribute('aria-label','Merkliste mit '+total+' Einträgen öffnen');}
+ const badge=$('bookmarkNavCount');
+ if(badge){badge.textContent=total>99?'99+':String(total);badge.classList.toggle('hidden',total===0)}
+ const button=document.querySelector('.bottomnav .nav-item[data-tab="collections"]');
+ if(button)button.setAttribute('aria-label','Merkliste mit '+total+' Einträgen öffnen');
 }
 
 function rausoOpenBookmark(item){
@@ -529,14 +531,10 @@ function rausoReadColor(message){return message.read_at?'read':'unread'}
 function rausoReadLabel(message){return message.read_at?'✓ Gelesen':'✓ Ungelesen'}
 function rausoUpdateMessageBadge(){
  const num=rausoInboxMessages.filter(m=>m.recipient_id===myId()&&!m.read_at).length;
- const badge=$('messageUnreadBadge');
- if(badge){badge.textContent=num>99?'99+':String(num);badge.classList.toggle('hidden',num===0)}
  const headerBadge=$('headerMessageCount');
  if(headerBadge){headerBadge.textContent=num>99?'99+':String(num);headerBadge.classList.toggle('hidden',num===0)}
  const headerButton=$('headerMessages');
  if(headerButton)headerButton.setAttribute('aria-label',num?num+' ungelesene Nachrichten öffnen':'Nachrichten öffnen');
- const button=document.querySelector('.nav-item[data-tab="messages"]');
- if(button)button.setAttribute('aria-label',num?num+' ungelesene Nachrichten':'Nachrichten');
 }
 function rausoMessageDate(value){
  try{const d=new Date(value);return d.toDateString()===new Date().toDateString()?rausoMessageTime(value):d.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit'})}catch{return ''}
@@ -749,8 +747,8 @@ function renderDating(){const opt=profile().dating_enabled===true;const main=$('
 function likedPerson(id){return demoMode()?!!state.demoDatingLikes[id]:state.datingLikes.some(l=>l.liker_id===myId()&&l.liked_id===id)}
 async function dateLike(id){if(!mustVerify('Dating-Likes'))return;if(demoMode()){state.demoDatingLikes[id]=state.demoDatingLikes[id]?'':(id==='demo-u2'?'match':'liked');persist();renderDating();renderMessages();toast(state.demoDatingLikes[id]==='match'?'Demo-Match! Du kannst den Test-Chat ausprobieren.':'Demo-Like gespeichert.');return}try{const req=likedPerson(id)?api.from('dating_likes').delete().eq('liker_id',myId()).eq('liked_id',id):api.from('dating_likes').insert({liker_id:myId(),liked_id:id});const {error}=await req;if(error)throw error;await loadSocial();toast(mutualLike(id)?'Match! Ihr könnt jetzt schreiben.':'Like gespeichert.')}catch(err){toast(err.message)}}
 async function setDating(enabled,adult){if(enabled&&!mustVerify('Dating aktivieren'))return;try{if(demoMode()){state.demoProfile={...state.demoProfile,dating_enabled:enabled,adult_confirmed:adult};persist()}else{const {error}=await api.from('rauso_profiles').update({dating_enabled:enabled,adult_confirmed:enabled?adult:profile().adult_confirmed}).eq('id',myId());if(error)throw error;state.profile={...state.profile,dating_enabled:enabled,adult_confirmed:adult}}renderDating();renderProfile();toast(enabled?'Dating aktiviert.':'Dating deaktiviert.')}catch(err){toast(err.message)}}
-function renderProfile(){const p=profile();$('profileContent').innerHTML=`<div class="surface stack"><div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')} · ${demoMode()?'Demo-Vorschau':'RAUSO-Mitglied'}</small></div></div><form id="profileForm" class="stack"><div class="input-group"><label for="myName">Anzeigename</label><input id="myName" minlength="2" maxlength="40" required  value="${esc(p.display_name)}"></div><div class="input-group"><label for="myCity">Wohnort / Region</label><input id="myCity" maxlength="80" value="${esc(p.city)}"></div><div class="input-group"><label for="myBio">Über mich</label><textarea id="myBio" maxlength="500">${esc(p.bio)}</textarea></div><button class="primary-btn" type="submit">Profil speichern</button></form></div><div class="section-head"><h2>Mein Konto</h2></div><div class="surface stack"><button id="reportSafety" class="safety-action">🛡 Sicherheitsfall melden · Notfall 133 / 112</button><p class="quiet">${demoMode()?'Alle sozialen Daten und Musterprofile sind lokale Vorschau.':'Angemeldet als '+esc(state.user?.email||'')}</p>${demoMode()?'<button class="outline-btn" id="loginBtn">Konto erstellen / Anmelden</button>':'<button class="outline-btn" id="logoutBtn">Abmelden</button>'}<button class="outline-btn" id="mySaved">♡ Gemerkte Orte (${state.favorites.size})</button><button class="outline-btn" id="deleteLocal">Lokale Testdaten löschen</button><p class="quiet">RAUSO v${APP_VERSION} · Ortsdaten © OpenStreetMap</p></div>`;
- $('profileForm').onsubmit=saveProfile;$('reportSafety').onclick=()=>openSafetyReport(null);$('mySaved').onclick=()=>{switchTab('collections')};$('deleteLocal').onclick=()=>{if(confirm('Testdaten auf diesem Gerät wirklich löschen?')){localStorage.removeItem(STORE);location.reload()}};if(demoMode())$('loginBtn').onclick=showAuth;else $('logoutBtn').onclick=logout;injectProfileExtras()}
+function renderProfile(){const p=profile();$('profileContent').innerHTML=`<div class="surface stack"><div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')} · ${demoMode()?'Demo-Vorschau':'RAUSO-Mitglied'}</small></div></div><form id="profileForm" class="stack"><div class="input-group"><label for="myName">Anzeigename</label><input id="myName" minlength="2" maxlength="40" required  value="${esc(p.display_name)}"></div><div class="input-group"><label for="myCity">Wohnort / Region</label><input id="myCity" maxlength="80" value="${esc(p.city)}"></div><div class="input-group"><label for="myBio">Über mich</label><textarea id="myBio" maxlength="500">${esc(p.bio)}</textarea></div><button class="primary-btn" type="submit">Profil speichern</button></form></div><div class="section-head"><h2>Mein Konto</h2></div><div class="surface stack"><button id="reportSafety" class="safety-action">🛡 Sicherheitsfall melden · Notfall 133 / 112</button><p class="quiet">${demoMode()?'Alle sozialen Daten und Musterprofile sind lokale Vorschau.':'Angemeldet als '+esc(state.user?.email||'')}</p>${demoMode()?'<button class="outline-btn" id="loginBtn">Konto erstellen / Anmelden</button>':'<button class="outline-btn" id="logoutBtn">Abmelden</button>'}<button class="outline-btn" id="deleteLocal">Lokale Testdaten löschen</button><p class="quiet">RAUSO v${APP_VERSION} · Ortsdaten © OpenStreetMap</p></div>`;
+ $('profileForm').onsubmit=saveProfile;$('reportSafety').onclick=()=>openSafetyReport(null);$('deleteLocal').onclick=()=>{if(confirm('Testdaten auf diesem Gerät wirklich löschen?')){localStorage.removeItem(STORE);location.reload()}};if(demoMode())$('loginBtn').onclick=showAuth;else $('logoutBtn').onclick=logout;injectProfileExtras()}
 async function saveProfile(e){e.preventDefault();const name=$('myName').value.trim();if(!rausoValidDisplayName(name)){toast('Bitte einen eigenen Profilnamen mit 2–40 Zeichen eingeben.');$('myName').focus();return}const data={display_name:name,city:$('myCity').value.trim(),bio:$('myBio').value.trim()};try{if(demoMode()){state.demoProfile={...state.demoProfile,...data};persist()}else{const {error}=await api.from('rauso_profiles').upsert({id:myId(),...data});if(error)throw error;state.profile={...state.profile,...data}}toast('Profil gespeichert.');updateHeaderAccount();renderProfile();injectProfileExtras();addMoreLink();addReadiness()}catch(err){toast(err.message)}}
 function rausoValidDisplayName(value){
  const name=String(value||'').trim();
@@ -1064,7 +1062,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.7.3';
+const APP_VERSION='2.7.4';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
@@ -1103,9 +1101,9 @@ function addReadiness(){const el=$('profileContent');if(!el||$('readinessBtn'))r
 function addMoreLink(){
  const el=$('profileContent');if(!el||$('rausoMore'))return;
  const b=document.createElement('button');b.id='rausoMore';b.className='outline-btn';
- b.textContent='☰ Weitere Bereiche: Merkliste, Programm & Hinweise';
+ b.textContent='☰ Weitere Bereiche: Programm & Hinweise';
  b.onclick=()=> {
-  const pages=[['🧡 Meine Merkliste','collections'],['🎟 Programm','shows'],
+  const pages=[['🎟 Programm','shows'],
    ['🔔 Benachrichtigungen','notifications'],['♡ Dating (ab 18)','dating'],
    ['⚙ Verwaltung (Berechtigung erforderlich)','admin']];
   modal('Weitere Bereiche','<div class="stack">'+pages.map(([label,tab])=>
@@ -1116,7 +1114,7 @@ function addMoreLink(){
 }
 function addNavMore(){
  const nav=document.querySelector('.bottomnav');if(!nav)return;
- for(const tab of ['collections','shows','notifications'])nav.querySelector('[data-tab="'+tab+'"]')?.classList.add('hidden');
+ for(const tab of ['shows','notifications'])nav.querySelector('[data-tab="'+tab+'"]')?.classList.add('hidden');
  nav.querySelector('#rausoMore')?.remove();
  addMoreLink()
 }
@@ -1149,7 +1147,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  setAppearance();init();addNavMore();addOfflineState();addReadiness();
  if($('headerFriends'))$('headerFriends').onclick=openFriendsPanel;
  if($('headerMessages'))$('headerMessages').onclick=()=>switchTab('messages');
- if($('heroBookmarks'))$('heroBookmarks').onclick=()=>switchTab('collections');
+
  if($('heroGoing'))$('heroGoing').onclick=()=>{state.meetFilter='going';switchTab('myMeetings')};
  if($('heroOrganized'))$('heroOrganized').onclick=()=>{state.meetFilter='organized';switchTab('myMeetings')};
  if(uiPref.start!=='discover')switchTab(uiPref.start)

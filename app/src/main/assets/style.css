@@ -183,7 +183,7 @@ html[data-rauso-theme="orange"] .hero,html[data-rauso-theme="carbon"] .hero{back
 html[data-rauso-theme="rainbow"] .hero{background:linear-gradient(135deg,#21123d,#0e2232)!important}
 html[data-rauso-theme="orange"] .topbar,html[data-rauso-theme="orange"] .bottomnav,html[data-rauso-theme="carbon"] .topbar,html[data-rauso-theme="carbon"] .bottomnav{background:#111113!important}
 html[data-rauso-theme="light"] body:before,html[data-rauso-theme="light"] body:after,html[data-rauso-theme="orange"] body:before,html[data-rauso-theme="orange"] body:after,html[data-rauso-theme="rainbow"] body:before,html[data-rauso-theme="rainbow"] body:after,html[data-rauso-theme="carbon"] body:before,html[data-rauso-theme="carbon"] body:after{display:none!important}
-.bottomnav .nav-item[data-tab="collections"],.bottomnav .nav-item[data-tab="shows"],.bottomnav .nav-item[data-tab="notifications"],.bottomnav .nav-item[data-tab="dating"]{display:none!important}
+.bottomnav .nav-item[data-tab="shows"],.bottomnav .nav-item[data-tab="notifications"],.bottomnav .nav-item[data-tab="dating"]{display:none!important}
 .bottomnav #rausoMore{display:grid!important} .bottomnav .nav-item{min-width:0} .screen{padding-bottom:90px}
 .theme-line{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--line);border-radius:13px;cursor:pointer}
 .theme-swatch{width:42px;height:31px;border-radius:8px;flex:none}
@@ -1193,3 +1193,8 @@ html[data-rauso-theme] .place-card .place-actions .rauso-venue-site{font-size:10
 html[data-rauso-theme="light"] #categoryStrip .chip{color:white!important}
 @media(max-width:360px){html[data-rauso-theme] #categoryStrip .chip{flex-basis:91px!important;width:91px!important;min-width:91px!important;max-width:91px!important;height:91px!important;min-height:91px!important;font-size:9px!important}#categoryStrip.category-strip{gap:10px}}
 @media(prefers-reduced-motion:reduce){html[data-rauso-theme] #categoryStrip .chip.selected{transform:none}}
+
+/* RAUSO 2.7.4: one permanent Merkliste tab in the former Nachrichten position. */
+html[data-rauso-theme] .bottomnav .nav-item[data-tab="collections"]{display:grid!important;min-width:0!important}
+html[data-rauso-theme] .bottomnav .nav-item[data-tab="collections"].active{border:1px solid var(--rauso-glow);color:var(--rauso-glow)}
+html[data-rauso-theme] .hero-benefits{grid-template-columns:repeat(2,minmax(0,1fr))!important}
