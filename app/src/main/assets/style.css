@@ -219,3 +219,25 @@ html[data-rauso-theme="light"] body:before,html[data-rauso-theme="light"] body:a
  font-weight:800
 }
 @media (prefers-reduced-motion:reduce){.join-btn{transition:none}}
+
+/* RAUSO 2.3 – Orange heart and private profile gallery */
+.heart-btn{transition:background .17s ease,box-shadow .17s ease,color .17s ease;border-radius:12px}
+.heart-btn.is-liked,.heart-btn[aria-pressed="true"]{
+ background:linear-gradient(130deg,#ffbc50,#ff790e)!important;
+ color:#351900!important;border:2px solid #ffe3a4!important;font-weight:800!important;
+ box-shadow:0 0 0 2px rgba(255,154,52,.15),0 0 19px rgba(255,137,20,.59)!important;
+}
+.heart-btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.bookmark-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0}
+.bookmark-row>div{min-width:0;flex:1}
+.photo-upload-btn{display:inline-flex!important;align-items:center;justify-content:center;min-height:44px;cursor:pointer}
+.photo-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.photo-thumb{position:relative;width:100%;aspect-ratio:1;background:var(--panel2);border-radius:17px;overflow:hidden}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.profile-primary-label{position:absolute;left:7px;bottom:7px;background:rgba(23,15,37,.88);color:white;border-radius:12px;padding:5px 8px;font-size:11px}
+.photo-controls{display:grid;gap:6px;padding-top:7px}
+.photo-controls .small-btn{font-size:12px;min-height:34px}
+.photo-public{background:linear-gradient(110deg,#feab44,#ff8412)!important;color:#2d1600!important}
+.profile-avatar-photo img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+@media(min-width:700px){.photo-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.heart-btn{transition:none}}
