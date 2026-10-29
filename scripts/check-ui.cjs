@@ -59,3 +59,10 @@ assert.match(css,/#headerMessages>span:first-child/);
 assert.match(js,/\$\('priceFilter'\)\.onchange=/);
 assert.match(js,/\$\('heroCreate'\)\.onclick=/);
 assert.match(js,/function rausoMatchesPrice/);
+
+/* Screenshot reference UI: icons and shortcuts are implemented and functional. */
+for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-nav-dating-heart','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
+ assert(html.includes(cls),'Screenshot UI missing class '+cls);
+}
+assert(js.includes("data-rauso-hero-go")&&js.includes("destination==='friends'"),'Hero shortcuts must navigate');
+assert(css.includes('RAUSO 2.9.1 — screenshot-inspired Carbon/Orange'),'Reference layout CSS missing');
