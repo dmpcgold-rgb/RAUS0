@@ -192,3 +192,30 @@ html[data-rauso-theme="light"] body:before,html[data-rauso-theme="light"] body:a
 
 /* Dezent platzierte Versionsanzeige in den Einstellungen */
 .rauso-version-info { font-size: 10px; line-height: 1.3; opacity: .52; text-align: center; margin: 6px 0 0; letter-spacing: .02em; user-select: text; }
+
+
+/* RAUSO 2.3 – klarer, persistenter orangefarbener "Bin dabei"-Zustand. */
+.join-btn{transition:background .18s ease,box-shadow .18s ease,border-color .18s ease,transform .18s ease;white-space:nowrap}
+.join-btn.is-joined,.join-btn[aria-pressed="true"]{
+ background:linear-gradient(135deg,#ffad37,#fa6b0c)!important;
+ color:#301600!important;
+ border:2px solid #ffd27c!important;
+ font-weight:800!important;
+ box-shadow:0 0 0 2px rgba(255,152,45,.17),0 0 22px rgba(255,133,20,.65),inset 0 1px 0 rgba(255,255,255,.4)!important;
+ text-shadow:none;
+}
+.join-btn.is-joined:focus-visible,.join-btn[aria-pressed="true"]:focus-visible{
+ outline:3px solid #fff!important;outline-offset:3px
+}
+.event-card.event-joined{
+ border-color:rgba(255,158,45,.76)!important;
+ box-shadow:0 0 0 1px rgba(255,149,24,.25),0 10px 34px rgba(255,130,20,.13)
+}
+.meeting-status.going{
+ background:linear-gradient(125deg,#ffbd58,#fa790e)!important;
+ color:#351805!important;
+ border-color:#ffd38a!important;
+ box-shadow:0 0 13px rgba(255,140,20,.35);
+ font-weight:800
+}
+@media (prefers-reduced-motion:reduce){.join-btn{transition:none}}
