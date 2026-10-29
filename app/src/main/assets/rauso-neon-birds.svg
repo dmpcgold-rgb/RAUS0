@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 240" fill="none" aria-label="Neonvögel">
+<defs><linearGradient id="bird" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ff6b13"/><stop offset=".37" stop-color="#ffea66"/><stop offset=".68" stop-color="#fd38cf"/><stop offset="1" stop-color="#20f9e1"/></linearGradient>
+<linearGradient id="bird2"><stop stop-color="#ffde44"/><stop offset=".5" stop-color="#ff39ca"/><stop offset="1" stop-color="#34f8f1"/></linearGradient>
+<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="8"/></filter>
+<filter id="light" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.1"/></filter></defs>
+<g stroke-linecap="round" stroke-linejoin="round">
+<path d="M47 40 C93 20 134 25 168 73 C193 42 220 41 247 62 C276 84 316 97 343 95 C298 107 260 111 233 128 C218 145 197 160 180 167 C192 143 198 118 204 108 C183 94 160 83 143 70 C119 83 110 104 94 118 C102 95 104 66 47 40Z" stroke="#ff8221" stroke-width="10" filter="url(#glow)" opacity=".9"/>
+<path d="M47 40 C93 20 134 25 168 73 C193 42 220 41 247 62 C276 84 316 97 343 95 C298 107 260 111 233 128 C218 145 197 160 180 167 C192 143 198 118 204 108 C183 94 160 83 143 70 C119 83 110 104 94 118 C102 95 104 66 47 40Z" stroke="url(#bird)" stroke-width="3"/>
+<path d="M245 158 C268 151 297 149 324 174 C338 155 358 153 370 161 C390 175 407 187 443 187 C417 195 396 201 379 209 C374 222 359 227 346 231 C350 217 356 205 357 197 C330 193 313 189 303 183 C293 195 288 210 280 216 C284 200 286 185 245 158Z" stroke="#fc57cf" stroke-width="10" filter="url(#glow)" opacity=".8"/>
+<path d="M245 158 C268 151 297 149 324 174 C338 155 358 153 370 161 C390 175 407 187 443 187 C417 195 396 201 379 209 C374 222 359 227 346 231 C350 217 356 205 357 197 C330 193 313 189 303 183 C293 195 288 210 280 216 C284 200 286 185 245 158Z" stroke="url(#bird2)" stroke-width="3"/>
+</g></svg>
