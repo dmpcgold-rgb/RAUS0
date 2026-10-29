@@ -28,6 +28,14 @@ public class MainActivity extends Activity {
  private static final int REQUEST_LOCATION_COARSE=4103;
  private GeolocationPermissions.Callback pendingGeoCallback;
  private String pendingGeoOrigin;
+ private int systemBottomPx=0;
+ private void applyWebSafeArea(){
+  if(web==null)return;
+  final float density=getResources().getDisplayMetrics().density;
+  final int bottomCss=Math.max(0,Math.round(systemBottomPx/Math.max(density,0.1f)));
+  web.evaluateJavascript("document.documentElement.style.setProperty('--rauso-native-bottom','"+bottomCss+"px')",null);
+ }
+
  private void navigateBackWithinRauso(){
   if(web==null)return;
   String current=web.getUrl();
@@ -69,8 +77,14 @@ public class MainActivity extends Activity {
     top=insets.getSystemWindowInsetTop();
     bottom=insets.getSystemWindowInsetBottom();
    }
-   if(web.getPaddingTop()!=top || web.getPaddingBottom()!=bottom){
-    web.setPadding(0,top,0,bottom);
+   // Keep clock and battery clear with native top padding. Bottom space must be
+   // applied to the CSS fixed navigation, which WebView padding alone does not move.
+   if(web.getPaddingTop()!=top || web.getPaddingBottom()!=0){
+    web.setPadding(0,top,0,0);
+   }
+   if(systemBottomPx!=bottom){
+    systemBottomPx=bottom;
+    applyWebSafeArea();
    }
    return insets;
   });
@@ -81,6 +95,10 @@ public class MainActivity extends Activity {
   settings.setAllowFileAccess(false);
   settings.setAllowContentAccess(true); // Required for user-selected content:// photo URIs.
   web.setWebViewClient(new WebViewClient(){
+   @Override public void onPageFinished(WebView view,String url){
+    super.onPageFinished(view,url);
+    applyWebSafeArea();
+   }
    @Override public android.webkit.WebResourceResponse shouldInterceptRequest(WebView view,android.webkit.WebResourceRequest request){
     return loader.shouldInterceptRequest(request.getUrl());
    }
@@ -114,6 +132,7 @@ public class MainActivity extends Activity {
    }
   });
   setContentView(web);
+  web.requestApplyInsets();
   if(Build.VERSION.SDK_INT>=33){
    androidBackCallback=()->navigateBackWithinRauso();
    getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
