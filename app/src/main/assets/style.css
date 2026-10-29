@@ -183,8 +183,8 @@ html[data-rauso-theme="orange"] .hero,html[data-rauso-theme="carbon"] .hero{back
 html[data-rauso-theme="rainbow"] .hero{background:linear-gradient(135deg,#21123d,#0e2232)!important}
 html[data-rauso-theme="orange"] .topbar,html[data-rauso-theme="orange"] .bottomnav,html[data-rauso-theme="carbon"] .topbar,html[data-rauso-theme="carbon"] .bottomnav{background:#111113!important}
 html[data-rauso-theme="light"] body:before,html[data-rauso-theme="light"] body:after,html[data-rauso-theme="orange"] body:before,html[data-rauso-theme="orange"] body:after,html[data-rauso-theme="rainbow"] body:before,html[data-rauso-theme="rainbow"] body:after,html[data-rauso-theme="carbon"] body:before,html[data-rauso-theme="carbon"] body:after{display:none!important}
-.bottomnav .nav-item:not([data-tab="discover"]):not([data-tab="events"]):not([data-tab="messages"]):not([data-tab="profile"]){display:none!important}
-#rausoMore{display:grid!important} .bottomnav .nav-item{min-width:0} .screen{padding-bottom:90px}
+.bottomnav .nav-item[data-tab="collections"],.bottomnav .nav-item[data-tab="shows"],.bottomnav .nav-item[data-tab="notifications"],.bottomnav .nav-item[data-tab="dating"]{display:none!important}
+.bottomnav #rausoMore{display:grid!important} .bottomnav .nav-item{min-width:0} .screen{padding-bottom:90px}
 .theme-line{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--line);border-radius:13px;cursor:pointer}
 .theme-swatch{width:42px;height:31px;border-radius:8px;flex:none}
 .swatch-light{background:#f7f5e9;border:2px solid #328253}.swatch-purple{background:linear-gradient(135deg,#230747,#dc67f1)}.swatch-orange{background:linear-gradient(135deg,#080808,#ff851b)}.swatch-rainbow{background:linear-gradient(110deg,#37e8fd,#a366ff,#f974aa,#fcbf46)}.swatch-carbon{background:repeating-linear-gradient(135deg,#111 0,#111 3px,#343434 3px,#343434 6px)}
