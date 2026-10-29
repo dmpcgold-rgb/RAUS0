@@ -1638,7 +1638,7 @@ html[data-rauso-theme="orange"] .discover-heading p{font-size:10.5px!important}
 html[data-rauso-theme="orange"] .section-birds{width:47px;min-width:0;height:34px;flex:0 1 47px}
 html[data-rauso-theme="orange"] .discover-heading .outline-btn{padding:5px 8px!important;min-width:58px;min-height:34px;font-size:11px}
 html[data-rauso-theme="orange"] .filters{
- display:grid!important;grid-template-columns:1fr 1fr!important;
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
  gap:8px!important;margin-bottom:8px!important;
 }
 html[data-rauso-theme="orange"] .filters>.field:first-child,
