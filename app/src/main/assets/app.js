@@ -265,12 +265,33 @@ function renderViennaHighlights(){
  }
 }
 
-function renderPlaces(){const filtered=state.places.filter(x=>`${x.name} ${x.region} ${x.type}`.toLowerCase().includes(state.query.toLowerCase()) && (!state.priceFilter || (state.priceFilter==='free'&&x.fee==='no') || (state.priceFilter==='priced'&&x.fee==='yes')));
- $('placeStatus').textContent=state.placesLive?`${filtered.length} Orte · OpenStreetMap · Angaben ohne Gewähr`:state.placeLoading?'Orte werden geladen …':`Keine Live-Daten geladen. Tippe auf „Orte laden“.`;
- $('places').innerHTML=filtered.length?filtered.slice(0,100).map(p=>`<article class="place-card"><div class="place-cover ${esc(state.cat)}"><span class="place-cover-label">Symbolbild</span></div><div class="place-header"><div class="place-emoji">${cats[state.cat].icon}</div><div class="place-body"><h3>${esc(p.name)}</h3><p class="place-sub">${esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')}</p><p class="place-sub">${esc(p.type||'Freizeitziel')} · ${p.fee==='no'?'Kostenlos laut OSM':p.fee==='yes'?'Kostenpflichtig laut OSM':'Preis nicht angegeben'}</p></div></div><div class="place-actions"><button class="small-btn heart-btn ${isBookmarked('place',p.id)?'is-liked':''}" data-favorite="${esc(p.id)}" aria-label="${isBookmarked('place',p.id)?'Aus Merkliste entfernen':'In Merkliste speichern'}" title="${isBookmarked('place',p.id)?'Aus Merkliste entfernen':'In Merkliste speichern'}" aria-pressed="${isBookmarked('place',p.id)}">${isBookmarked('place',p.id)?'♥':'♡'}</button><button class="small-btn" data-osm="${esc(p.id)}">↗ Karte</button><button class="small-btn" data-with="${esc(p.id)}" aria-label="Treffen bei diesem Ort erstellen">＋ Treffen</button></div></article>`).join(''):'<div class="empty"><strong>Keine Orte gefunden</strong>Versuche eine andere Kategorie oder einen größeren Umkreis.</div>';
- $('places').querySelectorAll('[data-favorite]').forEach(b=>b.onclick=()=>{const p=state.places.find(x=>String(x.id)===b.dataset.favorite);if(p)toggleBookmark('place',p)});
- $('places').querySelectorAll('[data-osm]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.osm);if(p)window.location.assign(osmLink(p))});
- $('places').querySelectorAll('[data-with]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.with);createOuting(p)});renderViennaHighlights();updateBookmarkShortcut();if(state.mapOpen)drawMap(filtered);
+function renderPlaces(){
+ const filtered=state.places.filter(p=>(p.name+' '+p.region+' '+p.type).toLowerCase().includes(state.query.toLowerCase()));
+ $('placeStatus').textContent=state.placesLive?filtered.length+' Orte · OpenStreetMap · Angaben ohne Gewähr':state.placeLoading?'Orte werden geladen …':'Keine Live-Daten geladen. Tippe auf „Orte laden“.';
+ $('places').innerHTML=filtered.length?filtered.slice(0,100).map(p=>{
+  const liked=isBookmarked('place',p.id);
+  return '<article class="place-card rauso-place-link" data-place-open="'+esc(p.id)+'" tabindex="0" role="link" title="'+esc(p.name)+' – '+(p.website?'Website':'Karte')+' öffnen">'+
+   '<div class="place-cover '+esc(state.cat)+'"><span class="place-cover-label">Symbolbild</span></div>'+
+   '<span class="venue-distance osm-distance" title="'+esc(rausoDistanceOrigin())+'">📍 '+esc(rausoDistanceLabel(p))+'</span>'+
+   '<div class="place-header"><div class="place-emoji">'+cats[state.cat].icon+'</div><div class="place-body">'+
+   '<h3>'+esc(p.name)+'</h3><p class="place-sub">'+esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')+'</p></div></div>'+
+   '<div class="place-actions"><button class="small-btn" data-with="'+esc(p.id)+'" aria-label="Treffen an diesem Ort erstellen">＋ Treffen</button>'+
+   '<button class="small-btn heart-btn star-btn '+(liked?'is-liked':'')+'" data-favorite="'+esc(p.id)+'" aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" aria-pressed="'+liked+'">'+(liked?'★':'☆')+'</button></div></article>';
+ }).join(''):'<div class="empty"><strong>Keine Orte gefunden</strong>Versuche eine andere Kategorie oder einen größeren Umkreis.</div>';
+ $('places').querySelectorAll('[data-place-open]').forEach(card=>{
+  const p=state.places.find(item=>String(item.id)===card.dataset.placeOpen);
+  if(!p)return;
+  card.onclick=e=>{if(!e.target.closest('button'))rausoOpenPlace(p)};
+  card.onkeydown=e=>{if(e.target===card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();rausoOpenPlace(p)}};
+ });
+ $('places').querySelectorAll('[data-favorite]').forEach(b=>b.onclick=e=>{
+  e.stopPropagation();const p=state.places.find(item=>String(item.id)===b.dataset.favorite);
+  if(p)toggleBookmark('place',p)
+ });
+ $('places').querySelectorAll('[data-with]').forEach(b=>b.onclick=e=>{
+  e.stopPropagation();const p=state.places.find(item=>String(item.id)===b.dataset.with);if(p)createOuting(p)
+ });
+ renderViennaHighlights();updateBookmarkShortcut();if(state.mapOpen)drawMap(filtered);
 }
 function drawMap(places){if(!window.L){$('mapView').innerHTML='<div class="empty">Karte benötigt eine Internetverbindung.</div>';return}const center=regionData[state.region];if(!state.map){state.map=L.map('map',{zoomControl:false}).setView(center,11);L.control.zoom({position:'bottomright'}).addTo(state.map);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap-Mitwirkende',maxZoom:18}).addTo(state.map);state.markers=L.layerGroup().addTo(state.map)}state.map.setView(center,11);state.markers.clearLayers();places.slice(0,100).forEach(p=>L.marker([p.lat,p.lon]).bindPopup(`<strong>${esc(p.name)}</strong>`).addTo(state.markers));setTimeout(()=>state.map.invalidateSize(),150)}
 function showMap(){state.mapOpen=!state.mapOpen;$('mapView').classList.toggle('hidden',!state.mapOpen);$('mapToggle').textContent=state.mapOpen?'≡ Liste':'◫ Karte';if(state.mapOpen)drawMap(state.places)}
