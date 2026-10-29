@@ -8,6 +8,9 @@ import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
 import android.content.ActivityNotFoundException;
+import android.os.Build;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 import android.webkit.WebSettings;
 import androidx.webkit.WebViewAssetLoader;
 
@@ -16,6 +19,21 @@ public class MainActivity extends Activity {
  private WebView web;
  private ValueCallback<Uri[]> photoPickerCallback;
  private static final int REQUEST_PHOTO_PICKER = 4102;
+ private OnBackInvokedCallback androidBackCallback;
+ private void navigateBackWithinRauso(){
+  if(web==null)return;
+  String current=web.getUrl();
+  if(current==null){web.loadUrl(HOME);return;}
+  if(!current.startsWith("https://appassets.androidplatform.net/assets/")){
+   if(web.canGoBack())web.goBack();else web.loadUrl(HOME);
+   return;
+  }
+  // Dialog > previous RAUSO tab > top of Discover. No Activity.finish().
+  web.evaluateJavascript("window.RAUSO_BACK ? window.RAUSO_BACK() : false",null);
+ }
+ @SuppressWarnings("deprecation")
+ @Override public void onBackPressed(){navigateBackWithinRauso();}
+
  private String authTarget(Intent intent) {
   Uri uri=intent==null?null:intent.getData();
   if(uri==null||!"rauso".equals(uri.getScheme())||!"auth".equals(uri.getHost())||!"/callback".equals(uri.getPath()))return HOME;
@@ -58,6 +76,11 @@ public class MainActivity extends Activity {
    }
   });
   setContentView(web);
+  if(Build.VERSION.SDK_INT>=33){
+   androidBackCallback=()->navigateBackWithinRauso();
+   getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+     OnBackInvokedDispatcher.PRIORITY_DEFAULT,androidBackCallback);
+  }
   String target=authTarget(getIntent());
   if(state!=null && HOME.equals(target))web.restoreState(state);else web.loadUrl(target);
  }
@@ -75,5 +98,11 @@ public class MainActivity extends Activity {
   if(web!=null && intent.getData()!=null)web.loadUrl(authTarget(intent));
  }
  @Override protected void onSaveInstanceState(Bundle out){if(web!=null)web.saveState(out);super.onSaveInstanceState(out);}
- @Override protected void onDestroy(){if(photoPickerCallback!=null){photoPickerCallback.onReceiveValue(null);photoPickerCallback=null;}if(web!=null)web.destroy();super.onDestroy();}
+ @Override protected void onDestroy(){
+  if(Build.VERSION.SDK_INT>=33 && androidBackCallback!=null)
+   getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(androidBackCallback);
+  if(photoPickerCallback!=null){photoPickerCallback.onReceiveValue(null);photoPickerCallback=null;}
+  if(web!=null)web.destroy();
+  super.onDestroy();
+ }
 }
