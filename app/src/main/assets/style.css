@@ -461,3 +461,6 @@ html[data-rauso-theme="orange"] .join-btn.is-joined{filter:drop-shadow(0 0 3px #
  html[data-rauso-theme="orange"] .section-birds{display:none}
  html[data-rauso-theme="orange"] .nav-item small{font-size:8px}
 }
+
+/* Override legacy purple price control in the fixed screenshot palette. */
+html[data-rauso-theme="orange"] #priceFilter,html[data-rauso-theme="orange"] #regionSelect,html[data-rauso-theme="orange"] #radiusSelect{background:transparent!important;color:#fffaf5!important;border:0!important;box-shadow:none!important;outline:0!important}
