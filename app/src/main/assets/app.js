@@ -144,12 +144,41 @@ function renderCollections(){
   const item=state.bookmarks[b.dataset.bookmarkRemove];if(item)toggleBookmark(item.type,item)
  });
 }
+
+/* Curated, individually checked real addresses. Illustration imagery is not a venue photo. */
+const rausoViennaPicks = [
+ {id:'verified-vienna-figlmueller-wollzeile',name:'Figlmüller Wollzeile',addr:'Wollzeile 5, 1010 Wien',region:'Wien',type:'Wiener Schnitzel',category:'restaurants',short:'Wiener Küche · Innenstadt',source:'https://www.figlmueller.at/lage-kontakt/'},
+ {id:'verified-vienna-plachutta-wollzeile',name:'Plachutta Wollzeile',addr:'Wollzeile 38, 1010 Wien',region:'Wien',type:'Wiener Küche',category:'restaurants',short:'Tafelspitz & Wiener Klassiker',source:'https://www.plachutta.at/restaurants/'},
+ {id:'verified-vienna-lugeck',name:'Lugeck',addr:'Lugeck 4, 1010 Wien',region:'Wien',type:'Wiener Küche',category:'restaurants',short:'Wirtshaus · Wiener Innenstadt',source:'https://www.lugeck.com/'},
+ {id:'verified-vienna-melker-stiftskeller',name:'Melker Stiftskeller',addr:'Schottengasse 3, 1010 Wien',region:'Wien',type:'Österreichisches Gasthaus',category:'restaurants',short:'Historischer Keller · Wirtshaus',source:'https://www.openstreetmap.org/search?query=Melker%20Stiftskeller%20Wien'},
+ {id:'verified-vienna-therme-wien',name:'Therme Wien',addr:'Kurbadstraße 14, 1100 Wien',region:'Wien · Oberlaa',type:'Therme & Wellness',category:'thermen',short:'Thermalbaden · U1 Oberlaa',source:'https://thermewien.at/kontakt/'},
+ {id:'verified-baden-roemertherme',name:'Römertherme Baden',addr:'Brusattiplatz 4, 2500 Baden',region:'Baden bei Wien',type:'Therme & Wellness',category:'thermen',short:'Thermalwasser · Baden bei Wien',source:'https://www.openstreetmap.org/search?query=R%C3%B6mertherme%20Baden'}
+];
+function renderViennaHighlights(){
+ const el=$('viennaHighlights');if(!el)return;
+ const cat=state.cat;
+ const list=[...rausoViennaPicks].sort((a,b)=>(a.category===cat?0:1)-(b.category===cat?0:1));
+ el.innerHTML=list.map(p=>{
+  const liked=isBookmarked('place',p.id);
+  const mapUrl='https://www.openstreetmap.org/search?query='+encodeURIComponent(p.name+', '+p.addr);
+  return '<article class="featured-card"><div class="featured-image '+(p.category==='thermen'?'therme':'restaurant')+'"></div>'+
+   '<div class="featured-text"><h4>'+esc(p.name)+'</h4><p>'+esc(p.short)+'</p><p>'+esc(p.addr)+'</p>'+
+   '<div class="featured-actions"><button type="button" class="small-btn heart-btn '+(liked?'is-liked':'')+
+   '" aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" aria-pressed="'+liked+'" data-featured-like="'+esc(p.id)+'">'+(liked?'♥ Gemerkt':'♡ Merken')+'</button>'+
+   '<a class="small-btn" href="'+esc(mapUrl)+'" target="_blank" rel="noopener noreferrer">⌖ Karte</a></div></div></article>';
+ }).join('');
+ el.querySelectorAll('[data-featured-like]').forEach(b=>b.onclick=()=>{
+  const p=rausoViennaPicks.find(v=>v.id===b.dataset.featuredLike);
+  if(p)toggleBookmark('place',p)
+ });
+}
+
 function renderPlaces(){const filtered=state.places.filter(x=>`${x.name} ${x.region} ${x.type}`.toLowerCase().includes(state.query.toLowerCase()) && (!state.priceFilter || (state.priceFilter==='free'&&x.fee==='no') || (state.priceFilter==='priced'&&x.fee==='yes')));
  $('placeStatus').textContent=state.placesLive?`${filtered.length} Orte · OpenStreetMap · Angaben ohne Gewähr`:state.placeLoading?'Orte werden geladen …':`Keine Live-Daten geladen. Tippe auf „Orte laden“.`;
  $('places').innerHTML=filtered.length?filtered.slice(0,100).map(p=>`<article class="place-card"><div class="place-header"><div class="place-emoji">${cats[state.cat].icon}</div><div class="place-body"><h3>${esc(p.name)}</h3><p class="place-sub">${esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')}</p><p class="place-sub">${esc(p.type||'Freizeitziel')} · ${p.fee==='no'?'Kostenlos laut OSM':p.fee==='yes'?'Kostenpflichtig laut OSM':'Preis nicht angegeben'}</p></div></div><div class="place-actions"><button class="small-btn heart-btn ${isBookmarked('place',p.id)?'is-liked':''}" data-favorite="${esc(p.id)}" aria-pressed="${isBookmarked('place',p.id)}">${isBookmarked('place',p.id)?'♥ Gemerkt':'♡ Merken'}</button><button class="small-btn" data-osm="${esc(p.id)}">↗ Karte</button><button class="small-btn" data-with="${esc(p.id)}">＋ Hier treffen</button></div></article>`).join(''):'<div class="empty"><strong>Keine Orte gefunden</strong>Versuche eine andere Kategorie oder einen größeren Umkreis.</div>';
  $('places').querySelectorAll('[data-favorite]').forEach(b=>b.onclick=()=>{const p=state.places.find(x=>String(x.id)===b.dataset.favorite);if(p)toggleBookmark('place',p)});
  $('places').querySelectorAll('[data-osm]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.osm);if(p)window.location.assign(osmLink(p))});
- $('places').querySelectorAll('[data-with]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.with);createOuting(p)});if(state.mapOpen)drawMap(filtered);
+ $('places').querySelectorAll('[data-with]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.with);createOuting(p)});renderViennaHighlights();if(state.mapOpen)drawMap(filtered);
 }
 function drawMap(places){if(!window.L){$('mapView').innerHTML='<div class="empty">Karte benötigt eine Internetverbindung.</div>';return}const center=regionData[state.region];if(!state.map){state.map=L.map('map',{zoomControl:false}).setView(center,11);L.control.zoom({position:'bottomright'}).addTo(state.map);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap-Mitwirkende',maxZoom:18}).addTo(state.map);state.markers=L.layerGroup().addTo(state.map)}state.map.setView(center,11);state.markers.clearLayers();places.slice(0,100).forEach(p=>L.marker([p.lat,p.lon]).bindPopup(`<strong>${esc(p.name)}</strong>`).addTo(state.markers));setTimeout(()=>state.map.invalidateSize(),150)}
 function showMap(){state.mapOpen=!state.mapOpen;$('mapView').classList.toggle('hidden',!state.mapOpen);$('mapToggle').textContent=state.mapOpen?'≡ Liste':'◫ Karte';if(state.mapOpen)drawMap(state.places)}
@@ -395,13 +424,13 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.3.0';
+const APP_VERSION='2.4.0';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
-const uiPref={theme:'light',autoTheme:false,start:'discover',...readPref()};
+const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
 const saveUi=()=>{try{localStorage.setItem(UI_PREF,JSON.stringify(uiPref))}catch(e){console.warn('Settings storage unavailable',e)}};
 const themes={light:'Hell · Natürlich',purple:'Lila Neon',orange:'Orange Neon',rainbow:'Regenbogen',carbon:'Carbon Schwarz'};
-function setAppearance(){let t=uiPref.theme;if(uiPref.autoTheme){const hour=new Date().getHours();t=hour>=19||hour<7?'carbon':'light'}document.documentElement.dataset.rausoTheme=t;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t==='light'?'#f8f7f3':'#111019')}
+function setAppearance(){let t=uiPref.theme;if(uiPref.autoTheme){const hour=new Date().getHours();t=hour>=19||hour<7?'carbon':'light'}document.documentElement.dataset.rausoTheme=t;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t==='light'?'#f8f7f3':'#09090a');const lab=$('themePickerLabel');if(lab)lab.textContent=themes[t]||'Neon Orange'}
 function openAppearance(){
 const options=Object.entries(themes).map(([v,t])=>`<label class="theme-line"><input type="radio" name="theme" value="${v}" ${uiPref.theme===v?'checked':''}><span class="theme-swatch swatch-${v}"></span><strong>${t}</strong></label>`).join('');
 modal('Design & Startseite',`<div class="stack"><p class="quiet">Wähle ein Design. Die Einstellung wird auf diesem Gerät gespeichert.</p>${options}<label class="theme-line"><input type="checkbox" id="uiAuto" ${uiPref.autoTheme?'checked':''}><strong>Automatisch: tagsüber hell, abends dunkel</strong></label><label class="input-group"><span>Startbereich</span><select id="uiStart"><option value="discover">Entdecken</option><option value="events">Treffen</option><option value="family">Familie</option><option value="myMeetings">Meine Treffen</option></select></label><button class="primary-btn" id="uiSave">Speichern</button><div class="rauso-version-info">RAUSO v${APP_VERSION}</div></div>`);
@@ -440,5 +469,13 @@ async function updateOnlinePresence(){
 }
 setInterval(()=>{if(!document.hidden)updateOnlinePresence()},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateOnlinePresence()});
-document.addEventListener('DOMContentLoaded',()=>{setAppearance();init();addNavMore();addOfflineState();addAppearanceLink();addReadiness();if(uiPref.start!=='discover')switchTab(uiPref.start)});
+document.addEventListener('DOMContentLoaded',()=>{
+ if(!uiPref.referenceDesign24){uiPref.theme='orange';uiPref.autoTheme=false;uiPref.referenceDesign24=true;saveUi()}
+ setAppearance();init();addNavMore();addOfflineState();addAppearanceLink();addReadiness();
+ if($('themePicker'))$('themePicker').onclick=openAppearance;
+ if($('heroDiscover'))$('heroDiscover').onclick=()=>document.querySelector('.discover-heading')?.scrollIntoView({behavior:'smooth'});
+ if($('heroConnect'))$('heroConnect').onclick=()=>switchTab('events');
+ if($('heroExperience'))$('heroExperience').onclick=()=>switchTab('myMeetings');
+ if(uiPref.start!=='discover')switchTab(uiPref.start)
+});
 })();
