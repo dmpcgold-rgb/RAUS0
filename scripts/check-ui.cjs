@@ -32,8 +32,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='2\.9\.0'/);
-assert.match(gradle,/versionCode 41; versionName '2\.9\.0'/);
+assert.match(js,/const APP_VERSION='2\.9\.1'/);
+assert.match(gradle,/versionCode 42; versionName '2\.9\.1'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
