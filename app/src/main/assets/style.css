@@ -1198,3 +1198,39 @@ html[data-rauso-theme="light"] #categoryStrip .chip{color:white!important}
 html[data-rauso-theme] .bottomnav .nav-item[data-tab="collections"]{display:grid!important;min-width:0!important}
 html[data-rauso-theme] .bottomnav .nav-item[data-tab="collections"].active{border:1px solid var(--rauso-glow);color:var(--rauso-glow)}
 html[data-rauso-theme] .hero-benefits{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+
+
+/* RAUSO 2.8.0 — accessible create and share controls. */
+html[data-rauso-theme] #heroPlan.rauso-header-create{
+ flex:0 0 34px!important;display:grid!important;place-items:center!important;
+ width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;
+ padding:0!important;margin:0!important;border:3px solid var(--rauso-glow,#ff8c28)!important;
+ border-radius:50%!important;background:rgba(9,10,14,.92)!important;color:#fff!important;
+ font-size:26px!important;font-weight:800!important;line-height:1!important;
+ box-shadow:0 0 11px var(--rauso-glow,#ff8c28)!important;cursor:pointer!important;
+}
+html[data-rauso-theme] #heroPlan.rauso-header-create:focus-visible{
+ outline:3px solid #fff!important;outline-offset:2px!important;
+}
+.rauso-share-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.rauso-share-options>.quiet{grid-column:1/-1;margin:0 0 3px}
+.rauso-share-options .outline-btn{min-width:0;font-size:13px;white-space:normal}
+.rauso-share-options #shareCopy{grid-column:1/-1}
+.rauso-bookmark-detail .primary-btn,.rauso-bookmark-detail .outline-btn{width:100%}
+#categoryStrip .chip{text-transform:uppercase}
+@media(max-width:390px){
+ html[data-rauso-theme] #heroPlan.rauso-header-create{
+  flex-basis:30px!important;width:30px!important;min-width:30px!important;
+  height:30px!important;min-height:30px!important;font-size:22px!important;
+ }
+ .compact-topbar{gap:3px!important;padding-left:5px!important;padding-right:5px!important}
+ #headerFriends{min-width:0!important}
+ #headerMessages{min-width:0!important}
+ .header-message-text{font-size:9px!important}
+}
+@media(max-width:340px){
+ #headerMessages .header-message-text{display:none!important}
+ #accountShortcutLabel{display:none!important}
+ .rauso-share-options{grid-template-columns:1fr}
+ .rauso-share-options>.quiet,.rauso-share-options #shareCopy{grid-column:auto}
+}
