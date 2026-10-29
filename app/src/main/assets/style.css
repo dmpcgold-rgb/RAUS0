@@ -1324,3 +1324,10 @@ html[data-rauso-theme] .meeting-filter.active[data-meeting-filter="going"]{backg
  html[data-rauso-theme] #categoryStrip.category-strip{gap:8px!important}
  html[data-rauso-theme] #heroPlan.rauso-header-create{flex-basis:28px!important;width:28px!important;min-width:28px!important;height:28px!important;min-height:28px!important}
 }
+
+/* RAUSO 2.8.2: restrained age-range controls and clear participation requirements. */
+.rauso-age-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:5px}
+.rauso-age-fields label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600}
+.rauso-age-fields input{box-sizing:border-box;min-width:0;width:100%;font-size:14px}
+.rauso-age-note{font-size:12px;font-weight:650;opacity:.92;margin:8px 0 5px}
+@media(max-width:330px){.rauso-age-fields{grid-template-columns:1fr}}
