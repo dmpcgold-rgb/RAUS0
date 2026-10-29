@@ -9,6 +9,11 @@ import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
 import android.content.ActivityNotFoundException;
 import android.os.Build;
+import android.graphics.Color;
+import android.view.WindowInsets;
+import android.webkit.GeolocationPermissions;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.window.OnBackInvokedCallback;
 import android.window.OnBackInvokedDispatcher;
 import android.webkit.WebSettings;
@@ -20,6 +25,9 @@ public class MainActivity extends Activity {
  private ValueCallback<Uri[]> photoPickerCallback;
  private static final int REQUEST_PHOTO_PICKER = 4102;
  private OnBackInvokedCallback androidBackCallback;
+ private static final int REQUEST_LOCATION_COARSE=4103;
+ private GeolocationPermissions.Callback pendingGeoCallback;
+ private String pendingGeoOrigin;
  private void navigateBackWithinRauso(){
   if(web==null)return;
   String current=web.getUrl();
@@ -48,7 +56,26 @@ public class MainActivity extends Activity {
   super.onCreate(state);
   WebViewAssetLoader loader=new WebViewAssetLoader.Builder().addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
   web=new WebView(this);
+  // Keep app content below Android's status bar (clock, signal and battery).
+  web.setBackgroundColor(Color.rgb(9,9,10));
+  web.setOnApplyWindowInsetsListener((view,insets)->{
+   final int top;
+   final int bottom;
+   if(Build.VERSION.SDK_INT>=30){
+    android.graphics.Insets safe=insets.getInsets(
+      WindowInsets.Type.statusBars()|WindowInsets.Type.navigationBars());
+    top=safe.top;bottom=safe.bottom;
+   }else{
+    top=insets.getSystemWindowInsetTop();
+    bottom=insets.getSystemWindowInsetBottom();
+   }
+   if(web.getPaddingTop()!=top || web.getPaddingBottom()!=bottom){
+    web.setPadding(0,top,0,bottom);
+   }
+   return insets;
+  });
   WebSettings settings=web.getSettings();
+  settings.setGeolocationEnabled(true);
   settings.setJavaScriptEnabled(true);
   settings.setDomStorageEnabled(true);
   settings.setAllowFileAccess(false);
@@ -59,6 +86,17 @@ public class MainActivity extends Activity {
    }
   });
   web.setWebChromeClient(new WebChromeClient(){
+   @Override public void onGeolocationPermissionsShowPrompt(String origin,GeolocationPermissions.Callback callback){
+    if(origin==null || !origin.startsWith("https://appassets.androidplatform.net")){
+     callback.invoke(origin,false,false);return;
+    }
+    if(Build.VERSION.SDK_INT<23 || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED){
+     callback.invoke(origin,true,false);return;
+    }
+    pendingGeoOrigin=origin;pendingGeoCallback=callback;
+    requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_LOCATION_COARSE);
+   }
+
    @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> uploadCallback,
        WebChromeClient.FileChooserParams params){
     if(photoPickerCallback!=null)photoPickerCallback.onReceiveValue(null);
@@ -84,6 +122,14 @@ public class MainActivity extends Activity {
   String target=authTarget(getIntent());
   if(state!=null && HOME.equals(target))web.restoreState(state);else web.loadUrl(target);
  }
+ @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] grantResults){
+  super.onRequestPermissionsResult(requestCode,permissions,grantResults);
+  if(requestCode==REQUEST_LOCATION_COARSE && pendingGeoCallback!=null){
+   pendingGeoCallback.invoke(pendingGeoOrigin,
+     grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED,false);
+   pendingGeoCallback=null;pendingGeoOrigin=null;
+  }
+ }
  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
   super.onActivityResult(requestCode,resultCode,data);
   if(requestCode==REQUEST_PHOTO_PICKER){
@@ -101,6 +147,7 @@ public class MainActivity extends Activity {
  @Override protected void onDestroy(){
   if(Build.VERSION.SDK_INT>=33 && androidBackCallback!=null)
    getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(androidBackCallback);
+  if(pendingGeoCallback!=null){pendingGeoCallback.invoke(pendingGeoOrigin,false,false);pendingGeoCallback=null;}
   if(photoPickerCallback!=null){photoPickerCallback.onReceiveValue(null);photoPickerCallback=null;}
   if(web!=null)web.destroy();
   super.onDestroy();
