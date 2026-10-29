@@ -90,7 +90,7 @@ function switchTab(tab, recordHistory=true){
    rausoTabHistory.push(state.tab);
    if(rausoTabHistory.length>60)rausoTabHistory.shift();
  }
- state.tab=tab;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages')renderMessages();if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications()}
+ state.tab=tab;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages')renderMessages();if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();if($('headerBookmarks'))$('headerBookmarks').classList.toggle('active',tab==='collections')}
 function rausoBack(){
  const dialog=document.querySelector('#modalRoot .modal-overlay');
  if(dialog){closeModal();return true;}
@@ -189,10 +189,13 @@ const rausoViennaPicks = [
  {id:'verified-vienna-therme-wien',name:'Therme Wien',addr:'Kurbadstraße 14, 1100 Wien',region:'Wien · Oberlaa',type:'Therme & Wellness',category:'thermen',short:'Thermalbaden · U1 Oberlaa',source:'https://thermewien.at/kontakt/'},
  {id:'verified-baden-roemertherme',name:'Römertherme Baden',addr:'Brusattiplatz 4, 2500 Baden',region:'Baden bei Wien',type:'Therme & Wellness',category:'thermen',short:'Thermalwasser · Baden bei Wien',source:'https://www.openstreetmap.org/search?query=R%C3%B6mertherme%20Baden'}
 ];
+let rausoShowAllHighlights=false;
 function renderViennaHighlights(){
  const el=$('viennaHighlights');if(!el)return;
  const cat=state.cat;
- const list=[...rausoViennaPicks].sort((a,b)=>(a.category===cat?0:1)-(b.category===cat?0:1));
+ const sorted=[...rausoViennaPicks].sort((a,b)=>(a.category===cat?0:1)-(b.category===cat?0:1));
+ const first=sorted[0], different=sorted.find(x=>x.category!==first?.category);
+ const list=rausoShowAllHighlights?sorted:[first,different].filter(Boolean);
  el.innerHTML=list.map(p=>{
   const liked=isBookmarked('place',p.id);
   const mapUrl='https://www.openstreetmap.org/search?query='+encodeURIComponent(p.name+', '+p.addr);
@@ -206,6 +209,17 @@ function renderViennaHighlights(){
   const p=rausoViennaPicks.find(v=>v.id===b.dataset.featuredLike);
   if(p)toggleBookmark('place',p)
  });
+ const section=$('featuredSection');
+ let toggle=$('moreViennaHighlights');
+ if(section && !toggle){
+  toggle=document.createElement('button');toggle.id='moreViennaHighlights';
+  toggle.type='button';toggle.className='outline-btn more-highlights';
+  section.insertBefore(toggle,section.querySelector('.featured-note'));
+ }
+ if(toggle){
+  toggle.textContent=rausoShowAllHighlights?'Weniger Orte anzeigen':'Weitere 4 Orte anzeigen';
+  toggle.onclick=()=>{rausoShowAllHighlights=!rausoShowAllHighlights;renderViennaHighlights()};
+ }
 }
 
 function renderPlaces(){const filtered=state.places.filter(x=>`${x.name} ${x.region} ${x.type}`.toLowerCase().includes(state.query.toLowerCase()) && (!state.priceFilter || (state.priceFilter==='free'&&x.fee==='no') || (state.priceFilter==='priced'&&x.fee==='yes')));
