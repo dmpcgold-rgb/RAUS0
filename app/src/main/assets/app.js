@@ -67,7 +67,13 @@ const persist = () => {try{localStorage.setItem(STORE,JSON.stringify({favorites:
 const myId = () => state.user?.id||'local-user';
 const profile = () => state.profile||state.demoProfile;
 const demoMode = () => !state.user;
-function mustVerify(action){if(state.user)return true;showAuth();toast('Für '+action+' ist eine Anmeldung erforderlich.');return false}
+function mustVerify(action){
+ if(state.user){
+  if(state.profile&&rausoValidDisplayName(state.profile.display_name))return true;
+  rausoCompleteProfile();toast('Bitte zuerst einen eigenen Profilnamen eingeben.');return false
+ }
+ showAuth();toast('Für '+action+' ist eine Anmeldung erforderlich.');return false
+}
 function checkVehicle(){return mustVerify('Mitfahrgelegenheiten')}
 const transportMeta={auto:['🚗','Auto'],ubahn:['🚇','U-Bahn'],bus:['🚌','Bus'],zug:['🚆','Zug'],zufuss:['🚶','Zu Fuß']};
 const meetingMeta={kochen:'🍳 Kochen',basteln:'🎨 Basteln',backen:'🧁 Backen',spiele:'🎲 Spieleabend',kaffee:'☕ Kaffee & Plaudern',sonstiges:'🏡 Sonstiges'};
