@@ -32,8 +32,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='2\.9\.1'/);
-assert.match(gradle,/versionCode 42; versionName '2\.9\.1'/);
+assert.match(js,/const APP_VERSION='2\.9\.2'/);
+assert.match(gradle,/versionCode 43; versionName '2\.9\.2'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -65,4 +65,10 @@ for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-n
  assert(html.includes(cls),'Screenshot UI missing class '+cls);
 }
 assert(js.includes("data-rauso-hero-go")&&js.includes("destination==='friends'"),'Hero shortcuts must navigate');
-assert(css.includes('RAUSO 2.9.1 — screenshot-inspired Carbon/Orange'),'Reference layout CSS missing');
+assert(css.includes('RAUSO 2.9.2 — screenshot-inspired Carbon/Orange'),'Reference layout CSS missing');
+
+/* RAUSO 2.9.2: approval actions and pending state. */
+assert(html.includes('data-meeting-filter="pending"'));
+assert(js.includes('id="oRequiresApproval"')&&js.includes('requires_approval:val.requires_approval'));
+assert(js.includes('function rausoReviewRequest(')&&js.includes('function rausoPendingReviewHtml(')&&js.includes("actual==='pending'"));
+assert(css.includes('.rauso-approval-panel')&&css.includes('.rauso-approve'));
