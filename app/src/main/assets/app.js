@@ -82,7 +82,35 @@ let toastTimeout;
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>$('toast').classList.remove('visible'),3700)}
 function closeModal(){$('modalRoot').innerHTML=''}
 function modal(title,body){$('modalRoot').innerHTML=`<div class="modal-overlay" id="modalOverlay"><div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="modal-header"><h2>${esc(title)}</h2><button id="closeModal" aria-label="Schließen">×</button></div>${body}</div></div>`;$('closeModal').onclick=closeModal;$('modalOverlay').onclick=e=>{if(e.target.id==='modalOverlay')closeModal()}}
-function switchTab(tab){if(!['discover','family','profile','shows','events','myMeetings','collections'].includes(tab) && !hasBackend){showAuth();return;}state.tab=tab;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages')renderMessages();if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications()}
+/* Keep real in-app navigation history; Android Back must never close RAUSO. */
+const rausoTabHistory=[];
+function switchTab(tab, recordHistory=true){
+ if(!['discover','family','profile','shows','events','myMeetings','collections'].includes(tab) && !hasBackend){showAuth();return;}
+ if(recordHistory && state.tab && tab!==state.tab){
+   rausoTabHistory.push(state.tab);
+   if(rausoTabHistory.length>60)rausoTabHistory.shift();
+ }
+ state.tab=tab;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages')renderMessages();if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications()}
+function rausoBack(){
+ const dialog=document.querySelector('#modalRoot .modal-overlay');
+ if(dialog){closeModal();return true;}
+ if(state.tab==='discover' && state.mapOpen){showMap();return true;}
+ if(rausoTabHistory.length){
+    const prior=rausoTabHistory.pop();
+    switchTab(prior,false);
+    return true;
+ }
+ if(state.tab!=='discover'){switchTab('discover',false);return true;}
+ if(window.scrollY>40){window.scrollTo({top:0,behavior:'smooth'});return true;}
+ toast('Du bist auf der Startseite.');
+ return true;
+}
+window.RAUSO_BACK=rausoBack;
+window.addEventListener('keydown',event=>{
+ if(event.key==='Escape'||event.key==='BrowserBack'){
+   event.preventDefault();rausoBack();
+ }
+});
 function fmt(d){return new Intl.DateTimeFormat('de-AT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Vienna'}).format(new Date(d))}
 function km(a,b,c,d){const R=6371,rad=x=>x*Math.PI/180,dy=rad(c-a),dx=rad(d-b),v=Math.sin(dy/2)**2+Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dx/2)**2;return R*2*Math.atan2(Math.sqrt(v),Math.sqrt(1-v))}
 function osmLink(p){return `https://www.openstreetmap.org/?mlat=${encodeURIComponent(p.lat)}&mlon=${encodeURIComponent(p.lon)}#map=16/${encodeURIComponent(p.lat)}/${encodeURIComponent(p.lon)}`}
@@ -109,7 +137,7 @@ async function toggleBookmark(type,item){
   state.bookmarks[key]={type,id:String(item.id),title:String(item.title||item.name||'Unternehmung'),subtitle:String(item.place_name||item.region||''),lat:item.lat,lon:item.lon};
   if(type==='place')state.favorites.add(item.id)
  }
- persist();
+ persist();updateBookmarkShortcut();
  if(!demoMode()){
   const request=existing
    ? api.from('rauso_bookmarks').delete().eq('user_id',myId()).eq('item_type',type).eq('item_id',String(item.id))
@@ -132,7 +160,14 @@ async function loadBookmarks(){
  state.favorites=new Set((data||[]).filter(x=>x.item_type==='place').map(x=>x.item_id));
  persist();renderPlaces();renderEvents();renderCollections();
 }
-function renderCollections(){
+function updateBookmarkShortcut(){
+ const total=Object.keys(state.bookmarks||{}).length;
+ const button=$('wishlistShortcut');
+ if(button){button.textContent='♥ Merkliste ('+total+')';button.setAttribute('aria-label',total+' gemerkte Orte und Treffen öffnen');}
+ const header=$('headerBookmarks');
+ if(header){header.setAttribute('aria-label','Merkliste öffnen, '+total+' Einträge');header.title='Merkliste: '+total;}
+}
+function renderCollections(){updateBookmarkShortcut();
  const el=$('collectionsContent');if(!el)return;
  const items=Object.values(state.bookmarks);
  el.innerHTML='<div class="surface stack"><h2>🧡 Meine Merkliste ('+items.length+')</h2>'+
@@ -178,7 +213,7 @@ function renderPlaces(){const filtered=state.places.filter(x=>`${x.name} ${x.reg
  $('places').innerHTML=filtered.length?filtered.slice(0,100).map(p=>`<article class="place-card"><div class="place-cover ${esc(state.cat)}"><span class="place-cover-label">Symbolbild</span></div><div class="place-header"><div class="place-emoji">${cats[state.cat].icon}</div><div class="place-body"><h3>${esc(p.name)}</h3><p class="place-sub">${esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')}</p><p class="place-sub">${esc(p.type||'Freizeitziel')} · ${p.fee==='no'?'Kostenlos laut OSM':p.fee==='yes'?'Kostenpflichtig laut OSM':'Preis nicht angegeben'}</p></div></div><div class="place-actions"><button class="small-btn heart-btn ${isBookmarked('place',p.id)?'is-liked':''}" data-favorite="${esc(p.id)}" aria-pressed="${isBookmarked('place',p.id)}">${isBookmarked('place',p.id)?'♥ Gemerkt':'♡ Merken'}</button><button class="small-btn" data-osm="${esc(p.id)}">↗ Karte</button><button class="small-btn" data-with="${esc(p.id)}">＋ Hier treffen</button></div></article>`).join(''):'<div class="empty"><strong>Keine Orte gefunden</strong>Versuche eine andere Kategorie oder einen größeren Umkreis.</div>';
  $('places').querySelectorAll('[data-favorite]').forEach(b=>b.onclick=()=>{const p=state.places.find(x=>String(x.id)===b.dataset.favorite);if(p)toggleBookmark('place',p)});
  $('places').querySelectorAll('[data-osm]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.osm);if(p)window.location.assign(osmLink(p))});
- $('places').querySelectorAll('[data-with]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.with);createOuting(p)});renderViennaHighlights();if(state.mapOpen)drawMap(filtered);
+ $('places').querySelectorAll('[data-with]').forEach(b=>b.onclick=()=>{const p=state.places.find(p=>p.id===b.dataset.with);createOuting(p)});renderViennaHighlights();updateBookmarkShortcut();if(state.mapOpen)drawMap(filtered);
 }
 function drawMap(places){if(!window.L){$('mapView').innerHTML='<div class="empty">Karte benötigt eine Internetverbindung.</div>';return}const center=regionData[state.region];if(!state.map){state.map=L.map('map',{zoomControl:false}).setView(center,11);L.control.zoom({position:'bottomright'}).addTo(state.map);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap-Mitwirkende',maxZoom:18}).addTo(state.map);state.markers=L.layerGroup().addTo(state.map)}state.map.setView(center,11);state.markers.clearLayers();places.slice(0,100).forEach(p=>L.marker([p.lat,p.lon]).bindPopup(`<strong>${esc(p.name)}</strong>`).addTo(state.markers));setTimeout(()=>state.map.invalidateSize(),150)}
 function showMap(){state.mapOpen=!state.mapOpen;$('mapView').classList.toggle('hidden',!state.mapOpen);$('mapToggle').textContent=state.mapOpen?'≡ Liste':'◫ Karte';if(state.mapOpen)drawMap(state.places)}
@@ -424,7 +459,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.4.0';
+const APP_VERSION='2.5.0';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
@@ -437,7 +472,20 @@ modal('Design & Startseite',`<div class="stack"><p class="quiet">Wähle ein Desi
 $('uiStart').value=uiPref.start;
 $('uiSave').onclick=()=>{uiPref.theme=document.querySelector('input[name="theme"]:checked').value;uiPref.autoTheme=$('uiAuto').checked;uiPref.start=$('uiStart').value;saveUi();setAppearance();closeModal();toast('Einstellungen gespeichert.')};
 }
-function addAppearanceLink(){const el=$('profileContent');if(!el||$('appearanceBtn'))return;const b=document.createElement('button');b.id='appearanceBtn';b.className='outline-btn';b.textContent='🎨 Einstellungen · Design & Startseite';b.onclick=openAppearance;el.prepend(b)}
+function openSettings(){
+ modal('⚙ Einstellungen', '<div class="stack"><p class="quiet">Passe das Aussehen und die Startseite von RAUSO an.</p>'+
+ '<button class="outline-btn" id="settingDesign">🎨 Design auswählen</button>'+
+ '<button class="outline-btn" id="settingStart">⌂ Startseite & Anzeige</button>'+
+ '<p class="quiet">Deine Auswahl bleibt auf diesem Smartphone gespeichert.</p></div>');
+ $('settingDesign').onclick=openAppearance;
+ $('settingStart').onclick=openAppearance;
+}
+function addAppearanceLink(){
+ const el=$('profileContent');if(!el||$('appearanceBtn'))return;
+ const b=document.createElement('button');b.id='appearanceBtn';
+ b.className='outline-btn';b.textContent='⚙ Einstellungen';
+ b.onclick=openSettings;el.prepend(b);
+}
 function openReadiness(){
 const configured=!!(window.ERLEBEN_CONFIG?.supabaseUrl&&window.ERLEBEN_CONFIG?.supabasePublishableKey);
 const checks=[['Android-Version','2.1.0 · API 36'],['Designs','5 Designs verfügbar'],['Online-Backend',configured?'Konfiguriert – Funktionstest nötig':'Noch nicht verbunden'],['Benutzeranmeldung',configured?'Anmeldung testen':'Nicht verfügbar'],['Treffen und Nachrichten',configured?'Mehrbenutzertest erforderlich':'Nur Vorschau'],['Push-Mitteilungen','Firebase noch nicht eingerichtet'],['Kinoprogramme','Lizenzierte Quelle fehlt'],['Play Store','Signierter Release und Datenschutzprüfung fehlen']];
@@ -491,7 +539,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateOnli
 document.addEventListener('DOMContentLoaded',()=>{
  if(!uiPref.referenceDesign24){uiPref.theme='orange';uiPref.autoTheme=false;uiPref.referenceDesign24=true;saveUi()}
  setAppearance();init();addNavMore();addOfflineState();addAppearanceLink();addReadiness();
- if($('themePicker'))$('themePicker').onclick=openAppearance;
+ if($('headerBookmarks'))$('headerBookmarks').onclick=()=>switchTab('collections');
+ if($('wishlistShortcut'))$('wishlistShortcut').onclick=()=>switchTab('collections');
  if($('heroDiscover'))$('heroDiscover').onclick=()=>document.querySelector('.discover-heading')?.scrollIntoView({behavior:'smooth'});
  if($('heroConnect'))$('heroConnect').onclick=()=>switchTab('events');
  if($('heroExperience'))$('heroExperience').onclick=()=>switchTab('myMeetings');
