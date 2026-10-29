@@ -566,7 +566,38 @@ function drawRausoNotifications(notifications){
 setInterval(()=>{if(!document.hidden&&state.user)pollRausoNotifications(true)},7500);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.user)pollRausoNotifications(false)});
 async function renderShows(){const el=$('showsContent');el.innerHTML=`<div class="surface stack"><h2>Verlässliche Veranstaltungstermine</h2><p>Derzeit kein lizenzierter Datenlieferant konfiguriert. Es werden ausdrücklich keine erfundenen Filmzeiten, Tickets oder freien Plätze angezeigt.</p><button id="showPlaceSearch" class="outline-btn">🎬 Kinos in meiner Region finden</button><button id="showEvents" class="outline-btn">Offizielle Veranstaltungsseiten öffnen</button></div>`;$('showPlaceSearch').onclick=()=>{switchTab('discover');document.querySelector('[data-cat="kino"]').click()};$('showEvents').onclick=()=>window.open('https://www.wien.info/de/aktuell/veranstaltungen','_blank','noopener')}
-async function renderAdmin(){const el=$('adminContent');if(!state.user){el.innerHTML='<div class="status-banner">Anmeldung erforderlich.</div>';return}const {data:role,error:roleError}=await api.from('app_admins').select('user_id,role').eq('user_id',myId()).maybeSingle();if(roleError||!role){el.innerHTML='<div class="status-banner">Kein administrativer Zugriff. Die Berechtigung wird vom Server überprüft.</div>';return}const {data,error}=await api.from('reports').select('id,reason,created_at,status').order('created_at',{ascending:false}).limit(100);el.innerHTML=`<div class="surface stack"><h2>RAUSO-Verwaltung · ${role.role==='owner'?'Hauptadministratorin':'Administrator'}</h2><p class="quiet">Beide Rollen dürfen Meldungen bearbeiten. Rollen werden ausschließlich serverseitig vergeben. Die Hauptadministratorin bleibt für Betreiberentscheidungen zuständig.</p><h2>Offene Meldungen</h2>${error?esc(error.message):(data||[]).map(r=>`<div class="moderation-card"><strong>${esc('Meldung')}</strong><p>${esc(r.reason||'')}</p><small>${esc(r.status||'offen')} · ${fmt(r.created_at)}</small><button class="outline-btn" data-close-report="${esc(r.id)}">Als bearbeitet markieren</button></div>`).join('')||'<p>Keine Meldungen.</p>'}</div>`;el.querySelectorAll('[data-close-report]').forEach(b=>b.onclick=async()=>{const {error}=await api.from('reports').update({status:'resolved'}).eq('id',b.dataset.closeReport);if(error)toast(error.message);else renderAdmin()})}
+async function renderAdmin(){
+ const zone=$('adminContent');if(!zone)return;
+ if(!state.user){zone.innerHTML='<div class="surface">Bitte anmelden.</div>';return}
+ const {data:role,error:roleError}=await api.from('rauso_roles').select('role')
+  .eq('user_id',myId()).maybeSingle();
+ if(roleError||!role){
+  zone.innerHTML='<div class="surface">Nur berechtigte Moderatoren können Fotos freigeben. Hochgeladene Bilder bleiben bis zur Moderation privat.</div>';
+  return
+ }
+ const {data:pending,error}=await api.rpc('rauso_pending_photo_review');
+ if(error){zone.innerHTML='<div class="surface">'+esc(error.message)+'</div>';return}
+ const images=await Promise.all((pending||[]).map(async row=>{
+  const {data:signed}=await api.storage.from('profile-photos').createSignedUrl(row.storage_path,600);
+  return {...row,url:signed?.signedUrl||''}
+ }));
+ zone.innerHTML='<div class="surface"><h2>Foto-Moderation</h2>'+
+  '<p>RAUSO erlaubt nur vollständig bekleidete Personen: keine Bikinis, Badebekleidung, Unterwäsche oder Nacktheit. Bei Zweifel ablehnen.</p>'+
+  '<p class="quiet">Vor einer manuellen Freigabe sind neue Bilder ausschließlich privat.</p></div>'+
+  (images.map(row=>'<article class="surface moderation-photo">'+
+    (row.url?'<img src="'+esc(row.url)+'" alt="Foto zur manuellen Prüfung">':'<p>Bild nicht verfügbar.</p>')+
+    '<div class="photo-controls"><button class="small-btn" data-review-approve="'+esc(row.id)+'">✓ Bekleidet · Freigeben</button>'+
+    '<button class="small-btn" data-review-reject="'+esc(row.id)+'">✕ Ablehnen</button></div></article>'
+  ).join('')||'<div class="empty">Keine Fotos zur Prüfung.</div>');
+ for(const decision of ['approved','rejected']){
+  const attr=decision==='approved'?'reviewApprove':'reviewReject';
+  zone.querySelectorAll('[data-review-'+(decision==='approved'?'approve':'reject')+']').forEach(button=>button.onclick=async()=>{
+   if(decision==='approved'&&!confirm('Foto geprüft: vollständig bekleidet, keine Bikini-/Bade-/Unterwäsche und keine Nacktheit?'))return;
+   const {error:err}=await api.rpc('rauso_review_photo',{photo:button.dataset[attr],decision});
+   if(err)toast(err.message);else{toast(decision==='approved'?'Foto freigegeben.':'Foto abgelehnt.');renderAdmin()}
+  })
+ }
+}
 
 async function addProfilePhoto(file){
  if(!state.user){showAuth();return}
