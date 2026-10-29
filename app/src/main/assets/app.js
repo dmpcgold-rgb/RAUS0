@@ -171,14 +171,14 @@ async function toggleBookmark(type,item){
  const before=state.bookmarks[key];
  if(existing){delete state.bookmarks[key];if(type==='place')state.favorites.delete(item.id)}
  else{
-  state.bookmarks[key]={type,id:String(item.id),title:String(item.title||item.name||'Unternehmung'),subtitle:String(item.place_name||item.region||''),lat:item.lat,lon:item.lon};
+  state.bookmarks[key]={type,id:String(item.id),title:String(item.title||item.name||'Unternehmung'),subtitle:String(item.place_name||item.region||''),lat:item.lat,lon:item.lon,website:item.website||item.source||'',addr:item.addr||'',category:item.category||'',author_id:item.author_id||'',starts_at:item.starts_at||'',description:item.description||''};
   if(type==='place')state.favorites.add(item.id)
  }
  persist();updateBookmarkShortcut();
  if(!demoMode()){
   const request=existing
    ? api.from('rauso_bookmarks').delete().eq('user_id',myId()).eq('item_type',type).eq('item_id',String(item.id))
-   : api.from('rauso_bookmarks').upsert({user_id:myId(),item_type:type,item_id:String(item.id),title:state.bookmarks[key].title,subtitle:state.bookmarks[key].subtitle,details:{lat:item.lat||null,lon:item.lon||null}},{onConflict:'user_id,item_type,item_id'});
+   : api.from('rauso_bookmarks').upsert({user_id:myId(),item_type:type,item_id:String(item.id),title:state.bookmarks[key].title,subtitle:state.bookmarks[key].subtitle,details:{lat:item.lat||null,lon:item.lon||null,website:item.website||item.source||'',addr:item.addr||'',category:item.category||'',author_id:item.author_id||'',starts_at:item.starts_at||'',description:item.description||''}},{onConflict:'user_id,item_type,item_id'});
   const {error}=await request;
   if(error){
    if(before)state.bookmarks[key]=before;else delete state.bookmarks[key];
@@ -193,25 +193,56 @@ async function loadBookmarks(){
  const {data,error}=await api.from('rauso_bookmarks').select('item_type,item_id,title,subtitle,details').eq('user_id',myId());
  if(error){toast('Merkliste konnte nicht synchronisiert werden.');return}
  state.bookmarks={};
- for(const r of data||[])state.bookmarks[bookmarkKey(r.item_type,r.item_id)]={type:r.item_type,id:r.item_id,title:r.title,subtitle:r.subtitle,lat:r.details?.lat,lon:r.details?.lon};
+ for(const r of data||[])state.bookmarks[bookmarkKey(r.item_type,r.item_id)]={type:r.item_type,id:r.item_id,title:r.title,subtitle:r.subtitle,lat:r.details?.lat,lon:r.details?.lon,website:r.details?.website||'',addr:r.details?.addr||'',category:r.details?.category||'',author_id:r.details?.author_id||'',starts_at:r.details?.starts_at||'',description:r.details?.description||''};
  state.favorites=new Set((data||[]).filter(x=>x.item_type==='place').map(x=>x.item_id));
  persist();renderPlaces();renderEvents();renderCollections();
 }
 function updateBookmarkShortcut(){
  const total=Object.keys(state.bookmarks||{}).length;
  const button=$('wishlistShortcut');
- if(button){button.textContent='♥ Merkliste ('+total+')';button.setAttribute('aria-label',total+' gemerkte Orte und Treffen öffnen');}
+ if(button){button.textContent='★ Merkliste ('+total+')';button.setAttribute('aria-label',total+' gemerkte Orte und Treffen öffnen');}
  const header=$('headerBookmarks');
  if(header){header.setAttribute('aria-label','Merkliste öffnen, '+total+' Einträge');header.title='Merkliste: '+total;}
 }
-function renderCollections(){updateBookmarkShortcut();
+
+function rausoOpenBookmark(item){
+ if(!item)return;
+ if(item.type!=='outing'){
+  const p=rausoViennaPicks.find(x=>String(x.id)===String(item.id)) ||
+    state.places.find(x=>String(x.id)===String(item.id)) || item;
+  rausoOpenPlace(Object.assign({name:item.title,region:item.subtitle},p));return;
+ }
+ const event=eventList().find(x=>String(x.id)===String(item.id))||item;
+ const name=event.title||item.title,where=event.place_name||item.subtitle;
+ let dateText='';
+ try{if(event.starts_at)dateText=fmt(event.starts_at)}catch{}
+ modal('Ausflug · '+name,'<div class="stack"><p class="quiet">📍 '+esc(where||'Treffpunkt auf Anfrage')+'</p>'+
+  (dateText?'<p>📅 '+esc(dateText)+'</p>':'')+
+  (event.description?'<p>'+esc(event.description)+'</p>':'')+
+  '<button id="bookmarkViewEvents" class="primary-btn">Zur Unternehmung</button>'+
+  (event.author_id?'<button id="bookmarkViewOrganizer" class="outline-btn">Profil des Veranstalters</button>':'')+
+  '</div>');
+ $('bookmarkViewEvents').onclick=()=>{closeModal();state.eventMode='all';switchTab('events')};
+ if($('bookmarkViewOrganizer'))$('bookmarkViewOrganizer').onclick=()=>{
+   const author=availablePeople().find(p=>String(p.id)===String(event.author_id));
+   if(!author){toast('Das Profil dieses Mitglieds ist derzeit nicht sichtbar.');return}
+   modal('Profil · '+(author.display_name||'Mitglied'),'<div class="stack"><p>📍 '+esc(author.city||'Österreich')+'</p><p>'+esc(author.bio||'Kein Profiltext')+'</p></div>')
+ };
+}
+function renderCollections(){
+ updateBookmarkShortcut();
  const el=$('collectionsContent');if(!el)return;
  const items=Object.values(state.bookmarks);
- el.innerHTML='<div class="surface stack"><h2>🧡 Meine Merkliste ('+items.length+')</h2>'+
-  '<p class="quiet">Orange Herzen sind gespeichert. '+(state.user?'Deine Favoriten werden mit deinem Konto synchronisiert.':'Vorschau: Die Merkliste bleibt lokal auf diesem Gerät.')+'</p></div>'+
-  (items.length?items.map(item=>'<div class="surface bookmark-row"><div><strong>'+esc(item.title)+'</strong><p class="quiet">'+esc(item.type==='outing'?'Treffen':'Ort')+' · '+esc(item.subtitle||'')+'</p></div>'+
-   '<button class="small-btn heart-btn is-liked" data-bookmark-remove="'+esc(bookmarkKey(item.type,item.id))+'">♥ Entfernen</button></div>').join(''):
-   '<div class="empty">Noch keine Favoriten. Tippe auf ein Herz bei Orten oder Treffen.</div>');
+ el.innerHTML='<div class="surface stack"><h2>★ Meine Merkliste ('+items.length+')</h2>'+
+  '<p class="quiet">Orange Sterne sind gespeichert. Tippe auf einen Eintrag für die Website oder die Unternehmung.</p></div>'+
+  (items.length?items.map(item=>{
+   const key=bookmarkKey(item.type,item.id);
+   return '<div class="surface bookmark-row"><button type="button" class="bookmark-open" data-bookmark-open="'+esc(key)+'">'+
+    '<strong>'+esc(item.title)+'</strong><span class="quiet">'+esc(item.type==='outing'?'Ausflugsvorschlag':'Ort')+' · '+esc(item.subtitle||'')+'</span>'+
+    '<span class="bookmark-arrow" aria-hidden="true">›</span></button>'+
+    '<button type="button" class="small-btn star-btn is-liked bookmark-remove" data-bookmark-remove="'+esc(key)+'" aria-label="Aus Merkliste entfernen" title="Aus Merkliste entfernen">★</button></div>';
+  }).join(''):'<div class="empty">Noch keine Favoriten. Tippe auf einen Stern bei Orten oder Unternehmungen.</div>');
+ el.querySelectorAll('[data-bookmark-open]').forEach(b=>b.onclick=()=>rausoOpenBookmark(state.bookmarks[b.dataset.bookmarkOpen]));
  el.querySelectorAll('[data-bookmark-remove]').forEach(b=>b.onclick=()=>{
   const item=state.bookmarks[b.dataset.bookmarkRemove];if(item)toggleBookmark(item.type,item)
  });
@@ -296,7 +327,7 @@ function renderPlaces(){
 function drawMap(places){if(!window.L){$('mapView').innerHTML='<div class="empty">Karte benötigt eine Internetverbindung.</div>';return}const center=regionData[state.region];if(!state.map){state.map=L.map('map',{zoomControl:false}).setView(center,11);L.control.zoom({position:'bottomright'}).addTo(state.map);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap-Mitwirkende',maxZoom:18}).addTo(state.map);state.markers=L.layerGroup().addTo(state.map)}state.map.setView(center,11);state.markers.clearLayers();places.slice(0,100).forEach(p=>L.marker([p.lat,p.lon]).bindPopup(`<strong>${esc(p.name)}</strong>`).addTo(state.markers));setTimeout(()=>state.map.invalidateSize(),150)}
 function showMap(){state.mapOpen=!state.mapOpen;$('mapView').classList.toggle('hidden',!state.mapOpen);$('mapToggle').textContent=state.mapOpen?'≡ Liste':'◫ Karte';if(state.mapOpen)drawMap(state.places)}
 function eventList(){return demoMode()?state.demoEvents:state.outings}
-function renderEventCard(e){const r=demoMode()?(state.demoReactions[e.id]||''):(e.mineReaction||'');const t=transportMeta[e.transport_mode]||transportMeta.auto;const privateMode=e.visibility==='private';const offering=e.transport_mode==='auto' && e.ride_role==='offer';const detail=offering&&e.seats_offered?`${e.seats_offered} Plätze`:'';return `<article class="event-card ${r==='going'?'event-joined':''}" data-outing-id="${esc(e.id)}"><div class="event-top"><span class="pill">${esc(privateMode?'🏡 Privat':cats[e.category]?.icon||'📍')} ${esc(privateMode?meetingMeta[e.meeting_type]||'Privates Treffen':e.category||'Ausflug')}</span><span class="event-date">${esc(fmt(e.starts_at))}</span></div><h3>${esc(e.title)}</h3><div class="event-meta">📍 ${esc(e.place_name)}<br>👤 ${esc(e.author||'RAUSO-Mitglied')}${e.authorOnline?' · 🟢 Online':''}${e.family_friendly?' · 👨‍👩‍👧 Familienfreundlich':''}</div><p class="event-descr">${esc(e.description||'')}</p>${e.attendance?'<p class="quiet">Teilnahmen: '+e.attendance.going+' zugesagt · '+e.attendance.interested+' interessiert</p>':''}<div class="event-transport"><span>${t[0]} ${t[1]}</span>${detail?`<span>💺 ${esc(detail)}</span>`:''}${e.departure_place?`<span>↗ ${esc(e.departure_place)}</span>`:''}${offering?'<span>🔒 Fahrerprüfung nötig</span>':''}</div>${privateMode?'<div class="locked-note">🔐 Privatadresse nicht öffentlich; erst nach bestätigter Teilnahme teilen.</div>':''}<div class="event-actions"><button class="small-btn heart-btn ${isBookmarked('outing',e.id)?'is-liked':''}" data-react="${esc(e.id)}" data-type="like" aria-pressed="${isBookmarked('outing',e.id)}">${isBookmarked('outing',e.id)?'♥ Gemerkt':'♡ Like'}</button><button class="small-btn ${r==='interested'?'active':''}" data-react="${esc(e.id)}" data-type="interested">✋ Interesse</button><button class="small-btn join-btn ${r==='going'?'is-joined':''}" data-react="${esc(e.id)}" data-type="going" aria-pressed="${r==='going'?'true':'false'}">${r==='going'?'✓ Du bist dabei':'✓ Bin dabei'}</button><button class="small-btn" data-share="${esc(e.id)}">↗ Teilen</button><button class="small-btn" data-incident="${esc(e.id)}">🛡 Melden</button></div></article>`}
+function renderEventCard(e){const r=demoMode()?(state.demoReactions[e.id]||''):(e.mineReaction||'');const t=transportMeta[e.transport_mode]||transportMeta.auto;const privateMode=e.visibility==='private';const offering=e.transport_mode==='auto' && e.ride_role==='offer';const detail=offering&&e.seats_offered?`${e.seats_offered} Plätze`:'';return `<article class="event-card ${r==='going'?'event-joined':''}" data-outing-id="${esc(e.id)}"><div class="event-top"><span class="pill">${esc(privateMode?'🏡 Privat':cats[e.category]?.icon||'📍')} ${esc(privateMode?meetingMeta[e.meeting_type]||'Privates Treffen':e.category||'Ausflug')}</span><span class="event-date">${esc(fmt(e.starts_at))}</span></div><h3>${esc(e.title)}</h3><div class="event-meta">📍 ${esc(e.place_name)}<br>👤 ${esc(e.author||'RAUSO-Mitglied')}${e.authorOnline?' · 🟢 Online':''}${e.family_friendly?' · 👨‍👩‍👧 Familienfreundlich':''}</div><p class="event-descr">${esc(e.description||'')}</p>${e.attendance?'<p class="quiet">Teilnahmen: '+e.attendance.going+' zugesagt · '+e.attendance.interested+' interessiert</p>':''}<div class="event-transport"><span>${t[0]} ${t[1]}</span>${detail?`<span>💺 ${esc(detail)}</span>`:''}${e.departure_place?`<span>↗ ${esc(e.departure_place)}</span>`:''}${offering?'<span>🔒 Fahrerprüfung nötig</span>':''}</div>${privateMode?'<div class="locked-note">🔐 Privatadresse nicht öffentlich; erst nach bestätigter Teilnahme teilen.</div>':''}<div class="event-actions"><button class="small-btn heart-btn star-btn ${isBookmarked('outing',e.id)?'is-liked':''}" data-react="${esc(e.id)}" data-type="like" aria-pressed="${isBookmarked('outing',e.id)}">${isBookmarked('outing',e.id)?'★':'☆'}</button><button class="small-btn ${r==='interested'?'active':''}" data-react="${esc(e.id)}" data-type="interested">✋ Interesse</button><button class="small-btn join-btn ${r==='going'?'is-joined':''}" data-react="${esc(e.id)}" data-type="going" aria-pressed="${r==='going'?'true':'false'}">${r==='going'?'✓ Du bist dabei':'✓ Bin dabei'}</button><button class="small-btn" data-share="${esc(e.id)}">↗ Teilen</button><button class="small-btn" data-incident="${esc(e.id)}">🛡 Melden</button></div></article>`}
 function wireEventButtons(root,data){root.querySelectorAll('[data-react]').forEach(b=>b.onclick=()=>reactOuting(b.dataset.react,b.dataset.type));root.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>{const e=data.find(e=>e.id===b.dataset.share);if(e)shareOuting(e)});root.querySelectorAll('[data-incident]').forEach(b=>b.onclick=()=>openSafetyReport(b.dataset.incident))}
 function renderEvents(){const data=eventList().filter(e=>new Date(e.starts_at).getTime()>Date.now()-3600000 && (state.eventMode==='all'||(state.eventMode==='private' ? e.visibility==='private':e.visibility!=='private'))).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at));$('eventList').innerHTML=(demoMode()?'<div class="status-banner">Vorschau: Treffen und Reaktionen bleiben auf diesem Gerät. Keine reale Teilnahme oder Sicherheitsüberprüfung.</div>':'')+(data.length?data.map(renderEventCard).join(''):'<div class="empty"><strong>Keine passenden Treffen</strong>Du kannst selbst ein Treffen vorschlagen.</div>');document.querySelectorAll('[data-event-mode]').forEach(b=>b.classList.toggle('active',b.dataset.eventMode===state.eventMode));wireEventButtons($('eventList'),data)}
 // Participation is a user's own RSVP. "going" is not an organizer-confirmed booking.
