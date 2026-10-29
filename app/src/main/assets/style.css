@@ -965,3 +965,89 @@ html[data-rauso-theme="light"] .bottomnav {
 @media (max-width: 400px) {
  .bottomnav .nav-item { min-height: 56px; }
 }
+
+
+/* RAUSO 2.7: edge-to-edge status bar, direct settings, compact auth header. */
+:root {--rauso-native-top:0px}
+body{
+ padding-top:max(var(--rauso-native-top,0px),env(safe-area-inset-top,0px))!important;
+}
+.topbar,.compact-topbar,html[data-rauso-theme="orange"] .topbar{
+ top:max(var(--rauso-native-top,0px),env(safe-area-inset-top,0px))!important;
+}
+/* The first header position is fixed to the safe content edge. With a
+   native status inset, the body's padding provides room while scrolling. */
+html[data-rauso-theme="orange"] .compact-topbar{
+ min-height:51px;height:51px;gap:6px;
+ padding:5px 9px!important;
+}
+html[data-rauso-theme="orange"] .main-header-bookmarks{
+ min-height:37px;height:37px;gap:5px;padding:4px 9px;
+ flex:0 1 auto;
+}
+html[data-rauso-theme="orange"] .header-bookmarks-text{font-size:11px!important}
+.header-settings-btn{
+ display:grid;place-items:center;flex:0 0 37px;
+ width:37px;height:37px;border-radius:11px;
+ color:#ffa33d;background:linear-gradient(130deg,#251818,#101012);
+ border:1px solid #df7930;font-size:21px;font-weight:700;
+ box-shadow:0 0 10px #ff7e2c32;cursor:pointer
+}
+html[data-rauso-theme="orange"] .rauso-notification-bell{
+ width:37px;height:37px;min-height:37px
+}
+html[data-rauso-theme="orange"] .face-profile-btn{
+ padding:4px 9px;height:37px;min-height:37px;max-width:123px;
+ font-size:17px;white-space:nowrap
+}
+html[data-rauso-theme="orange"] .topbar-profile-label{font-size:11px}
+.header-settings-btn:focus-visible,.face-profile-btn:focus-visible{
+ outline:2px solid #ffd1a4;outline-offset:2px
+}
+@media(max-width:370px){
+ html[data-rauso-theme="orange"] .compact-topbar{gap:4px;padding:5px!important}
+ html[data-rauso-theme="orange"] .main-header-bookmarks{padding:4px 6px;min-width:0}
+ html[data-rauso-theme="orange"] .header-bookmarks-text{font-size:10px!important}
+ .header-settings-btn{flex-basis:34px;width:34px}
+ html[data-rauso-theme="orange"] .rauso-notification-bell{width:34px}
+ html[data-rauso-theme="orange"] .face-profile-btn{max-width:98px;padding:4px 6px}
+}
+/* Modern inbox, one-tap chat rows, clear unread and delivered receipts. */
+.rauso-inbox-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.rauso-inbox-summary h2{margin:0}
+.rauso-inbox-tabs{display:flex;gap:7px;margin:0 0 13px}
+.rauso-inbox-tabs button{
+ flex:1;background:#191517;color:#edddcd;border:1px solid #6d4a35;
+ border-radius:12px;padding:9px;font-size:12px
+}
+.rauso-inbox-tabs button.active{border-color:#ff9d35;color:#fff;background:#5b2c15;box-shadow:0 0 9px #ff831a4c}
+.rauso-inbox-list{display:grid;gap:8px}
+.rauso-chat-row{
+ display:flex;align-items:center;gap:10px;min-width:0;
+ width:100%;text-align:left;background:linear-gradient(125deg,#251c1a,#131315);
+ border:1px solid #6b4d38;border-radius:15px;padding:11px 10px;color:#fff;cursor:pointer
+}
+.rauso-chat-row.unread{border-color:#f0782b;box-shadow:0 0 12px #f17b1f24}
+.rauso-chat-row .profile-meta{min-width:0;flex:1}
+.rauso-chat-row .profile-meta strong,.rauso-chat-row .profile-meta small{
+ display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.rauso-chat-row .profile-meta strong{font-size:14px}
+.rauso-chat-row .profile-meta small{font-size:12px;color:#c4b5ae;margin-top:4px}
+.rauso-chat-tail{min-width:51px;align-self:flex-start;display:grid;justify-items:end;gap:7px}
+.rauso-chat-time{font-size:10px;color:#b1a6a3}
+.rauso-read-status{
+ display:inline-flex;align-items:center;justify-content:center;gap:3px;
+ font-size:12px;line-height:1.2;font-weight:800
+}
+.rauso-read-status.unread{color:#ff5959}
+.rauso-read-status.read{color:#55d879}
+.rauso-unread-count{padding:3px 7px;border-radius:13px;background:#f25443;color:#fff;font-weight:800;font-size:11px}
+.rauso-chat-hint{font-size:12px;color:#b2a9a1}
+.chat-board .bubble{position:relative}
+.chat-board .bubble small{display:flex;align-items:center;gap:6px;margin-top:5px}
+.message-tab-nav-count{min-width:17px;height:17px;font-size:10px}
+.rauso-message-search{margin:10px 0}
+.rauso-message-search input{width:100%}
+.inbox-empty{padding:22px 14px;text-align:center;color:#b4acb2}
+.inbox-overview-heading{font-size:17px;margin:0}
