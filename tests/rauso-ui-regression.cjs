@@ -44,3 +44,12 @@ assert(!js.includes('id="mySaved"')&&!js.includes("['🧡 Meine Merkliste','coll
 assert(!js.includes("for(const tab of ['collections','shows','notifications'])"),'Merkliste must never be hidden in nav');
 assert(js.includes("const badge=$('bookmarkNavCount')"),'Merkliste badge must stay updated');
 assert(css.includes('.bottomnav .nav-item[data-tab="collections"]{display:grid!important'),'Merkliste must be visible in every theme');
+
+/* RAUSO 2.8.2: immutable birthday, creator-selected age range and RSVP gate. */
+assert(js.includes("id=\"signupBirth\"")&&js.includes("birth_date:birth"),'Birthday must be required at registration');
+assert(js.includes('rausoRequestBirthdate'),'Legacy birthdate prompt must be available');
+assert(js.includes('function rausoAgeAtEvent(')&&js.includes("timeZone:'Europe/Vienna'"),'Age must be checked on event date');
+assert(js.includes('id="oMinAge"')&&js.includes('id="oMaxAge"'),'Event age range inputs missing');
+assert(js.includes('min_age:val.min_age,max_age:val.max_age'),'Event age limits must be persisted');
+assert(js.includes('rausoEventAgeEligibility(requested)'),'RSVP must check age');
+assert(css.includes('.rauso-age-fields')&&css.includes('.rauso-age-note'),'Age input styles missing');
