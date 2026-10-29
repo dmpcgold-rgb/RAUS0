@@ -213,7 +213,15 @@ function rausoOpenBookmark(item){
  if(item.type!=='outing'){
   const p=rausoViennaPicks.find(x=>String(x.id)===String(item.id)) ||
     state.places.find(x=>String(x.id)===String(item.id)) || item;
-  rausoOpenPlace(Object.assign({name:item.title,region:item.subtitle},p));return;
+  const place=Object.assign({name:item.title,region:item.subtitle},p);
+  const linkLabel=rausoHasVenueWebsite(place)?'WEBSITE ÖFFNEN':'KARTE ÖFFNEN';
+  modal('Ort · '+(place.name||item.title),
+   '<div class="stack rauso-bookmark-detail"><p class="quiet">'+esc(place.addr||place.region||item.subtitle||'Österreich')+'</p>'+
+   '<button type="button" id="savedPlaceSite" class="primary-btn">'+linkLabel+' ↗</button>'+
+   '<button type="button" id="savedPlaceCreate" class="outline-btn">＋ TREFFEN HIER ERSTELLEN</button></div>');
+  $('savedPlaceSite').onclick=()=>{closeModal();rausoOpenPlace(place)};
+  $('savedPlaceCreate').onclick=()=>{closeModal();createOuting(place)};
+  return;
  }
  const event=eventList().find(x=>String(x.id)===String(item.id))||item;
  const name=event.title||item.title,where=event.place_name||item.subtitle;
@@ -236,15 +244,15 @@ function renderCollections(){
  updateBookmarkShortcut();
  const el=$('collectionsContent');if(!el)return;
  const items=Object.values(state.bookmarks);
- el.innerHTML='<div class="surface stack"><h2>★ Meine Merkliste ('+items.length+')</h2>'+
-  '<p class="quiet">Orange Sterne sind gespeichert. Tippe auf einen Eintrag für die Website oder die Unternehmung.</p></div>'+
+ el.innerHTML='<div class="surface stack"><h2>♥ Meine Merkliste ('+items.length+')</h2>'+
+  '<p class="quiet">Orange Herzen sind gespeichert. Tippe auf einen Eintrag für die Details und den Website-Link.</p></div>'+
   (items.length?items.map(item=>{
    const key=bookmarkKey(item.type,item.id);
    return '<div class="surface bookmark-row"><button type="button" class="bookmark-open" data-bookmark-open="'+esc(key)+'">'+
     '<strong>'+esc(item.title)+'</strong><span class="quiet">'+esc(item.type==='outing'?'Ausflugsvorschlag':'Ort')+' · '+esc(item.subtitle||'')+'</span>'+
     '<span class="bookmark-arrow" aria-hidden="true">›</span></button>'+
-    '<button type="button" class="small-btn star-btn is-liked bookmark-remove" data-bookmark-remove="'+esc(key)+'" aria-label="Aus Merkliste entfernen" title="Aus Merkliste entfernen">★</button></div>';
-  }).join(''):'<div class="empty">Noch keine Favoriten. Tippe auf einen Stern bei Orten oder Unternehmungen.</div>');
+    '<button type="button" class="small-btn star-btn is-liked bookmark-remove" data-bookmark-remove="'+esc(key)+'" aria-label="Aus Merkliste entfernen" title="Aus Merkliste entfernen">♥</button></div>';
+  }).join(''):'<div class="empty">Noch keine Favoriten. Tippe auf ein Herz bei Orten oder Unternehmungen.</div>');
  el.querySelectorAll('[data-bookmark-open]').forEach(b=>b.onclick=()=>rausoOpenBookmark(state.bookmarks[b.dataset.bookmarkOpen]));
  el.querySelectorAll('[data-bookmark-remove]').forEach(b=>b.onclick=()=>{
   const item=state.bookmarks[b.dataset.bookmarkRemove];if(item)toggleBookmark(item.type,item)
@@ -276,7 +284,7 @@ function renderViennaHighlights(){
    '<span class="featured-cat '+(p.category==='thermen'?'thermal':'')+'">'+esc(label)+'</span></div>'+'<button type="button" class="rauso-venue-site rauso-featured-site" data-featured-site="'+esc(p.id)+'" aria-label="'+(rausoHasVenueWebsite(p)?'Website':'Karte')+' von '+esc(p.name)+' öffnen">'+(rausoHasVenueWebsite(p)?'WEBSEITE ↗':'KARTE ↗')+'</button>'+
    '<button type="button" class="featured-heart heart-btn star-btn '+(liked?'is-liked':'')+'" '+
    'aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" '+
-   'aria-pressed="'+liked+'" data-featured-like="'+esc(p.id)+'">'+(liked?'★':'☆')+'</button></article>';
+   'aria-pressed="'+liked+'" data-featured-like="'+esc(p.id)+'">'+(liked?'♥':'♡')+'</button></article>';
  }).join('');
  el.querySelectorAll('[data-featured-open]').forEach(card=>{
   const open=()=>{const item=rausoViennaPicks.find(x=>x.id===card.dataset.featuredOpen);if(item)rausoOpenPlace(item)};
@@ -312,7 +320,7 @@ function renderPlaces(){
    '<div class="place-header"><div class="place-emoji">'+cats[state.cat].icon+'</div><div class="place-body">'+
    '<h3>'+esc(p.name)+'</h3><p class="place-sub">'+esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')+'</p></div></div>'+
    '<div class="place-actions"><button type="button" class="rauso-venue-site" data-place-site="'+esc(p.id)+'" aria-label="'+(rausoHasVenueWebsite(p)?'Website':'Karte')+' von '+esc(p.name)+' öffnen">'+(rausoHasVenueWebsite(p)?'WEBSEITE ↗':'KARTE ↗')+'</button>'+
-   '<button class="small-btn heart-btn star-btn '+(liked?'is-liked':'')+'" data-favorite="'+esc(p.id)+'" aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" aria-pressed="'+liked+'">'+(liked?'★':'☆')+'</button></div></article>';
+   '<button class="small-btn heart-btn star-btn '+(liked?'is-liked':'')+'" data-favorite="'+esc(p.id)+'" aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" aria-pressed="'+liked+'">'+(liked?'♥':'♡')+'</button></div></article>';
  }).join(''):'<div class="empty"><strong>Keine Orte gefunden</strong>Versuche eine andere Kategorie oder einen größeren Umkreis.</div>';
  $('places').querySelectorAll('[data-place-open]').forEach(card=>{
   const p=state.places.find(item=>String(item.id)===card.dataset.placeOpen);
@@ -333,7 +341,7 @@ function renderPlaces(){
 function drawMap(places){if(!window.L){$('mapView').innerHTML='<div class="empty">Karte benötigt eine Internetverbindung.</div>';return}const center=regionData[state.region];if(!state.map){state.map=L.map('map',{zoomControl:false}).setView(center,11);L.control.zoom({position:'bottomright'}).addTo(state.map);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap-Mitwirkende',maxZoom:18}).addTo(state.map);state.markers=L.layerGroup().addTo(state.map)}state.map.setView(center,11);state.markers.clearLayers();places.slice(0,100).forEach(p=>L.marker([p.lat,p.lon]).bindPopup(`<strong>${esc(p.name)}</strong>`).addTo(state.markers));setTimeout(()=>state.map.invalidateSize(),150)}
 function showMap(){state.mapOpen=!state.mapOpen;$('mapView').classList.toggle('hidden',!state.mapOpen);$('mapToggle').textContent=state.mapOpen?'≡ Liste':'◫ Karte';if(state.mapOpen)drawMap(state.places)}
 function eventList(){return demoMode()?state.demoEvents:state.outings}
-function renderEventCard(e){const r=demoMode()?(state.demoReactions[e.id]||''):(e.mineReaction||'');const t=transportMeta[e.transport_mode]||transportMeta.auto;const privateMode=e.visibility==='private';const offering=e.transport_mode==='auto' && e.ride_role==='offer';const detail=offering&&e.seats_offered?`${e.seats_offered} Plätze`:'';return `<article class="event-card ${r==='going'?'event-joined':''}" data-outing-id="${esc(e.id)}"><div class="event-top"><span class="pill">${esc(privateMode?'🏡 Privat':cats[e.category]?.icon||'★')} ${esc(privateMode?meetingMeta[e.meeting_type]||'Privates Treffen':e.category||'Ausflug')}</span><span class="event-date">${esc(fmt(e.starts_at))}</span></div><h3>${esc(e.title)}</h3><div class="event-meta">★ ${esc(e.place_name)}<br><button type="button" class="event-author-link" data-event-organizer="${esc(e.id)}" title="Veranstalterprofil öffnen">👤 ${esc(e.author||'RAUSO-Mitglied')} <span aria-hidden="true">›</span></button>${e.authorOnline?' · 🟢 Online':''}${e.family_friendly?' · 👨‍👩‍👧 Familienfreundlich':''}</div><p class="event-descr">${esc(e.description||'')}</p>${e.attendance?'<p class="quiet">Teilnahmen: '+e.attendance.going+' zugesagt</p>':''}<div class="event-transport"><span>${t[0]} ${t[1]}</span>${detail?`<span>💺 ${esc(detail)}</span>`:''}${e.departure_place?`<span>↗ ${esc(e.departure_place)}</span>`:''}</div>${privateMode?'<div class="locked-note">🔐 Privatadresse nicht öffentlich; erst nach bestätigter Teilnahme teilen.</div>':''}<div class="event-actions"><button class="small-btn heart-btn star-btn ${isBookmarked('outing',e.id)?'is-liked':''}" data-react="${esc(e.id)}" data-type="like" aria-pressed="${isBookmarked('outing',e.id)}">${isBookmarked('outing',e.id)?'★':'☆'}</button><button class="small-btn join-btn ${r==='going'?'is-joined':''}" data-react="${esc(e.id)}" data-type="going" aria-pressed="${r==='going'?'true':'false'}">${r==='going'?'✓ Du bist dabei':'✓ Bin dabei'}</button>${!demoMode()&&e.author_id!==myId()?`<button class="small-btn event-friend" data-friend-outing="${esc(e.id)}">👥 Freundschaft</button>`:'' }<button class="small-btn" data-share="${esc(e.id)}">↗ Teilen</button><button class="small-btn" data-incident="${esc(e.id)}">🛡 Melden</button></div></article>`}
+function renderEventCard(e){const r=demoMode()?(state.demoReactions[e.id]||''):(e.mineReaction||'');const t=transportMeta[e.transport_mode]||transportMeta.auto;const privateMode=e.visibility==='private';const offering=e.transport_mode==='auto' && e.ride_role==='offer';const detail=offering&&e.seats_offered?`${e.seats_offered} Plätze`:'';return `<article class="event-card ${r==='going'?'event-joined':''}" data-outing-id="${esc(e.id)}"><div class="event-top"><span class="pill">${esc(privateMode?'🏡 Privat':cats[e.category]?.icon||'★')} ${esc(privateMode?meetingMeta[e.meeting_type]||'Privates Treffen':e.category||'Ausflug')}</span><span class="event-date">${esc(fmt(e.starts_at))}</span></div><h3>${esc(e.title)}</h3><div class="event-meta">★ ${esc(e.place_name)}<br><button type="button" class="event-author-link" data-event-organizer="${esc(e.id)}" title="Veranstalterprofil öffnen">👤 ${esc(e.author||'RAUSO-Mitglied')} <span aria-hidden="true">›</span></button>${e.authorOnline?' · 🟢 Online':''}${e.family_friendly?' · 👨‍👩‍👧 Familienfreundlich':''}</div><p class="event-descr">${esc(e.description||'')}</p>${e.attendance?'<p class="quiet">Teilnahmen: '+e.attendance.going+' zugesagt</p>':''}<div class="event-transport"><span>${t[0]} ${t[1]}</span>${detail?`<span>💺 ${esc(detail)}</span>`:''}${e.departure_place?`<span>↗ ${esc(e.departure_place)}</span>`:''}</div>${privateMode?'<div class="locked-note">🔐 Privatadresse nicht öffentlich; erst nach bestätigter Teilnahme teilen.</div>':''}<div class="event-actions"><button class="small-btn heart-btn star-btn ${isBookmarked('outing',e.id)?'is-liked':''}" data-react="${esc(e.id)}" data-type="like" aria-pressed="${isBookmarked('outing',e.id)}">${isBookmarked('outing',e.id)?'♥':'♡'}</button><button class="small-btn join-btn ${r==='going'?'is-joined':''}" data-react="${esc(e.id)}" data-type="going" aria-pressed="${r==='going'?'true':'false'}">${r==='going'?'✓ Du bist dabei':'✓ Bin dabei'}</button>${!demoMode()&&e.author_id!==myId()?`<button class="small-btn event-friend" data-friend-outing="${esc(e.id)}">👥 Freundschaft</button>`:'' }<button class="small-btn" data-share="${esc(e.id)}">↗ Teilen</button><button class="small-btn" data-incident="${esc(e.id)}">🛡 Melden</button></div></article>`}
 async function openEventOrganizerProfile(outingId){
  const outing=eventList().find(event=>String(event.id)===String(outingId));
  if(!outing){toast('Veranstaltung nicht gefunden.');return}
@@ -421,13 +429,45 @@ function openMeetingFromMine(id){
 function renderFamily(){const events=eventList().filter(e=>e.family_friendly && Date.parse(e.starts_at)>Date.now()-3600000);$('familyEvents').innerHTML=(demoMode()?'<div class="status-banner">Beispielangebote. Alle Treffenden müssen als Erwachsene geprüft werden. Kinder erhalten kein eigenes Konto.</div>':'')+(events.length?events.map(renderEventCard).join(''):'<div class="empty">Noch keine Familientreffen. Erstelle selbst eines.</div>');wireEventButtons($('familyEvents'),events)}
 async function shareOuting(e){
  const privateMode=e.visibility==='private';
- const text='★ RAUSO Unternehmung: '+String(e.title||'Treffen')+'\n'+
+ const text='♥ RAUSO Unternehmung: '+String(e.title||'Treffen')+'\n'+
   'Wann: '+fmt(e.starts_at)+'\nWo: '+(privateMode?'Privater Treffpunkt – nach Zusage erfragen':String(e.place_name||'Treffpunkt offen'));
- if(window.RAUSOShare?.shareText){window.RAUSOShare.shareText(text);return}
- if(navigator.share){try{await navigator.share({title:'RAUSO Unternehmung',text});return}catch(err){if(err?.name==='AbortError')return}}
- modal('Unternehmung teilen','<div class="stack"><p class="quiet">Per WhatsApp teilen oder Einladung kopieren.</p><button class="primary-btn" id="shareWhatsApp">WhatsApp</button><button class="outline-btn" id="shareCopy">Text kopieren</button></div>');
- $('shareWhatsApp').onclick=()=>{window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');closeModal()};
- $('shareCopy').onclick=async()=>{try{await navigator.clipboard.writeText(text);toast('Einladung kopiert')}catch{toast('Kopieren fehlgeschlagen')}closeModal()};
+ // No private home addresses appear in outward invitations.
+ modal('Unternehmung teilen',
+  '<div class="stack rauso-share-options"><p class="quiet">Wähle die gewünschte App. Private Adressen werden nicht geteilt.</p>'+
+  '<button type="button" class="outline-btn" id="shareWhatsApp">WhatsApp</button>'+
+  '<button type="button" class="outline-btn" id="shareInstagram">Instagram</button>'+
+  '<button type="button" class="outline-btn" id="shareFacebook">Facebook</button>'+
+  '<button type="button" class="outline-btn" id="shareOther">Weitere Apps …</button>'+
+  '<button type="button" class="outline-btn" id="shareCopy">Einladung kopieren</button></div>');
+ const copyText=async()=>{
+  try{
+   if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(text);
+   else{
+    const area=document.createElement('textarea');area.value=text;area.style.position='fixed';area.style.left='-10000px';
+    document.body.appendChild(area);area.select();const copied=document.execCommand('copy');area.remove();if(!copied)throw Error('Kopieren nicht möglich');
+   }
+   closeModal();toast('Einladung kopiert. Du kannst sie in einer App einfügen.');
+  }catch{toast('Kopieren fehlgeschlagen. Verwende Weitere Apps.')}
+ };
+ const shareWith=async(target)=>{
+  if(window.RAUSOShare?.shareTo){
+   window.RAUSOShare.shareTo(target,text);closeModal();return;
+  }
+  if(target==='whatsapp'){
+   closeModal();window.location.assign('https://wa.me/?text='+encodeURIComponent(text));return;
+  }
+  if(navigator.share){
+   try{await navigator.share({title:'RAUSO Unternehmung',text});closeModal();return}
+   catch(err){if(err?.name==='AbortError')return}
+  }
+  // Web browsers cannot reliably target Instagram/Facebook with a text-only share.
+  await copyText();
+ };
+ $('shareWhatsApp').onclick=()=>shareWith('whatsapp');
+ $('shareInstagram').onclick=()=>shareWith('instagram');
+ $('shareFacebook').onclick=()=>shareWith('facebook');
+ $('shareOther').onclick=()=>shareWith('all');
+ $('shareCopy').onclick=copyText;
 }
 async function reactOuting(id,type){
  if(type==='like'){const item=eventList().find(x=>x.id===id);if(item)await toggleBookmark('outing',item);return}
@@ -1062,7 +1102,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.7.4';
+const APP_VERSION='2.8.0';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
