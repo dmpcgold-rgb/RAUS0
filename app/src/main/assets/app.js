@@ -468,9 +468,9 @@ async function requestEventFriendship(eventId){
 }
 function mutualLike(id){if(demoMode())return state.demoDatingLikes[id]==='match';return state.datingLikes.some(l=>l.liker_id===myId()&&l.liked_id===id)&&state.datingLikes.some(l=>l.liker_id===id&&l.liked_id===myId())}
 function openChat(id){const p=availablePeople().find(p=>p.id===id);if(!p)return;if(connection(p)!=='accepted'&&!mutualLike(id)){toast('Chat erst nach bestätigtem Kontakt oder gegenseitigem Dating-Like.');return}state.currentChat=id;modal(`Chat mit ${p.display_name}`,`<div id="chatMessages" class="chat-board"></div><form id="chatForm" class="sendline"><input id="chatInput" maxlength="2000" required placeholder="Nachricht schreiben …" autocomplete="off"><button type="submit">➤</button></form><p class="quiet">${demoMode()?'Demo: Die Nachrichten bleiben auf diesem Gerät und erreichen keine andere Person.':'Nur du und dein Kontakt können diese Nachrichten lesen.'}</p>`);loadChat();$('chatForm').onsubmit=sendChat}
-async function loadChat(){if(!$('chatMessages'))return;let msgs;if(demoMode())msgs=state.demoMessages[state.currentChat]||[];else{const {data,error}=await api.from('messages').select('*').or(`and(sender_id.eq.${myId()},recipient_id.eq.${state.currentChat}),and(sender_id.eq.${state.currentChat},recipient_id.eq.${myId()})`).order('created_at',{ascending:true}).limit(100);if(error){toast(error.message);return}msgs=data||[]}
+async function loadChat(){if(!$('chatMessages'))return;let msgs;if(demoMode())msgs=state.demoMessages[state.currentChat]||[];else{const {data,error}=await api.from('rauso_messages').select('*').or(`and(sender_id.eq.${myId()},recipient_id.eq.${state.currentChat}),and(sender_id.eq.${state.currentChat},recipient_id.eq.${myId()})`).order('created_at',{ascending:true}).limit(100);if(error){toast(error.message);return}msgs=data||[]}
  $('chatMessages').innerHTML=msgs.map(m=>`<div class="bubble ${m.sender_id===myId()?'mine':''}">${esc(m.body)}<small>${new Date(m.created_at).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})}</small></div>`).join('')||'<div class="quiet">Noch keine Nachrichten.</div>';$('chatMessages').scrollTop=$('chatMessages').scrollHeight}
-async function sendChat(e){e.preventDefault();if(!mustVerify('Nachrichten schreiben'))return;const body=$('chatInput').value.trim();if(!body||!state.currentChat)return;try{if(demoMode()){(state.demoMessages[state.currentChat]??=[]).push({sender_id:myId(),body,created_at:new Date().toISOString()});persist()}else{const {error}=await api.from('messages').insert({sender_id:myId(),recipient_id:state.currentChat,body});if(error)throw error}$('chatInput').value='';await loadChat()}catch(err){toast(err.message)}}
+async function sendChat(e){e.preventDefault();if(!mustVerify('Nachrichten schreiben'))return;const body=$('chatInput').value.trim();if(!body||!state.currentChat)return;try{if(demoMode()){(state.demoMessages[state.currentChat]??=[]).push({sender_id:myId(),body,created_at:new Date().toISOString()});persist()}else{const {error}=await api.from('rauso_messages').insert({sender_id:myId(),recipient_id:state.currentChat,body});if(error)throw error}$('chatInput').value='';await loadChat()}catch(err){toast(err.message)}}
 function personOptions(id){const p=availablePeople().find(p=>p.id===id);if(!p)return;modal(`${p.display_name} · Optionen`,`<div class="stack"><p class="quiet">Du kannst Nutzer blockieren oder unangemessenes Verhalten melden.</p><button id="blockPerson" class="outline-btn">⛔ ${demoMode()?'Testprofil ausblenden':'Nutzer blockieren'}</button><button id="reportPerson" class="outline-btn">⚑ Profil melden</button></div>`);$('blockPerson').onclick=()=>blockPerson(id);$('reportPerson').onclick=()=>reportPerson(id)}
 async function blockPerson(id){try{if(demoMode()){state.demoBlocks[id]=true;persist()}else{const {error}=await api.from('blocks').insert({blocker_id:myId(),blocked_id:id});if(error)throw error;await loadSocial()}closeModal();renderMessages();toast('Profil ausgeblendet.')}catch(err){toast(err.message)}}
 function reportPerson(id){modal('Profil melden',`<form id="reportForm" class="stack"><div class="input-group"><label for="reason">Grund der Meldung</label><textarea id="reason" required minlength="5" maxlength="500" placeholder="Beschreibe das Problem"></textarea></div><button class="primary-btn" type="submit">Meldung senden</button></form>`);$('reportForm').onsubmit=async e=>{e.preventDefault();if(demoMode()){toast('Demo: Meldung wurde nicht an einen Server gesendet.');closeModal();return}const {error}=await api.from('reports').insert({reporter_id:myId(),target_id:id,reason:$('reason').value.trim()});if(error)toast(error.message);else{closeModal();toast('Meldung eingereicht.')}}}
@@ -497,18 +497,74 @@ async function resendConfirmationEmail(){
 }
 async function runAuth(signup){const email=$('authEmail').value,password=$('authPassword').value;const {data,error}=signup?await api.auth.signUp({email,password,options:{emailRedirectTo:'rauso://auth/callback'}}):await api.auth.signInWithPassword({email,password});if(error){toast(error.message);return}closeModal();if(data.session){await refreshUser();toast('Angemeldet.')}else toast('Bitte bestätige deine E-Mail-Adresse.');}
 async function logout(){await api.auth.signOut();state.user=null;state.profile=null;state.outings=[];state.people=[];state.connections=[];switchTab('profile')}
-async function refreshUser(){const {data:{user}}=await api.auth.getUser();state.user=user||null;if(!user){state.profile=null;return}const {data,error}=await api.from('rauso_profiles').select('*').eq('id',user.id).maybeSingle();if(error)console.error(error);if(data)state.profile=data;else{state.profile={...state.demoProfile,dating_enabled:false,adult_confirmed:false};const {error:e}=await api.from('rauso_profiles').insert({id:user.id,display_name:state.profile.display_name,city:state.profile.city,bio:state.profile.bio});if(e)toast('Bitte Profil prüfen: '+e.message)}$('datingNav').classList.toggle('hidden',!state.profile?.dating_enabled);await Promise.all([loadOutings(),loadSocial(),loadBookmarks()]);renderProfile()}
+async function refreshUser(){const {data:{user}}=await api.auth.getUser();state.user=user||null;if(!user){state.profile=null;return}const {data,error}=await api.from('rauso_profiles').select('*').eq('id',user.id).maybeSingle();if(error)console.error(error);if(data)state.profile=data;else{state.profile={...state.demoProfile,dating_enabled:false,adult_confirmed:false};const {error:e}=await api.from('rauso_profiles').insert({id:user.id,display_name:state.profile.display_name,city:state.profile.city,bio:state.profile.bio});if(e)toast('Bitte Profil prüfen: '+e.message)}$('datingNav').classList.toggle('hidden',!state.profile?.dating_enabled);await Promise.all([loadOutings(),loadSocial(),loadBookmarks()]);await pollRausoNotifications(false);renderProfile()}
 
 const configV16 = config || {};
 async function requireUserFor(feature){if(!state.user){showAuth();toast('Bitte für '+feature+' anmelden.');return false}return true}
 async function openWishlist(id){const {data,error}=await api.from('wishlist_items').select('id,place_id,place_name,notes').eq('wishlist_id',id);modal('Wunschliste',`<div class="stack">${error?esc(error.message):(data||[]).map(x=>`<div class="surface">${esc(x.place_name)} · ${esc(x.notes||'')}</div>`).join('')||'Liste ist leer.'}<form id="addWish"><input id="wishPlace" required maxlength="120" placeholder="Ort / Ausflugsziel"><button class="primary-btn">Ort hinzufügen</button></form></div>`);$('addWish').onsubmit=async e=>{e.preventDefault();const {error}=await api.from('wishlist_items').insert({wishlist_id:id,place_name:$('wishPlace').value.trim(),added_by:myId()});if(error)toast(error.message);else openWishlist(id)}}
-async function renderNotifications(){const el=$('notificationsContent');if(!state.user){el.innerHTML='<div class="surface">Für persönliche Benachrichtigungen bitte anmelden.</div>';return}
- const {data,error}=await api.from('rauso_notifications').select('id,type,body,is_read,created_at').order('created_at',{ascending:false}).limit(80);
- if(error){el.innerHTML='<div class="status-banner">Benachrichtigungen nicht verfügbar: '+esc(error.message)+'</div>';return}
- el.innerHTML=`<div class="surface"><h2>Meine Mitteilungen</h2><p class="quiet">In-App-Benachrichtigungen. Handy-Push benötigt eine eigene Firebase-Konfiguration.</p><button id="readAllNotifs" class="outline-btn">Alle als gelesen markieren</button></div>${(data||[]).map(n=>`<article class="surface ${n.is_read?'':'unread-notification'}"><strong>${esc(n.type)}</strong><p>${esc(n.body)}</p><small>${esc(fmt(n.created_at))}</small>${n.is_read?'':`<button class="small-btn" data-notif-read="${esc(n.id)}">Als gelesen markieren</button>`}</article>`).join('')||'<div class="empty">Noch keine Mitteilungen.</div>'}`;
- el.querySelectorAll('[data-notif-read]').forEach(b=>b.onclick=async()=>{const {error}=await api.from('rauso_notifications').update({is_read:true}).eq('id',b.dataset.notifRead);if(error)toast(error.message);else renderNotifications()});
- $('readAllNotifs').onclick=async()=>{const {error}=await api.from('rauso_notifications').update({is_read:true}).eq('user_id',myId()).eq('is_read',false);if(error)toast(error.message);else renderNotifications()};
+
+let rausoNotificationKnown=new Set();
+let rausoNotificationInitialized=false;
+let rausoNotificationPolling=false;
+async function pollRausoNotifications(announce=true){
+ if(!state.user||!api||rausoNotificationPolling||document.hidden)return;
+ rausoNotificationPolling=true;
+ try{
+  const {data,error}=await api.from('rauso_notifications')
+   .select('id,type,body,is_read,created_at,actor_id,outing_id')
+   .eq('user_id',myId()).order('created_at',{ascending:false}).limit(80);
+  if(error){console.warn('Notifications:',error.message);return}
+  const notifications=data||[];
+  const unread=notifications.filter(n=>!n.is_read);
+  const badge=$('notificationCount');
+  if(badge){badge.textContent=unread.length>99?'99+':String(unread.length);badge.classList.toggle('hidden',unread.length===0)}
+  const newItems=unread.filter(n=>!rausoNotificationKnown.has(n.id));
+  for(const n of notifications)rausoNotificationKnown.add(n.id);
+  if(rausoNotificationInitialized && announce && newItems.length){
+   toast('🔔 '+newItems[0].body+(newItems.length>1?' · +'+(newItems.length-1)+' weitere':''));
+  }
+  rausoNotificationInitialized=true;
+  if(state.tab==='notifications')drawRausoNotifications(notifications);
+ }catch(e){console.warn('Benachrichtigungen:',e.message)}
+ finally{rausoNotificationPolling=false}
 }
+async function renderNotifications(){
+ const el=$('notificationsContent');if(!el)return;
+ if(!state.user){el.innerHTML='<div class="surface">Bitte anmelden, um Benachrichtigungen zu erhalten.</div>';return}
+ const {data,error}=await api.from('rauso_notifications')
+  .select('id,type,body,is_read,created_at,actor_id,outing_id')
+  .eq('user_id',myId()).order('created_at',{ascending:false}).limit(80);
+ if(error){el.innerHTML='<div class="status-banner">Benachrichtigungen nicht verfügbar: '+esc(error.message)+'</div>';return}
+ drawRausoNotifications(data||[]);
+}
+function drawRausoNotifications(notifications){
+ const el=$('notificationsContent');if(!el)return;
+ el.innerHTML='<div class="surface"><h2>🔔 Benachrichtigungen</h2><p class="quiet">Neue Freundschaftsanfragen, Nachrichten, Zusagen und Absagen erscheinen hier während die App geöffnet ist. Benachrichtigungen bei geschlossener App erfordern zusätzlich einen Push-Dienst.</p><button id="readAllNotifs" class="outline-btn">Alle als gelesen markieren</button></div>'+
+  (notifications.length?notifications.map(n=>{
+   const action=n.type==='friend_request'&&n.actor_id?
+     '<div class="notification-actions"><button class="small-btn join-btn" data-accept-request="'+esc(n.actor_id)+'">✓ Annehmen</button><button class="small-btn" data-decline-request="'+esc(n.actor_id)+'">✕ Ablehnen</button></div>':'';
+   return '<article class="surface notification-item '+(n.is_read?'':'unread-notification')+'"><strong>'+esc(n.type==='friend_request'?'👥 Freundschaftsanfrage':n.type==='friend_accepted'?'👥 Freundschaft bestätigt':n.type==='friend_declined'?'👥 Anfrage abgelehnt':n.type==='message'?'✉ Neue Nachricht':n.type==='rsvp'?'📅 Veranstaltung':'🔔 Mitteilung')+'</strong>'+
+    '<p>'+esc(n.body)+'</p><small>'+esc(fmt(n.created_at))+'</small>'+action+
+    (n.is_read?'':'<button class="small-btn" data-notif-read="'+esc(n.id)+'">Gelesen</button>')+
+    '</article>';
+  }).join(''):'<div class="empty">Noch keine Mitteilungen.</div>');
+ el.querySelectorAll('[data-accept-request]').forEach(b=>b.onclick=async()=>{
+  await acceptContact(b.dataset.acceptRequest);await renderNotifications();await pollRausoNotifications(false)
+ });
+ el.querySelectorAll('[data-decline-request]').forEach(b=>b.onclick=async()=>{
+  await declineContact(b.dataset.declineRequest);await renderNotifications();await pollRausoNotifications(false)
+ });
+ el.querySelectorAll('[data-notif-read]').forEach(b=>b.onclick=async()=>{
+  const {error}=await api.from('rauso_notifications').update({is_read:true}).eq('id',b.dataset.notifRead).eq('user_id',myId());
+  if(error)toast(error.message);else{await renderNotifications();await pollRausoNotifications(false)}
+ });
+ const all=$('readAllNotifs');if(all)all.onclick=async()=>{
+  const {error}=await api.from('rauso_notifications').update({is_read:true}).eq('user_id',myId()).eq('is_read',false);
+  if(error)toast(error.message);else{await renderNotifications();await pollRausoNotifications(false)}
+ };
+}
+setInterval(()=>{if(!document.hidden&&state.user)pollRausoNotifications(true)},7500);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.user)pollRausoNotifications(false)});
 async function renderShows(){const el=$('showsContent');el.innerHTML=`<div class="surface stack"><h2>Verlässliche Veranstaltungstermine</h2><p>Derzeit kein lizenzierter Datenlieferant konfiguriert. Es werden ausdrücklich keine erfundenen Filmzeiten, Tickets oder freien Plätze angezeigt.</p><button id="showPlaceSearch" class="outline-btn">🎬 Kinos in meiner Region finden</button><button id="showEvents" class="outline-btn">Offizielle Veranstaltungsseiten öffnen</button></div>`;$('showPlaceSearch').onclick=()=>{switchTab('discover');document.querySelector('[data-cat="kino"]').click()};$('showEvents').onclick=()=>window.open('https://www.wien.info/de/aktuell/veranstaltungen','_blank','noopener')}
 async function renderAdmin(){const el=$('adminContent');if(!state.user){el.innerHTML='<div class="status-banner">Anmeldung erforderlich.</div>';return}const {data:role,error:roleError}=await api.from('app_admins').select('user_id,role').eq('user_id',myId()).maybeSingle();if(roleError||!role){el.innerHTML='<div class="status-banner">Kein administrativer Zugriff. Die Berechtigung wird vom Server überprüft.</div>';return}const {data,error}=await api.from('reports').select('id,reason,created_at,status').order('created_at',{ascending:false}).limit(100);el.innerHTML=`<div class="surface stack"><h2>RAUSO-Verwaltung · ${role.role==='owner'?'Hauptadministratorin':'Administrator'}</h2><p class="quiet">Beide Rollen dürfen Meldungen bearbeiten. Rollen werden ausschließlich serverseitig vergeben. Die Hauptadministratorin bleibt für Betreiberentscheidungen zuständig.</p><h2>Offene Meldungen</h2>${error?esc(error.message):(data||[]).map(r=>`<div class="moderation-card"><strong>${esc('Meldung')}</strong><p>${esc(r.reason||'')}</p><small>${esc(r.status||'offen')} · ${fmt(r.created_at)}</small><button class="outline-btn" data-close-report="${esc(r.id)}">Als bearbeitet markieren</button></div>`).join('')||'<p>Keine Meldungen.</p>'}</div>`;el.querySelectorAll('[data-close-report]').forEach(b=>b.onclick=async()=>{const {error}=await api.from('reports').update({status:'resolved'}).eq('id',b.dataset.closeReport);if(error)toast(error.message);else renderAdmin()})}
 
@@ -664,7 +720,7 @@ function restoreDiscoverySettings(){
  if(price&&['','free','priced'].includes(saved.price)){price.value=saved.price;state.priceFilter=saved.price}
 }
 
-function init(){restoreDiscoverySettings();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>switchTab('profile');$('heroPlan').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
+function init(){restoreDiscoverySettings();if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>switchTab('profile');$('heroPlan').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
  $('categorySelect').onchange=e=>{document.querySelector('[data-cat="'+e.target.value+'"]')?.click()};
  $('loadPlaces').onclick=queryPlaces;$('priceFilter').onchange=e=>{state.priceFilter=e.target.value;saveDiscoverySettings();renderPlaces()};state.places=[];$('datingNav').classList.toggle('hidden',!profile().dating_enabled);renderPlaces();renderEvents();renderFamily();renderMyMeetings();renderMessages();renderProfile();injectProfileExtras();queryPlaces();if(hasBackend){api.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(()=>refreshUser().then(()=>{updateOnlinePresence();switchTab(state.tab)}),0)});refreshUser().then(()=>switchTab(state.tab))}
 }
