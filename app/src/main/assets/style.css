@@ -1571,3 +1571,217 @@ html[data-rauso-theme="orange"] .bottomnav .nav-item small{
 @media(prefers-reduced-motion:reduce){
  html[data-rauso-theme="orange"] .rauso-place-link :is(.featured-image,.place-cover){transition:none!important}
 }
+
+
+/* RAUSO 2.9.1 — screenshot-inspired Carbon/Orange mobile layout.
+   Existing controls and user flows remain; colors adapt to current theme. */
+html[data-rauso-theme="orange"] #discoverScreen{
+ padding:10px 13px 26px!important;
+}
+html[data-rauso-theme="orange"] .hero{
+ min-height:0!important;
+ padding:23px 18px 16px!important;
+ margin:2px 0 21px!important;
+ border:1.5px solid #ff8637!important;
+ border-radius:23px!important;
+ background:
+   linear-gradient(90deg,rgba(6,7,10,.95) 0%,rgba(8,8,11,.80) 49%,rgba(7,7,10,.25) 100%),
+   linear-gradient(0deg,rgba(3,3,5,.76),transparent 63%),
+   url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=75') center 48%/cover no-repeat!important;
+ box-shadow:0 0 13px #fa701a44,inset 0 0 0 1px #ffaf6040!important;
+}
+html[data-rauso-theme="orange"] .hero::after{background:linear-gradient(0deg,rgba(6,6,9,.7),transparent 55%)!important}
+html[data-rauso-theme="orange"] .hero-content{max-width:100%}
+html[data-rauso-theme="orange"] .hero-label{font-size:9px!important;letter-spacing:2.2px!important;margin-bottom:8px!important}
+html[data-rauso-theme="orange"] .hero h1{
+ font-size:clamp(29px,9vw,47px)!important;
+ line-height:1.015!important;
+ margin:8px 0 8px!important;letter-spacing:-1.3px!important;
+}
+html[data-rauso-theme="orange"] .hero p{
+ font-size:11.5px!important;line-height:1.4!important;
+ max-width:285px;margin:10px 0 12px!important;
+}
+html[data-rauso-theme="orange"] .hero-birds{max-width:154px;width:37%;right:0;top:22px;opacity:.92}
+html[data-rauso-theme="orange"] .rauso-hero-cta{
+ min-height:38px!important;height:38px!important;padding:7px 13px!important;
+ font-size:12px!important;border-radius:11px!important;
+ width:min(100%,255px);max-width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+html[data-rauso-theme="orange"] .rauso-hero-shortcuts{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:6px;margin-top:12px;
+}
+html[data-rauso-theme="orange"] .rauso-hero-shortcuts button{
+ height:37px;min-width:0;padding:5px 3px;
+ border:1px solid #aa6140;border-radius:10px;
+ background:rgba(15,13,16,.87);color:#f4e9e5;
+ font-size:10px;display:flex;align-items:center;justify-content:center;gap:4px;
+ white-space:nowrap;
+}
+html[data-rauso-theme="orange"] .rauso-hero-shortcuts button span{font-size:18px;line-height:1;color:#ff8d30}
+html[data-rauso-theme="orange"] .rauso-hero-shortcuts button:focus-visible{outline:2px solid #ffd18c;outline-offset:2px}
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ margin:7px 0 0!important;gap:6px!important;
+}
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status button{
+ min-height:27px!important;height:27px!important;
+ padding:2px 5px!important;font-size:9px!important;
+ border-radius:9px!important;opacity:.96;
+}
+html[data-rauso-theme="orange"] .discover-heading{
+ gap:6px!important;margin-bottom:10px!important;
+}
+html[data-rauso-theme="orange"] .discover-heading h2{font-size:clamp(19px,5vw,26px)!important;white-space:normal}
+html[data-rauso-theme="orange"] .discover-heading p{font-size:10.5px!important}
+html[data-rauso-theme="orange"] .section-birds{width:47px;min-width:0;height:34px;flex:0 1 47px}
+html[data-rauso-theme="orange"] .discover-heading .outline-btn{padding:5px 8px!important;min-width:58px;min-height:34px;font-size:11px}
+html[data-rauso-theme="orange"] .filters{
+ display:grid!important;grid-template-columns:1fr 1fr!important;
+ gap:8px!important;margin-bottom:8px!important;
+}
+html[data-rauso-theme="orange"] .filters>.field:first-child,
+html[data-rauso-theme="orange"] .filters>.field.small-field,
+html[data-rauso-theme="orange"] .filters>.field.field-category{
+ grid-column:auto!important;grid-row:auto!important;
+ min-width:0!important;margin:0!important;
+}
+html[data-rauso-theme="orange"] .filters>.field{min-width:0;min-height:50px!important;padding:8px 10px!important}
+html[data-rauso-theme="orange"] .filters>.field span{font-size:10px!important}
+html[data-rauso-theme="orange"] .filters>.field select{font-size:11px!important;max-width:100%}
+html[data-rauso-theme="orange"] .searchbox{
+ height:43px!important;margin:0 0 9px!important;border-radius:11px!important;
+ border-color:#aa6343!important;
+}
+html[data-rauso-theme="orange"] .searchbox input{font-size:12px!important}
+html[data-rauso-theme] #categoryStrip.category-strip{
+ display:flex!important;align-items:center!important;
+ gap:7px!important;padding:3px 2px 9px!important;
+ margin:0 0 6px!important;overflow-x:auto!important;scroll-snap-type:x proximity;
+}
+html[data-rauso-theme] #categoryStrip .chip{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 auto!important;width:auto!important;min-width:0!important;max-width:165px!important;
+ height:36px!important;min-height:36px!important;
+ padding:6px 9px!important;
+ border:1.3px solid var(--category-color)!important;border-radius:12px!important;
+ background:#181418!important;background-image:none!important;
+ color:#f9f3ef!important;font-size:9px!important;font-weight:700!important;
+ letter-spacing:0!important;line-height:1.05!important;white-space:nowrap!important;
+ box-shadow:inset 0 1px 0 #ffffff12!important;transform:none!important;
+ scroll-snap-align:start;
+}
+html[data-rauso-theme] #categoryStrip .chip.selected{
+ border-width:1.8px!important;
+ background:color-mix(in srgb,var(--category-color) 39%,#1a1415)!important;
+ box-shadow:0 0 10px var(--category-color),inset 0 0 4px #fff2!important;
+ transform:none!important;
+}
+#categoryStrip .chip[data-cat="thermen"],.place-card[data-venue-category="thermen"],.featured-card[data-venue-category="thermen"]{--category-color:#ff8f2b;--category-fill:#332116}
+#categoryStrip .chip[data-cat="restaurants"],.place-card[data-venue-category="restaurants"],.featured-card[data-venue-category="restaurants"]{--category-color:#ef5764;--category-fill:#321b22}
+#categoryStrip .chip[data-cat="kino"],.place-card[data-venue-category="kino"],.featured-card[data-venue-category="kino"]{--category-color:#ba68e9;--category-fill:#291934}
+#categoryStrip .chip[data-cat="ausfluege"],.place-card[data-venue-category="ausfluege"],.featured-card[data-venue-category="ausfluege"]{--category-color:#21c9ac;--category-fill:#12312d}
+#categoryStrip .chip[data-cat="familie"],.place-card[data-venue-category="familie"],.featured-card[data-venue-category="familie"]{--category-color:#608bf9;--category-fill:#202948}
+html[data-rauso-theme="orange"] .shortcut-region-row{margin-bottom:8px!important;gap:5px!important}
+html[data-rauso-theme="orange"] .shortcut-region-row :is(.location-shortcut,.region-details summary){
+ min-height:31px;padding:6px 8px;font-size:10px!important;
+}
+html[data-rauso-theme="orange"] .featured-section{margin:8px 0 17px!important}
+html[data-rauso-theme="orange"] .featured-head h3{font-size:12.5px!important}
+html[data-rauso-theme="orange"] .featured-head span{font-size:9px!important}
+html[data-rauso-theme="orange"] .vienna-highlights,
+html[data-rauso-theme="orange"] .place-list{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;
+}
+html[data-rauso-theme="orange"] :is(.place-card,.featured-card)[data-venue-category]{
+ height:clamp(172px,46vw,214px)!important;min-width:0;
+ border:1.4px solid var(--category-color)!important;border-radius:15px!important;
+ background:#111217!important;box-shadow:0 3px 12px #0008!important;
+ overflow:hidden;
+}
+html[data-rauso-theme="orange"] :is(.place-card,.featured-card)[data-venue-category]::after{
+ content:"";position:absolute;inset:28% 0 0;
+ background:linear-gradient(0deg,#070709f5,#070709a4 54%,transparent 100%)!important;
+ z-index:1;pointer-events:none;
+}
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image).rauso-place-create{
+ background-color:var(--category-fill,#171719)!important;
+ background-image:linear-gradient(0deg,rgba(4,5,8,.40),rgba(4,5,8,.04))!important;
+ background-size:cover!important;background-position:center!important;
+}
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category="thermen"] :is(.place-cover,.featured-image).rauso-place-create{
+ background-image:linear-gradient(0deg,rgba(2,7,10,.3),transparent),url('https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=550&q=75')!important;
+}
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category="restaurants"] :is(.place-cover,.featured-image).rauso-place-create{
+ background-image:linear-gradient(0deg,rgba(2,7,10,.3),transparent),url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=550&q=75')!important;
+}
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category="kino"] :is(.place-cover,.featured-image).rauso-place-create{
+ background-image:linear-gradient(0deg,rgba(2,7,10,.3),transparent),url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=550&q=70')!important;
+}
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image)::after{
+ display:block!important;content:"Symbolbild"!important;
+ position:absolute!important;left:auto!important;right:6px!important;top:6px!important;
+ font-size:8px!important;z-index:1;color:#ded6cf;background:#070708b3;padding:2px 5px;border-radius:5px;
+}
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category] .featured-text{bottom:35px!important;left:0;right:0;padding:7px 9px!important}
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category] .featured-text h4{font-size:13px!important}
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category] .featured-text p{font-size:9px!important}
+html[data-rauso-theme="orange"] .place-card .place-header{bottom:36px!important}
+html[data-rauso-theme="orange"] .rauso-place-link .rauso-venue-site{
+ border-width:1px!important;box-shadow:none!important;min-height:25px!important;height:25px!important;
+ font-size:9px!important;padding:3px 6px!important;
+}
+html[data-rauso-theme="orange"] .rauso-place-link .rauso-create-venue-btn{
+ width:27px!important;min-width:27px!important;height:27px!important;min-height:27px!important;
+ border-width:1px!important;box-shadow:0 0 6px #0006!important;
+}
+html[data-rauso-theme="orange"] .rauso-place-link .venue-distance{font-size:9px!important;padding:4px 6px!important;min-height:22px!important}
+html[data-rauso-theme] #headerMessages{
+ position:relative!important;margin-right:auto!important;
+ flex:0 0 43px!important;width:43px!important;min-width:43px!important;max-width:43px!important;
+ height:43px!important;min-height:43px!important;
+ padding:0!important;display:grid!important;place-items:center!important;
+ color:#ff961f!important;border:1.5px solid #ff9227!important;border-radius:12px!important;
+ background:linear-gradient(135deg,#24150d,#120f12)!important;
+ font-size:29px!important;font-weight:500!important;
+ box-shadow:0 0 9px #ff871e55,inset 0 0 7px #ff7f1740!important;
+}
+html[data-rauso-theme] #headerMessages .rauso-neon-envelope{
+ color:#ffa334!important;font-size:29px!important;line-height:1!important;
+ text-shadow:0 0 4px #ffab2b,0 0 12px #ff6e0a,0 0 20px #ff500580;
+}
+html[data-rauso-theme] #headerMessages .rauso-header-message-count{position:absolute;top:-7px;right:-7px}
+html[data-rauso-theme] .bottomnav .rauso-created-exclamation{
+ color:#58acff!important;font-size:24px!important;font-weight:900!important;text-shadow:0 0 8px #2a90ff8c;
+}
+html[data-rauso-theme] .bottomnav .rauso-nav-smile{
+ color:#ff972c!important;display:grid!important;place-items:center!important;
+ filter:drop-shadow(0 0 3px #ff8a2560);
+}
+html[data-rauso-theme] .bottomnav .rauso-nav-smile svg{display:block;width:24px;height:24px}
+html[data-rauso-theme] .bottomnav .rauso-nav-star{
+ color:#ffc144!important;font-size:24px!important;filter:drop-shadow(0 0 5px #ffa8258a);
+}
+html[data-rauso-theme] .bottomnav .rauso-nav-dating-heart{
+ color:#ed4157!important;font-size:19px!important;filter:drop-shadow(0 0 3px #ed365d70);
+}
+html[data-rauso-theme] .bottomnav .rauso-nav-family{
+ color:#fff!important;display:grid!important;place-items:center!important;
+}
+html[data-rauso-theme] .bottomnav .rauso-nav-family svg{display:block;width:25px;height:25px}
+html[data-rauso-theme="light"] .bottomnav .rauso-nav-family{color:#101820!important}
+html[data-rauso-theme] .bottomnav .nav-item[data-tab="collections"] .nav-icon{line-height:1}
+html[data-rauso-theme] .bottomnav .nav-item{min-height:60px}
+html[data-rauso-theme] .bottomnav .nav-item.active{border-radius:13px!important}
+@media(max-width:370px){
+ html[data-rauso-theme] #headerMessages{flex-basis:40px!important;width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important}
+ html[data-rauso-theme] #headerMessages .rauso-neon-envelope{font-size:27px!important}
+ html[data-rauso-theme="orange"] .hero{padding:20px 15px 15px!important}
+ html[data-rauso-theme="orange"] .hero h1{font-size:30px!important}
+ html[data-rauso-theme="orange"] .rauso-hero-shortcuts button{font-size:9px}
+ html[data-rauso-theme] #categoryStrip .chip{height:34px!important;min-height:34px!important;font-size:8.5px!important;padding:5px 7px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-rauso-theme="orange"] .rauso-place-link :is(.place-cover,.featured-image){transition:none!important}
+}
