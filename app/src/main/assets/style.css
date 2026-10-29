@@ -825,3 +825,113 @@ html[data-rauso-theme="orange"] #appearanceBtn{
 
 /* Keep the illustrative-image label separate from the top-right map link. */
 html[data-rauso-theme="orange"] .featured-image::after{left:6px!important;right:auto!important;top:6px!important;z-index:2}
+
+
+/* RAUSO 2.6 — compact two-action top header and Android inset-safe screen */
+html[data-rauso-theme="orange"] .compact-topbar{
+ min-height:57px;height:57px;padding:7px 14px!important;
+ justify-content:space-between;gap:12px;
+}
+html[data-rauso-theme="orange"] .main-header-bookmarks,
+html[data-rauso-theme="orange"] .face-profile-btn,
+html[data-rauso-theme="orange"] .rauso-notification-bell{
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ height:41px;min-height:41px;width:auto;flex:0 0 auto;
+ padding:7px 11px;background:linear-gradient(140deg,#241818,#111214);
+ border:1px solid #ed8029;border-radius:13px;
+ color:#ffae48;font-size:15px;font-weight:750;
+ box-shadow:0 0 10px rgba(255,126,28,.2)
+}
+html[data-rauso-theme="orange"] .main-header-bookmarks{margin-right:auto}
+html[data-rauso-theme="orange"] .main-header-bookmarks .header-bookmarks-text{font-size:12px}
+html[data-rauso-theme="orange"] .rauso-notification-bell{position:relative;width:40px;padding:0;font-size:20px}
+html[data-rauso-theme="orange"] .face-profile-btn{min-width:46px;max-width:130px;font-size:21px}
+html[data-rauso-theme="orange"] .topbar-profile-label{font-size:11px;color:#f5d9bd;white-space:nowrap}
+html[data-rauso-theme="orange"] .notification-badge{
+ display:grid;place-items:center;position:absolute;top:-6px;right:-7px;
+ min-width:19px;height:19px;padding:0 4px;border-radius:15px;
+ font-size:10px;font-weight:900;color:#1b0b05;
+ background:#ffad27;border:1px solid #ffdba3;
+ box-shadow:0 0 12px #ff8c26;
+}
+html[data-rauso-theme="orange"] .notification-badge.hidden{display:none!important}
+html[data-rauso-theme="orange"] .event-author-link{
+ display:inline-flex;align-items:center;gap:5px;
+ background:transparent;border:0;border-bottom:1px solid #e47e37;
+ color:#ffbd83;font-size:inherit;font-weight:800;padding:2px 3px;cursor:pointer;
+ max-width:100%;text-align:left
+}
+html[data-rauso-theme="orange"] .event-author-link:focus-visible{
+ outline:2px solid #ffab42;outline-offset:3px
+}
+html[data-rauso-theme="orange"] .organizer-profile{gap:12px}
+html[data-rauso-theme="orange"] .organizer-avatar{
+ width:64px;height:64px;flex:0 0 64px;object-fit:cover;border-radius:18px;
+ border:2px solid #fa891a
+}
+html[data-rauso-theme="orange"] .event-friend{border-color:#ff9d41}
+html[data-rauso-theme="orange"] .notification-item.unread-notification{
+ border-color:#f49c34;box-shadow:0 0 15px #ff901c34
+}
+html[data-rauso-theme="orange"] .notification-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+html[data-rauso-theme="orange"] .photo-review-status{margin:5px;color:#ffb861;font-size:11px}
+html[data-rauso-theme="orange"] .moderation-photo img{
+ display:block;max-height:280px;max-width:100%;object-fit:contain;border-radius:12px;margin:6px auto
+}
+html[data-rauso-theme="orange"] .star-btn{
+ font-size:16px!important;min-width:29px;min-height:29px;
+ width:30px;height:30px;padding:2px!important;
+ border-radius:11px;line-height:1;
+ background:rgba(15,10,9,.67)!important;color:#efdacc;
+}
+html[data-rauso-theme="orange"] .star-btn.is-liked{
+ color:#ffaf29!important;background:rgba(73,33,10,.85)!important;
+ text-shadow:0 0 7px #ff8523;box-shadow:0 0 11px #ff9d2770!important
+}
+html[data-rauso-theme="orange"] .featured-heart.star-btn{
+ width:31px;min-width:31px;height:31px;min-height:31px;right:6px;bottom:6px;
+ font-size:19px!important;border-radius:50%
+}
+html[data-rauso-theme="orange"] .venue-distance{
+ display:inline-flex!important;align-items:center;justify-content:center;
+ position:absolute;right:6px;top:6px;z-index:5;
+ background:rgba(13,14,16,.86)!important;color:#fff7e7!important;
+ border:1px solid rgba(255,148,65,.65)!important;
+ box-shadow:0 0 6px #ff7d2222;border-radius:12px;
+ white-space:nowrap;line-height:1.2;font-size:10px!important;
+ min-height:25px;padding:5px 7px!important;pointer-events:none
+}
+html[data-rauso-theme="orange"] .osm-distance{right:7px;top:7px}
+html[data-rauso-theme="orange"] .place-cover-label,
+html[data-rauso-theme="orange"] .featured-image::after{right:auto!important;left:6px!important}
+html[data-rauso-theme="orange"] .rauso-place-link{cursor:pointer}
+html[data-rauso-theme="orange"] .rauso-place-link:focus-visible{
+ outline:3px solid #ffae53;outline-offset:3px
+}
+html[data-rauso-theme="orange"] .bookmark-open{
+ flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;
+ border:0;background:none;color:var(--fg);padding:5px 8px;cursor:pointer;
+ gap:4px;text-align:left;position:relative
+}
+html[data-rauso-theme="orange"] .bookmark-open strong{font-size:14px}
+html[data-rauso-theme="orange"] .bookmark-open .quiet{font-size:11px}
+html[data-rauso-theme="orange"] .bookmark-arrow{position:absolute;right:7px;top:5px;font-size:25px;color:#ff992f}
+html[data-rauso-theme="orange"] .bookmark-remove{flex:0 0 31px}
+html[data-rauso-theme="orange"] .bookmark-row{align-items:center;padding:9px 10px}
+html[data-rauso-theme="orange"] .bottomnav .nav-item[data-tab="dating"]{
+ display:grid!important
+}
+html[data-rauso-theme="orange"] .bottomnav .nav-item small{
+ font-size:8px;line-height:1.15;white-space:normal;word-break:normal;
+ text-align:center;max-width:100%;min-height:17px;
+}
+html[data-rauso-theme="orange"] .bottomnav{gap:1px;padding-left:5px;padding-right:5px}
+html[data-rauso-theme="orange"] .bottomnav .nav-item{min-width:0!important;padding:7px 1px}
+html[data-rauso-theme="orange"] #datingNav.hidden{display:grid!important}
+html[data-rauso-theme="orange"] .photo-public[disabled]{opacity:.5;cursor:not-allowed}
+@media(max-width:400px){
+ html[data-rauso-theme="orange"] .compact-topbar{padding:6px 8px!important;gap:5px}
+ html[data-rauso-theme="orange"] .main-header-bookmarks{padding:5px 8px;max-width:121px}
+ html[data-rauso-theme="orange"] .face-profile-btn{padding:5px 7px}
+ html[data-rauso-theme="orange"] .topbar-profile-label{font-size:10px}
+}
