@@ -836,6 +836,9 @@ function showAuth(){
   '<div class="input-group" id="signupNameWrap" hidden><label for="signupName">Dein Profilname (Pflichtfeld)</label>'+
   '<input id="signupName" minlength="2" maxlength="40" autocomplete="nickname" placeholder="Wie sollen andere dich sehen?">'+
   '<small>Jeder RAUSO-Account benötigt einen selbst gewählten Namen.</small></div>'+
+   '<div class="input-group" id="signupBirthWrap" hidden><label for="signupBirth">Geburtsdatum (Pflichtfeld, später nicht änderbar)</label>'+
+   '<input id="signupBirth" type="date" min="1900-01-01" max="'+new Date().toISOString().slice(0,10)+'">'+
+   '<small>Das Geburtsdatum wird nur für dein Konto gespeichert.</small></div>'+
   '<div class="input-group"><label for="authEmail">E-Mail</label><input id="authEmail" type="email" required autocomplete="email"></div>'+
   '<div class="input-group"><label for="authPassword">Passwort (mind. 8 Zeichen)</label>'+
   '<input id="authPassword" type="password" minlength="8" required autocomplete="current-password"></div>'+
@@ -846,7 +849,7 @@ function showAuth(){
  let register=false;
  $('authForm').onsubmit=e=>{e.preventDefault();runAuth(register)};
  $('signup').onclick=()=>{
-  register=true;$('signupNameWrap').hidden=false;$('signupName').required=true;
+  register=true;$('signupNameWrap').hidden=false;$('signupName').required=true;$('signupBirthWrap').hidden=false;$('signupBirth').required=true;
   $('authSubmit').textContent='Konto registrieren';$('signup').textContent='Zur Anmeldung';
   $('signup').onclick=()=>showAuth();
   $('signupName').focus()
@@ -867,9 +870,11 @@ async function resendConfirmationEmail(){
 async function runAuth(signup){
  const email=$('authEmail')?.value.trim(),password=$('authPassword')?.value;
  const name=signup?$('signupName')?.value.trim():'';
+ const birth=signup?$('signupBirth')?.value:'';
  if(signup&&!rausoValidDisplayName(name)){toast('Profilname verpflichtend: 2–40 Zeichen und kein Platzhalter.');$('signupName').focus();return}
  const options={emailRedirectTo:'rauso://auth/callback'};
- if(signup)options.data={display_name:name};
+ if(signup&&rausoAge(birth)===null){toast('Bitte gültiges Geburtsdatum eintragen.');$('signupBirth').focus();return}
+ if(signup)options.data={display_name:name,birth_date:birth};
  const {data,error}=signup
   ?await api.auth.signUp({email,password,options})
   :await api.auth.signInWithPassword({email,password});
