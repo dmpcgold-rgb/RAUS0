@@ -92,7 +92,7 @@ function switchTab(tab, recordHistory=true){
    rausoTabHistory.push(state.tab);
    if(rausoTabHistory.length>60)rausoTabHistory.shift();
  }
- state.tab=tab;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();if($('headerBookmarks'))$('headerBookmarks').classList.toggle('active',tab==='collections')}
+ state.tab=tab;if($('headerMessages'))$('headerMessages').classList.toggle('active',tab==='messages');document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();if($('headerBookmarks'))$('headerBookmarks').classList.toggle('active',tab==='collections')}
 function rausoBack(){
  const dialog=document.querySelector('#modalRoot .modal-overlay');
  if(dialog){
@@ -528,6 +528,10 @@ function rausoUpdateMessageBadge(){
  const num=rausoInboxMessages.filter(m=>m.recipient_id===myId()&&!m.read_at).length;
  const badge=$('messageUnreadBadge');
  if(badge){badge.textContent=num>99?'99+':String(num);badge.classList.toggle('hidden',num===0)}
+ const headerBadge=$('headerMessageCount');
+ if(headerBadge){headerBadge.textContent=num>99?'99+':String(num);headerBadge.classList.toggle('hidden',num===0)}
+ const headerButton=$('headerMessages');
+ if(headerButton)headerButton.setAttribute('aria-label',num?num+' ungelesene Nachrichten öffnen':'Nachrichten öffnen');
  const button=document.querySelector('.nav-item[data-tab="messages"]');
  if(button)button.setAttribute('aria-label',num?num+' ungelesene Nachrichten':'Nachrichten');
 }
@@ -1147,6 +1151,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(!uiPref.referenceDesign24){uiPref.theme='orange';uiPref.autoTheme=false;uiPref.referenceDesign24=true;saveUi()}
  setAppearance();init();addNavMore();addOfflineState();addAppearanceLink();addReadiness();
  if($('headerFriends'))$('headerFriends').onclick=openFriendsPanel;
+ if($('headerMessages'))$('headerMessages').onclick=()=>switchTab('messages');
  if($('heroBookmarks'))$('heroBookmarks').onclick=()=>switchTab('collections');
  if($('heroGoing'))$('heroGoing').onclick=()=>{state.meetFilter='going';switchTab('myMeetings')};
  if($('heroOrganized'))$('heroOrganized').onclick=()=>{state.meetFilter='organized';switchTab('myMeetings')};

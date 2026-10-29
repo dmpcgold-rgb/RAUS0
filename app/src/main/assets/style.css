@@ -1083,3 +1083,44 @@ body{padding-top:var(--rauso-safe-top)!important}
 #modalRoot .modal-overlay{top:var(--rauso-safe-top)!important;bottom:var(--rauso-safe-bottom)!important}
 #modalRoot .modal{max-height:calc(100dvh - var(--rauso-safe-top) - var(--rauso-safe-bottom) - 28px)!important}
 #toast{bottom:calc(89px + var(--rauso-safe-bottom))!important}
+
+/* RAUSO 2.7.2 — direct message shortcut next to Friends, theme-aware and safe on narrow phones. */
+#headerFriends{margin-right:0!important;flex:0 0 auto}
+#headerMessages{
+ position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ flex:0 0 auto;margin-right:auto;white-space:nowrap;cursor:pointer;
+ min-height:37px;height:37px;padding:4px 9px;
+ border:1px solid var(--rauso-glow);border-radius:12px;
+ background:var(--panel);color:var(--rauso-glow);font-size:12px;font-weight:800;
+ box-shadow:0 0 10px rgba(var(--rauso-glow-rgb),.3)
+}
+#headerMessages.active{box-shadow:0 0 0 1px var(--rauso-glow),0 0 16px rgba(var(--rauso-glow-rgb),.65);background:var(--panel2)}
+#headerMessages .header-message-text{font-size:11px;white-space:nowrap}
+#headerMessages .rauso-header-message-count{
+ position:absolute;top:-7px;right:-6px;display:grid;place-items:center;
+ min-width:18px;height:18px;padding:0 3px;border-radius:10px;
+ background:#ef4545;border:1px solid #ffabab;color:#fff;font-size:10px;font-weight:900;
+ box-shadow:0 0 9px rgba(239,69,69,.55)
+}
+#headerMessages .rauso-header-message-count.hidden{display:none!important}
+html[data-rauso-theme="light"] #headerMessages{background:#f5fff7;color:#18783d}
+html[data-rauso-theme="light"] #headerMessages.active{background:#e3f7e8}
+@media(max-width:420px){
+ html[data-rauso-theme="orange"] .compact-topbar{gap:4px;padding:5px 6px!important}
+ #headerFriends{padding:4px 6px!important}
+ #headerMessages{gap:3px;padding:4px 6px;font-size:11px}
+ #headerMessages .header-message-text{font-size:10px}
+ #accountShortcut{padding:4px 5px!important;gap:3px}
+ #accountShortcutLabel{max-width:54px!important}
+ html[data-rauso-theme="orange"] .rauso-notification-bell{width:34px;min-width:34px}
+ .header-settings-btn{flex:0 0 34px;width:34px}
+}
+@media(max-width:355px){
+ #headerMessages{padding:4px}
+ #headerFriends{padding:4px!important;gap:2px}
+ #headerFriends .header-bookmarks-text{font-size:10px!important}
+ #headerMessages .header-message-text{font-size:10px}
+ #accountShortcutLabel{max-width:26px!important}
+ .header-settings-btn{flex-basis:30px;width:30px}
+ html[data-rauso-theme="orange"] .rauso-notification-bell{width:30px;min-width:30px}
+}
