@@ -59,3 +59,11 @@ assert(html.includes('id="heroCreate"')&&html.includes('id="priceFilter"'),'Miss
 for(const klass of ['rauso-created-exclamation','rauso-nav-smile','rauso-nav-star','rauso-nav-dating-heart','rauso-nav-family'])assert(html.includes(klass),'Missing navigation symbol '+klass);
 assert(css.includes('/* RAUSO 2.9: screenshot-inspired compact discovery')&&css.includes('#headerMessages>span:first-child'),'Missing 2.9 UI styles');
 assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'Price-filter and highlights integration missing');
+
+/* RAUSO 2.9.1: new navigation and shortcuts. */
+for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-nav-dating-heart','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
+ assert(html.includes(cls),'Missing visual token '+cls);
+}
+assert(js.includes("const APP_VERSION='2.9.1'"),'JS version should be 2.9.1');
+assert(js.includes("destination==='friends'")&&js.includes("destination==='events'"),'Hero shortcuts must navigate');
+assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
