@@ -32,7 +32,7 @@ assert(js.includes("rausoHasVenueWebsite(p)?'WEBSEITE ↗':'KARTE ↗'"),'Websit
 assert(js.includes('data-with=')&&js.includes('data-featured-create='),'Create shortcuts missing');
 assert(!js.includes('☆ Unternehmung starten'),'Legacy full text still visible');
 assert(!js.includes('function addAppearanceLink'),'Profile settings tile not removed');
-assert(css.includes('border-radius:50%!important')&&css.includes('var(--category-image)'),'Circular photo categories missing');
+assert(css.includes('html[data-rauso-theme="orange"] #categoryStrip .chip{')&&css.includes('border-radius:13px!important'),'Compact rectangular category pills missing');
 
 /* RAUSO 2.7.4: one main navigation Merkliste, messages only in the header. */
 const nav=html.slice(html.indexOf('<nav class="bottomnav"'),html.indexOf('</nav>')+6);
@@ -53,3 +53,9 @@ assert(js.includes('id="oMinAge"')&&js.includes('id="oMaxAge"'),'Event age range
 assert(js.includes('min_age:val.min_age,max_age:val.max_age'),'Event age limits must be persisted');
 assert(js.includes('rausoEventAgeEligibility(requested)'),'RSVP must check age');
 assert(css.includes('.rauso-age-fields')&&css.includes('.rauso-age-note'),'Age input styles missing');
+
+/* RAUSO 2.9: updated icon and discovery layout checks. */
+assert(html.includes('id="heroCreate"')&&html.includes('id="priceFilter"'),'Missing discover controls');
+for(const klass of ['rauso-created-exclamation','rauso-nav-smile','rauso-nav-star','rauso-nav-dating-heart','rauso-nav-family'])assert(html.includes(klass),'Missing navigation symbol '+klass);
+assert(css.includes('/* RAUSO 2.9: screenshot-inspired compact discovery')&&css.includes('#headerMessages>span:first-child'),'Missing 2.9 UI styles');
+assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'Price-filter and highlights integration missing');
