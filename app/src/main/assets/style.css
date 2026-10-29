@@ -1126,18 +1126,18 @@ html[data-rauso-theme="light"] #headerMessages.active{background:#e3f7e8}
 }
 
 /* RAUSO 2.7.3 — photographic circular categories, distinct color-coded outlines. */
-#categoryStrip .chip[data-cat="thermen"],.place-card[data-venue-category="thermen"],.featured-card[data-venue-category="thermen"]{--category-color:#2fea7d;--category-image:url("https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="restaurants"],.place-card[data-venue-category="restaurants"],.featured-card[data-venue-category="restaurants"]{--category-color:#ff576d;--category-image:url("https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="kino"],.place-card[data-venue-category="kino"],.featured-card[data-venue-category="kino"]{--category-color:#49afff;--category-image:url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="ausfluege"],.place-card[data-venue-category="ausfluege"],.featured-card[data-venue-category="ausfluege"]{--category-color:#ffca47;--category-image:url("https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="familie"],.place-card[data-venue-category="familie"],.featured-card[data-venue-category="familie"]{--category-color:#fe82cb;--category-image:url("https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="bowling"],.place-card[data-venue-category="bowling"],.featured-card[data-venue-category="bowling"]{--category-color:#b38cff;--category-image:url("https://images.unsplash.com/photo-1579301006977-7ad0f39a91d8?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="spielspass"],.place-card[data-venue-category="spielspass"],.featured-card[data-venue-category="spielspass"]{--category-color:#f97443;--category-image:url("https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="natur"],.place-card[data-venue-category="natur"],.featured-card[data-venue-category="natur"]{--category-color:#6fe663;--category-image:url("https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="kultur"],.place-card[data-venue-category="kultur"],.featured-card[data-venue-category="kultur"]{--category-color:#5de6ef;--category-image:url("https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="uebernachten"],.place-card[data-venue-category="uebernachten"],.featured-card[data-venue-category="uebernachten"]{--category-color:#f1b6ff;--category-image:url("https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="sport"],.place-card[data-venue-category="sport"],.featured-card[data-venue-category="sport"]{--category-color:#e3f565;--category-image:url("https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=650&q=75")}
-#categoryStrip .chip[data-cat="anime"],.place-card[data-venue-category="anime"],.featured-card[data-venue-category="anime"]{--category-color:#ff8fdc;--category-image:url("https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=650&q=75")}
+#categoryStrip .chip[data-cat="thermen"],.place-card[data-venue-category="thermen"],.featured-card[data-venue-category="thermen"]{--category-color:#2fea7d;--category-fill:#133e29}
+#categoryStrip .chip[data-cat="restaurants"],.place-card[data-venue-category="restaurants"],.featured-card[data-venue-category="restaurants"]{--category-color:#ff576d;--category-fill:#431b27}
+#categoryStrip .chip[data-cat="kino"],.place-card[data-venue-category="kino"],.featured-card[data-venue-category="kino"]{--category-color:#49afff;--category-fill:#152f48}
+#categoryStrip .chip[data-cat="ausfluege"],.place-card[data-venue-category="ausfluege"],.featured-card[data-venue-category="ausfluege"]{--category-color:#ffca47;--category-fill:#40330e}
+#categoryStrip .chip[data-cat="familie"],.place-card[data-venue-category="familie"],.featured-card[data-venue-category="familie"]{--category-color:#fe82cb;--category-fill:#442236}
+#categoryStrip .chip[data-cat="bowling"],.place-card[data-venue-category="bowling"],.featured-card[data-venue-category="bowling"]{--category-color:#b38cff;--category-fill:#322348}
+#categoryStrip .chip[data-cat="spielspass"],.place-card[data-venue-category="spielspass"],.featured-card[data-venue-category="spielspass"]{--category-color:#f97443;--category-fill:#48271c}
+#categoryStrip .chip[data-cat="natur"],.place-card[data-venue-category="natur"],.featured-card[data-venue-category="natur"]{--category-color:#6fe663;--category-fill:#223f23}
+#categoryStrip .chip[data-cat="kultur"],.place-card[data-venue-category="kultur"],.featured-card[data-venue-category="kultur"]{--category-color:#5de6ef;--category-fill:#194044}
+#categoryStrip .chip[data-cat="uebernachten"],.place-card[data-venue-category="uebernachten"],.featured-card[data-venue-category="uebernachten"]{--category-color:#f1b6ff;--category-fill:#3c2845}
+#categoryStrip .chip[data-cat="sport"],.place-card[data-venue-category="sport"],.featured-card[data-venue-category="sport"]{--category-color:#e3f565;--category-fill:#353c19}
+#categoryStrip .chip[data-cat="anime"],.place-card[data-venue-category="anime"],.featured-card[data-venue-category="anime"]{--category-color:#ff8fdc;--category-fill:#46243c}
 #categoryStrip.category-strip{display:flex;align-items:flex-start;gap:13px;padding:8px 5px 19px;overflow-x:auto;overflow-y:visible;scrollbar-width:thin;scroll-snap-type:x proximity}
 html[data-rauso-theme] #categoryStrip .chip{
  box-sizing:border-box;display:flex!important;flex:0 0 100px!important;align-items:center;justify-content:center;position:relative;isolation:isolate;
@@ -1244,4 +1244,83 @@ html[data-rauso-theme] #heroPlan.rauso-header-create:focus-visible{
   padding:3px!important;gap:0!important
  }
  #accountShortcutIcon{flex:0 0 27px!important;width:27px!important;height:27px!important}
+}
+
+/* RAUSO refined compact UI — monochrome per-category fills, fine 1.5px actions. */
+html[data-rauso-theme] #categoryStrip.category-strip{gap:10px!important;padding:6px 4px 15px!important}
+html[data-rauso-theme] #categoryStrip .chip{
+ flex:0 0 84px!important;width:84px!important;min-width:84px!important;max-width:84px!important;
+ height:84px!important;min-height:84px!important;padding:9px 5px!important;
+ border:2px solid var(--category-color)!important;border-radius:50%!important;
+ font-size:9px!important;font-weight:750!important;line-height:1.24!important;letter-spacing:.1px!important;
+ background:var(--category-fill,#201a2e)!important;background-image:none!important;
+ box-shadow:0 2px 9px #0003,inset 0 1px 0 #ffffff12!important;text-shadow:none!important;
+}
+html[data-rauso-theme] #categoryStrip .chip.selected{
+ border-width:3px!important;transform:translateY(-1px) scale(1.025)!important;
+ box-shadow:0 0 0 1px #ffffff75,0 0 10px var(--category-color)!important;
+}
+html[data-rauso-theme] :is(.place-card,.featured-card)[data-venue-category]{
+ background:var(--category-fill,#211a2d)!important;background-image:none!important;
+ border:2px solid var(--category-color)!important;box-shadow:0 3px 14px #0004!important;
+}
+html[data-rauso-theme] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image).rauso-place-create{
+ background:var(--category-fill,#211a2d)!important;background-image:none!important;
+}
+html[data-rauso-theme] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image).rauso-place-create::before{
+ content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#fff0 10%,#0004 100%);
+}
+html[data-rauso-theme] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image).rauso-place-create::after{display:none!important;content:none!important}
+html[data-rauso-theme] .rauso-place-link :is(.place-cover,.featured-image) .rauso-create-venue-btn{
+ width:31px!important;min-width:31px!important;height:31px!important;min-height:31px!important;
+ border-width:1.5px!important;top:7px!important;left:7px!important;
+ background:#0d0e13bb!important;box-shadow:0 1px 6px #0005!important;font-size:0!important;
+}
+html[data-rauso-theme] #heroPlan.rauso-header-create{
+ flex:0 0 30px!important;width:30px!important;min-width:30px!important;
+ height:30px!important;min-height:30px!important;border-width:1.5px!important;
+ box-shadow:0 1px 7px #0004!important;font-size:0!important;
+}
+.rauso-plus-mark{display:inline-block;position:relative;width:13px;height:13px;min-width:13px;flex:0 0 13px;vertical-align:-2px;margin-right:5px;color:inherit}
+.rauso-plus-mark::before,.rauso-plus-mark::after{content:"";position:absolute;left:50%;top:50%;background:currentColor;border-radius:2px;transform:translate(-50%,-50%)}
+.rauso-plus-mark::before{width:13px;height:1.5px}
+.rauso-plus-mark::after{width:1.5px;height:13px}
+#heroPlan .rauso-plus-mark,.rauso-create-venue-btn .rauso-plus-mark,#createPrivate .rauso-plus-mark{margin-right:0}
+html[data-rauso-theme] #heroPlan .rauso-plus-mark{width:14px;height:14px;min-width:14px;flex-basis:14px}
+#heroPlan .rauso-plus-mark::before{width:14px}
+#heroPlan .rauso-plus-mark::after{height:14px}
+html[data-rauso-theme] #headerMessages{
+ margin-right:auto!important;width:34px!important;min-width:34px!important;max-width:34px!important;
+ height:34px!important;min-height:34px!important;flex:0 0 34px!important;
+ padding:0!important;gap:0!important;font-size:19px!important;font-weight:400!important;
+ border-width:1px!important;border-radius:10px!important;box-shadow:0 1px 7px #0002!important;
+}
+html[data-rauso-theme] .rauso-capacity{
+ display:flex;align-items:center;justify-content:space-between;gap:6px;
+ padding:8px 9px;margin:8px 0 3px;color:#eee9f0;
+ background:#0003;border:1px solid #ffffff21;border-radius:9px;font-size:11px;line-height:1.2;
+}
+.rauso-capacity strong{font-size:11px;font-weight:700}
+.rauso-capacity span{white-space:nowrap;color:#9ef2b5}
+html[data-rauso-theme] .rauso-capacity.rauso-full{background:#4d161c;border-color:#c94d55}
+.rauso-capacity.rauso-full span{color:#ffabab;font-weight:800}
+html[data-rauso-theme] #heroGoing,
+html[data-rauso-theme] .join-btn.is-joined,
+html[data-rauso-theme] .join-btn[aria-pressed="true"],
+html[data-rauso-theme] .meeting-status.going{
+ background:#188445!important;color:#ffffff!important;border:1px solid #46c976!important;
+ box-shadow:0 2px 8px #12612c55!important;text-shadow:none!important;font-weight:750!important;
+}
+html[data-rauso-theme] #heroGoing{min-height:43px;border-radius:12px!important}
+html[data-rauso-theme] .event-card.event-joined{border-color:#319c5b!important;box-shadow:0 4px 14px #0003!important}
+html[data-rauso-theme] .join-btn[disabled]{opacity:.7;cursor:not-allowed;background:#4a2229!important;color:#ffd4d4!important}
+html[data-rauso-theme] :is(.event-card,.meeting-card,.surface){
+ border-width:1px!important;box-shadow:0 3px 12px #0002!important;
+}
+html[data-rauso-theme] .meeting-filter.active[data-meeting-filter="going"]{background:#196c3e!important;border-color:#4cc679!important;color:#fff!important}
+.rauso-age-display{border:1px solid #ffffff22;background:#0002;border-radius:10px;padding:9px 11px;font-size:12px;color:var(--fg)}
+@media(max-width:360px){
+ html[data-rauso-theme] #categoryStrip .chip{flex-basis:76px!important;width:76px!important;min-width:76px!important;max-width:76px!important;height:76px!important;min-height:76px!important;font-size:8px!important}
+ html[data-rauso-theme] #categoryStrip.category-strip{gap:8px!important}
+ html[data-rauso-theme] #heroPlan.rauso-header-create{flex-basis:28px!important;width:28px!important;min-width:28px!important;height:28px!important;min-height:28px!important}
 }
