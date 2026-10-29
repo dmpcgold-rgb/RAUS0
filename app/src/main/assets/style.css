@@ -784,3 +784,41 @@ html[data-rauso-theme="orange"] .more-highlights{
 html[data-rauso-theme="orange"] .more-highlights:focus-visible{
  outline:2px solid #ffe6ba;outline-offset:2px
 }
+
+/* RAUSO venue cards: new semantic map and orange heart overlay controls. */
+html[data-rauso-theme="orange"] .featured-map{
+ position:absolute;z-index:4;top:7px;right:7px;
+ display:flex;align-items:center;justify-content:center;
+ min-height:28px;height:28px;padding:4px 8px;
+ background:rgba(13,13,16,.78)!important;color:#f9f7f5!important;
+ border:1px solid rgba(255,170,93,.45)!important;
+ border-radius:18px;font-size:10px;text-decoration:none;
+ backdrop-filter:blur(4px);
+}
+html[data-rauso-theme="orange"] .featured-heart{
+ position:absolute;right:7px;bottom:6px;z-index:4;
+ min-width:36px;width:36px;min-height:36px;height:36px;
+ display:grid;place-items:center;padding:0;
+ border:0!important;border-radius:50%;font-size:27px;line-height:1;
+ background:rgba(6,6,7,.37)!important;color:#fff!important;
+ text-shadow:0 1px 3px #000;box-shadow:none!important;
+ cursor:pointer;
+}
+html[data-rauso-theme="orange"] .featured-heart.is-liked{
+ color:#ff982b!important;background:rgba(45,24,8,.72)!important;
+ text-shadow:0 0 12px #ff8d16;
+ box-shadow:0 0 13px #ff8a21a0!important
+}
+html[data-rauso-theme="orange"] .featured-heart:focus-visible,
+html[data-rauso-theme="orange"] .featured-map:focus-visible{
+ outline:2px solid white;outline-offset:2px;
+}
+html[data-rauso-theme="orange"] .featured-cat{margin-right:36px}
+html[data-rauso-theme="orange"] .header-bookmarks{transition:box-shadow .15s ease}
+html[data-rauso-theme="orange"] .profile-settings,
+html[data-rauso-theme="orange"] #appearanceBtn{
+ border-color:#fa8728;box-shadow:0 0 12px rgba(255,134,18,.17)
+}
+@media (prefers-reduced-motion:reduce){
+ html[data-rauso-theme="orange"] .header-bookmarks{transition:none}
+}
