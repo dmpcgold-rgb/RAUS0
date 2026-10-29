@@ -539,7 +539,8 @@ async function reactOuting(id,type){
   toast(next==='going'?'✓ Du bist dabei!':'Teilnahme aktualisiert.');
   await loadOutings();
  }catch(err){
-  toast('Teilnahme konnte nicht gespeichert werden: '+(err?.message||String(err)));
+  toast(String(err?.message||'').toLowerCase().includes('voll')?'Das Treffen ist bereits VOLL.':'Teilnahme konnte nicht gespeichert werden: '+(err?.message||String(err)));
+   await loadOutings().catch(()=>{});
  }finally{
   buttons.forEach(b=>b.disabled=false);
  }
@@ -551,23 +552,25 @@ function createOuting(p,opts={}){if(!mustVerify('Treffen erstellen'))return;cons
 }
 async function loadOutings(){
  if(demoMode()){state.demoEvents=[];renderEvents();return}
- const [{data:events,error},reacts,members,presence]=await Promise.all([
+ const [{data:events,error},reacts,members,presence,capacity]=await Promise.all([
   api.from('rauso_outings').select('*').order('starts_at',{ascending:true}).limit(80),
   api.from('rauso_rsvps').select('outing_id,user_id,status'),
   api.from('rauso_profiles').select('id,display_name'),
-  api.from('rauso_presence').select('user_id,last_seen_at')
+  api.from('rauso_presence').select('user_id,last_seen_at'),
+  api.rpc('rauso_outing_availability')
  ]);
  if(error){toast('Treffen konnten nicht geladen werden: '+error.message);return}
  const names=Object.fromEntries((members.data||[]).map(p=>[p.id,p.display_name]));
  const online=new Set((presence.data||[]).filter(p=>Date.now()-new Date(p.last_seen_at).getTime()<90000).map(p=>p.user_id));
  const mine=Object.fromEntries((reacts.data||[]).filter(r=>r.user_id===myId()).map(r=>[r.outing_id,r.status]));
+ const availability=Object.fromEntries((capacity.data||[]).map(c=>[c.outing_id,c]));
  const attendees={};
  for(const response of (reacts.data||[])){
   const row=attendees[response.outing_id]||(attendees[response.outing_id]={going:0});
   if(response.status==='going')row.going++;
  }
- state.outings=(events||[]).map(e=>({...e,category:'ausfluege',transport_mode:'zufuss',family_friendly:false,author:names[e.author_id]||'Mitglied',authorOnline:online.has(e.author_id),mineReaction:mine[e.id],attendance:e.author_id===myId()?(attendees[e.id]||{going:0}):null}));
- renderEvents();refreshMeetingBadge();if(state.tab==='myMeetings')renderMyMeetings();
+ state.outings=(events||[]).map(e=>({...e,category:'ausfluege',transport_mode:'zufuss',family_friendly:false,author:names[e.author_id]||'Mitglied',authorOnline:online.has(e.author_id),mineReaction:mine[e.id],attendance:e.author_id===myId()?(attendees[e.id]||{going:0}):null,availability:availability[e.id]||null}));
+ rausoMeetingDataReady=true;renderEvents();refreshMeetingBadge();if(state.tab==='myMeetings')renderMyMeetings();
 }
 function avatar(p){return `<span class="avatar">${esc((p.display_name||'?').replace(' (Demo)','').slice(0,1).toUpperCase())}</span>`}
 async function loadSocial(){
