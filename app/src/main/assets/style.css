@@ -822,3 +822,6 @@ html[data-rauso-theme="orange"] #appearanceBtn{
 @media (prefers-reduced-motion:reduce){
  html[data-rauso-theme="orange"] .header-bookmarks{transition:none}
 }
+
+/* Keep the illustrative-image label separate from the top-right map link. */
+html[data-rauso-theme="orange"] .featured-image::after{left:6px!important;right:auto!important;top:6px!important;z-index:2}
