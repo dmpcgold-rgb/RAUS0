@@ -229,39 +229,39 @@ const rausoViennaPicks = [
 let rausoShowAllHighlights=false;
 function renderViennaHighlights(){
  const el=$('viennaHighlights');if(!el)return;
- const cat=state.cat;
- const sorted=[...rausoViennaPicks].sort((a,b)=>(a.category===cat?0:1)-(b.category===cat?0:1));
- const first=sorted[0], different=sorted.find(x=>x.category!==first?.category);
+ const sorted=[...rausoViennaPicks].sort((a,b)=>(a.category===state.cat?0:1)-(b.category===state.cat?0:1));
+ const first=sorted[0],different=sorted.find(x=>x.category!==first?.category);
  const list=rausoShowAllHighlights?sorted:[first,different].filter(Boolean);
  el.innerHTML=list.map(p=>{
   const liked=isBookmarked('place',p.id);
-  const mapUrl='https://www.openstreetmap.org/search?query='+encodeURIComponent(p.name+', '+p.addr);
   const label=p.category==='thermen'?'♨ Thermen':'🍽 Restaurants';
-  return '<article class="featured-card" title="'+esc(p.name+' · '+p.addr)+'">'+
-    '<div class="featured-image '+(p.category==='thermen'?'therme':'restaurant')+'"></div>'+
-    '<a class="featured-map small-btn" href="'+esc(mapUrl)+'" title="Adresse in Karte: '+esc(p.addr)+'" '+
-    'target="_blank" rel="noopener noreferrer">⌖ Karte</a>'+
-    '<div class="featured-text"><h4>'+esc(p.name)+'</h4><p>'+esc(p.short)+'</p>'+
-    '<span class="featured-cat '+(p.category==='thermen'?'thermal':'')+'">'+esc(label)+'</span></div>'+
-    '<button type="button" class="featured-heart heart-btn '+(liked?'is-liked':'')+'" '+
-    'aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" '+
-    'title="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" '+
-    'aria-pressed="'+liked+'" data-featured-like="'+esc(p.id)+'">'+(liked?'♥':'♡')+'</button></article>';
+  return '<article class="featured-card rauso-place-link" data-featured-open="'+esc(p.id)+'" tabindex="0" role="link" title="Website von '+esc(p.name)+' öffnen">'+
+   '<div class="featured-image '+(p.category==='thermen'?'therme':'restaurant')+'"></div>'+
+   '<span class="featured-map venue-distance" title="'+esc(rausoDistanceOrigin())+'">📍 '+esc(rausoDistanceLabel(p))+'</span>'+
+   '<div class="featured-text"><h4>'+esc(p.name)+'</h4><p>'+esc(p.short)+'</p>'+
+   '<span class="featured-cat '+(p.category==='thermen'?'thermal':'')+'">'+esc(label)+'</span></div>'+
+   '<button type="button" class="featured-heart heart-btn star-btn '+(liked?'is-liked':'')+'" '+
+   'aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" '+
+   'aria-pressed="'+liked+'" data-featured-like="'+esc(p.id)+'">'+(liked?'★':'☆')+'</button></article>';
  }).join('');
- el.querySelectorAll('[data-featured-like]').forEach(b=>b.onclick=()=>{
-  const p=rausoViennaPicks.find(v=>v.id===b.dataset.featuredLike);
-  if(p)toggleBookmark('place',p)
+ el.querySelectorAll('[data-featured-open]').forEach(card=>{
+  const open=()=>{const item=rausoViennaPicks.find(x=>x.id===card.dataset.featuredOpen);if(item)rausoOpenPlace(item)};
+  card.onclick=e=>{if(!e.target.closest('button'))open()};
+  card.onkeydown=e=>{if(e.target===card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();open()}}
  });
- const section=$('featuredSection');
- let toggle=$('moreViennaHighlights');
- if(section && !toggle){
+ el.querySelectorAll('[data-featured-like]').forEach(b=>b.onclick=e=>{
+  e.stopPropagation();const item=rausoViennaPicks.find(x=>x.id===b.dataset.featuredLike);
+  if(item)toggleBookmark('place',item)
+ });
+ const section=$('featuredSection');let toggle=$('moreViennaHighlights');
+ if(section&&!toggle){
   toggle=document.createElement('button');toggle.id='moreViennaHighlights';
   toggle.type='button';toggle.className='outline-btn more-highlights';
   section.insertBefore(toggle,section.querySelector('.featured-note'));
  }
  if(toggle){
   toggle.textContent=rausoShowAllHighlights?'Weniger Orte anzeigen':'Weitere 4 Orte anzeigen';
-  toggle.onclick=()=>{rausoShowAllHighlights=!rausoShowAllHighlights;renderViennaHighlights()};
+  toggle.onclick=()=>{rausoShowAllHighlights=!rausoShowAllHighlights;renderViennaHighlights()}
  }
 }
 
