@@ -538,7 +538,27 @@ async function resendConfirmationEmail(){
 }
 async function runAuth(signup){const email=$('authEmail').value,password=$('authPassword').value;const {data,error}=signup?await api.auth.signUp({email,password,options:{emailRedirectTo:'rauso://auth/callback'}}):await api.auth.signInWithPassword({email,password});if(error){toast(error.message);return}closeModal();if(data.session){await refreshUser();toast('Angemeldet.')}else toast('Bitte bestätige deine E-Mail-Adresse.');}
 async function logout(){await api.auth.signOut();state.user=null;state.profile=null;state.outings=[];state.people=[];state.connections=[];switchTab('profile')}
-async function refreshUser(){const {data:{user}}=await api.auth.getUser();state.user=user||null;if(!user){state.profile=null;return}const {data,error}=await api.from('rauso_profiles').select('*').eq('id',user.id).maybeSingle();if(error)console.error(error);if(data)state.profile=data;else{state.profile={...state.demoProfile,dating_enabled:false,adult_confirmed:false};const {error:e}=await api.from('rauso_profiles').insert({id:user.id,display_name:state.profile.display_name,city:state.profile.city,bio:state.profile.bio});if(e)toast('Bitte Profil prüfen: '+e.message)}$('datingNav').classList.toggle('hidden',!state.profile?.dating_enabled);await Promise.all([loadOutings(),loadSocial(),loadBookmarks()]);await pollRausoNotifications(false);renderProfile()}
+let rausRealtimeChannel=null;
+let rausRefreshPending=false;
+function scheduleRausoRefresh(){
+ if(rausRefreshPending || !state.user)return;
+ rausRefreshPending=true;
+ setTimeout(async()=>{
+  try{if(state.user){await loadOutings();await pollRausoNotifications(false);if(state.tab==='notifications')await renderNotifications()}}
+  catch(err){console.warn('RAUSO realtime refresh',err)}
+  finally{rausRefreshPending=false}
+ },350);
+}
+function attachRausoRealtime(){
+ if(!api)return;
+ if(rausRealtimeChannel){api.removeChannel(rausRealtimeChannel);rausRealtimeChannel=null}
+ if(!state.user)return;
+ rausRealtimeChannel=api.channel('rauso-live-'+state.user.id)
+  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_rsvps'},scheduleRausoRefresh)
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'rauso_notifications',filter:'user_id=eq.'+state.user.id},scheduleRausoRefresh)
+  .subscribe();
+}
+async function refreshUser(){const {data:{user}}=await api.auth.getUser();state.user=user||null;attachRausoRealtime();if(!user){state.profile=null;return}const {data,error}=await api.from('rauso_profiles').select('*').eq('id',user.id).maybeSingle();if(error)console.error(error);if(data)state.profile=data;else{state.profile={...state.demoProfile,dating_enabled:false,adult_confirmed:false};const {error:e}=await api.from('rauso_profiles').insert({id:user.id,display_name:state.profile.display_name,city:state.profile.city,bio:state.profile.bio});if(e)toast('Bitte Profil prüfen: '+e.message)}$('datingNav').classList.toggle('hidden',!state.profile?.dating_enabled);await Promise.all([loadOutings(),loadSocial(),loadBookmarks()]);await pollRausoNotifications(false);renderProfile()}
 
 const configV16 = config || {};
 async function requireUserFor(feature){if(!state.user){showAuth();toast('Bitte für '+feature+' anmelden.');return false}return true}
