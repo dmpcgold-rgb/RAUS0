@@ -25,6 +25,26 @@ public class MainActivity extends Activity {
  private ValueCallback<Uri[]> photoPickerCallback;
  private static final int REQUEST_PHOTO_PICKER = 4102;
  private OnBackInvokedCallback androidBackCallback;
+ private void shareInvite(String text,String destination){
+  if(text==null || text.isEmpty() || text.length()>1500)return;
+  final String packageName;
+  switch(destination==null?"":destination){
+   case "whatsapp":packageName="com.whatsapp";break;
+   case "instagram":packageName="com.instagram.android";break;
+   case "facebook":packageName="com.facebook.katana";break;
+   default:packageName=null;break;
+  }
+  runOnUiThread(()->{
+   Intent share=new Intent(Intent.ACTION_SEND);
+   share.setType("text/plain");
+   share.putExtra(Intent.EXTRA_TEXT,text);
+   if(packageName!=null){
+    share.setPackage(packageName);
+    try{startActivity(share);return;}catch(ActivityNotFoundException ex){share.setPackage(null);}
+   }
+   startActivity(Intent.createChooser(share,"Unternehmung teilen"));
+  });
+ }
  private static final int REQUEST_LOCATION_COARSE=4103;
  private GeolocationPermissions.Callback pendingGeoCallback;
  private String pendingGeoOrigin;
@@ -74,10 +94,8 @@ public class MainActivity extends Activity {
   web=new WebView(this);
   // Android shares text with apps chosen explicitly by the user.
   web.addJavascriptInterface(new Object(){
-   @android.webkit.JavascriptInterface public void shareText(String text){
-    if(text==null||text.length()==0||text.length()>1500)return;
-    runOnUiThread(()->{Intent share=new Intent(Intent.ACTION_SEND);share.setType("text/plain");share.putExtra(Intent.EXTRA_TEXT,text);startActivity(Intent.createChooser(share,"Unternehmung teilen"));});
-   }
+   @android.webkit.JavascriptInterface public void shareText(String text){shareInvite(text,"all");}
+   @android.webkit.JavascriptInterface public void shareTo(String destination,String text){shareInvite(text,destination);}
   },"RAUSOShare");
   // Keep app content below Android's status bar (clock, signal and battery).
   web.setBackgroundColor(Color.rgb(9,9,10));
@@ -111,6 +129,15 @@ public class MainActivity extends Activity {
   settings.setAllowFileAccess(false);
   settings.setAllowContentAccess(true); // Required for user-selected content:// photo URIs.
   web.setWebViewClient(new WebViewClient(){
+   @Override public boolean shouldOverrideUrlLoading(WebView view,android.webkit.WebResourceRequest request){
+    Uri uri=request.getUrl();
+    // Stay inside RAUSO for local assets and open external venues in the browser.
+    if("https".equals(uri.getScheme()) && "appassets.androidplatform.net".equals(uri.getHost()))return false;
+    if("https".equals(uri.getScheme()) || "http".equals(uri.getScheme())){
+     try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(ActivityNotFoundException ignored){}
+    }
+    return true;
+   }
    @Override public void onPageFinished(WebView view,String url){
     super.onPageFinished(view,url);
     applyWebSafeArea();
