@@ -12,6 +12,40 @@ const api = hasBackend ? window.supabase.createClient(config.supabaseUrl,config.
 const STORE = 'rauso-v1-live';
 const safeLoad = () => {try{return JSON.parse(localStorage.getItem(STORE) || '{}')}catch{return {}}};
 const cache = safeLoad();
+
+let rausoOwnBirthdate=null;
+let rausoBirthdateReady=false;
+function rausoAge(date){
+ if(!date||!/^\d{4}-\d{2}-\d{2}$/.test(String(date)))return null;
+ const [y,m,d]=String(date).split('-').map(Number),parsed=new Date(Date.UTC(y,m-1,d));
+ if(parsed.getUTCFullYear()!==y||parsed.getUTCMonth()!==m-1||parsed.getUTCDate()!==d)return null;
+ const now=new Date();let age=now.getFullYear()-y;
+ if(now.getMonth()+1<m||(now.getMonth()+1===m&&now.getDate()<d))age--;
+ return age>=0&&age<=125?age:null;
+}
+function rausoAdult(){const age=rausoAge(rausoOwnBirthdate);return age!==null&&age>=18}
+async function rausoLoadOwnBirthdate(){
+ if(!state.user||!api){rausoOwnBirthdate=null;rausoBirthdateReady=false;return}
+ const {data,error}=await api.from('rauso_birthdates').select('birth_date').eq('user_id',myId()).maybeSingle();
+ if(error){console.warn('Geburtsdatum',error.message);return}
+ rausoOwnBirthdate=data?.birth_date||null;rausoBirthdateReady=true;
+}
+function rausoRequestBirthdate(){
+ if(!state.user||rausoOwnBirthdate)return;
+ modal('Geburtsdatum einmalig speichern',
+  '<form id="birthdateForm" class="stack"><p class="quiet">Das Geburtsdatum ist nach der Bestätigung nicht mehr änderbar und nur für dein eigenes Konto sichtbar.</p>'+
+  '<div class="input-group"><label for="birthdateOnce">Geburtsdatum (Pflichtfeld)</label><input id="birthdateOnce" type="date" min="1900-01-01" max="'+new Date().toISOString().slice(0,10)+'" required></div>'+
+  '<button type="submit" class="primary-btn">Dauerhaft speichern</button></form>');
+ $('birthdateForm').onsubmit=async e=>{
+  e.preventDefault();const value=$('birthdateOnce').value;
+  if(rausoAge(value)===null){toast('Bitte gültiges Geburtsdatum eingeben.');return}
+  const b=$('birthdateForm').querySelector('button[type=submit]');b.disabled=true;
+  try{const {error}=await api.from('rauso_birthdates').insert({user_id:myId(),birth_date:value});if(error)throw error;
+   await rausoLoadOwnBirthdate();closeModal();renderProfile();renderDating();toast('Geburtsdatum dauerhaft gespeichert.');
+  }catch(err){b.disabled=false;toast(err.message)}
+ };
+}
+
 const regionData = {
  'wiener-neustadt':[47.815,16.245],wien:[48.208,16.373],'st-poelten':[48.204,15.625],graz:[47.071,15.439],linz:[48.306,14.286],salzburg:[47.801,13.045],innsbruck:[47.269,11.404],klagenfurt:[46.624,14.306],bregenz:[47.504,9.748],eisenstadt:[47.846,16.522],baden:[48.005,16.232],villach:[46.612,13.850],krems:[48.411,15.611],zell:[47.323,12.797],'wr-neudorf':[48.082,16.314],amstetten:[48.121,14.877],tulln:[48.330,16.056],mistelbach:[48.570,16.578],neunkirchen:[47.722,16.078],leoben:[47.381,15.094],kapfenberg:[47.445,15.293],wels:[48.158,14.027],steyr:[48.042,14.422],gmunden:[47.918,13.800],'bad-ischl':[47.712,13.621],'bad-gastein':[47.116,13.135],saalfelden:[47.427,12.849],'st-johann':[47.521,12.427],kufstein:[47.583,12.170],lienz:[46.829,12.768],feldkirch:[47.236,9.601],dornbirn:[47.414,9.742],oberwart:[47.290,16.206],pinkafeld:[47.371,16.123],neusiedl:[47.949,16.844]
 };
@@ -218,7 +252,7 @@ function rausoOpenBookmark(item){
   modal('Ort · '+(place.name||item.title),
    '<div class="stack rauso-bookmark-detail"><p class="quiet">'+esc(place.addr||place.region||item.subtitle||'Österreich')+'</p>'+
    '<button type="button" id="savedPlaceSite" class="primary-btn">'+linkLabel+' ↗</button>'+
-   '<button type="button" id="savedPlaceCreate" class="outline-btn">＋ TREFFEN HIER ERSTELLEN</button></div>');
+   '<button type="button" id="savedPlaceCreate" class="outline-btn"><span class="rauso-plus-mark" aria-hidden="true"></span> TREFFEN HIER ERSTELLEN</button></div>');
   $('savedPlaceSite').onclick=()=>{closeModal();rausoOpenPlace(place)};
   $('savedPlaceCreate').onclick=()=>{closeModal();createOuting(place)};
   return;
@@ -278,7 +312,7 @@ function renderViennaHighlights(){
   const liked=isBookmarked('place',p.id);
   const label=p.category==='thermen'?'♨ THERMEN':'🍽 RESTAURANTS';
   return '<article class="featured-card rauso-place-link" data-venue-category="'+esc(p.category)+'" data-featured-open="'+esc(p.id)+'" tabindex="0" role="link" title="Website von '+esc(p.name)+' öffnen">'+
-   '<div class="featured-image rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-featured-create="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen" title="Unternehmung erstellen">＋</button></div>'+
+   '<div class="featured-image rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-featured-create="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen" title="Unternehmung erstellen"><span class="rauso-plus-mark" aria-hidden="true"></span></button></div>'+
    '<span class="featured-map venue-distance" title="'+esc(rausoDistanceOrigin())+'">★ '+esc(rausoDistanceLabel(p))+'</span>'+
    '<div class="featured-text"><h4>'+esc(p.name)+'</h4><p>'+esc(p.short)+'</p>'+
    '<span class="featured-cat '+(p.category==='thermen'?'thermal':'')+'">'+esc(label)+'</span></div>'+'<button type="button" class="rauso-venue-site rauso-featured-site" data-featured-site="'+esc(p.id)+'" aria-label="'+(rausoHasVenueWebsite(p)?'Website':'Karte')+' von '+esc(p.name)+' öffnen">'+(rausoHasVenueWebsite(p)?'WEBSEITE ↗':'KARTE ↗')+'</button>'+
@@ -315,7 +349,7 @@ function renderPlaces(){
  $('places').innerHTML=filtered.length?filtered.slice(0,100).map(p=>{
   const liked=isBookmarked('place',p.id);
   return '<article class="place-card rauso-place-link" data-venue-category="'+esc(p.category||state.cat)+'" data-place-open="'+esc(p.id)+'" tabindex="0" role="link" title="'+esc(p.name)+' – '+(p.website?'Website':'Karte')+' öffnen">'+
-   '<div class="place-cover rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-with="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen" title="Unternehmung erstellen">＋</button></div>'+
+   '<div class="place-cover rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-with="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen" title="Unternehmung erstellen"><span class="rauso-plus-mark" aria-hidden="true"></span></button></div>'+
    '<span class="venue-distance osm-distance" title="'+esc(rausoDistanceOrigin())+'">★ '+esc(rausoDistanceLabel(p))+'</span>'+
    '<div class="place-header"><div class="place-emoji">'+cats[state.cat].icon+'</div><div class="place-body">'+
    '<h3>'+esc(p.name)+'</h3><p class="place-sub">'+esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')+'</p></div></div>'+
@@ -371,7 +405,7 @@ async function openEventOrganizerProfile(outingId){
   friendship==='accepted'?'<button class="primary-btn" id="organizerChat">✉ Nachricht senden</button>':
   friendship==='pending'?(incoming?'<button class="primary-btn" id="organizerAccept">✓ Anfrage annehmen</button>':'<p class="quiet">⏳ Freundschaftsanfrage bereits gesendet.</p>'):
   friendship==='declined'?'<p class="quiet">Freundschaftsanfrage abgelehnt.</p>':
-  '<button class="primary-btn" id="organizerFriend">＋ Freundschaftsanfrage senden</button>';
+  '<button class="primary-btn" id="organizerFriend"><span class="rauso-plus-mark" aria-hidden="true"></span> Freundschaftsanfrage senden</button>';
  modal('👤 Veranstalterprofil','<div class="surface stack organizer-profile"><div class="profile-row">'+
    (photoUrl?'<img class="organizer-avatar" src="'+esc(photoUrl)+'" alt="Freigegebenes Profilfoto">':avatar(person))+
    '<div class="profile-meta"><h3>'+esc(person.display_name||'RAUSO-Mitglied')+'</h3><small>'+esc(person.city||'Österreich')+'</small></div></div>'+
@@ -560,7 +594,7 @@ async function openFriendsPanel(){
  root.querySelectorAll('[data-friend-chat]').forEach(b=>b.onclick=()=>{const id=b.dataset.friendChat;closeModal();openChat(id)});
  $('findFriends').onclick=()=>{closeModal();switchTab('messages');$('rausoFindPeople').open=true;$('peopleSearch')?.focus()};
 }
-function connectionRow(p){const status=connection(p),mine=demoMode()?status==='pending-out':state.connections.some(c=>c.sender_id===myId()&&c.receiver_id===p.id&&c.status==='pending');let action=status==='accepted'?`<button class="small-btn" data-chat="${esc(p.id)}">✉ Chat</button>`:(status==='pending-in'||(status==='pending'&&!mine))?`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`:(status==='pending'||status==='pending-out')?'<span class="quiet">Anfrage gesendet</span>':`<button class="small-btn" data-add="${esc(p.id)}">＋ Kontakt</button>`;if(demoMode()&&status==='pending-in')action=`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`;
+function connectionRow(p){const status=connection(p),mine=demoMode()?status==='pending-out':state.connections.some(c=>c.sender_id===myId()&&c.receiver_id===p.id&&c.status==='pending');let action=status==='accepted'?`<button class="small-btn" data-chat="${esc(p.id)}">✉ Chat</button>`:(status==='pending-in'||(status==='pending'&&!mine))?`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`:(status==='pending'||status==='pending-out')?'<span class="quiet">Anfrage gesendet</span>':`<button class="small-btn" data-add="${esc(p.id)}"><span class="rauso-plus-mark" aria-hidden="true"></span> Kontakt</button>`;if(demoMode()&&status==='pending-in')action=`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`;
  return `<div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')}</small></div>${action}<button class="small-btn" aria-label="Mehr Optionen" data-options="${esc(p.id)}">⋯</button></div>`}
 
 let rausoInboxMessages=[];
@@ -656,7 +690,7 @@ function renderMessages(){
   (demoMode()?'<div class="status-banner">Vorschau: Nachrichten werden nicht an andere Personen gesendet. <button class="small-btn" id="contactsLogin">Jetzt anmelden</button></div>':'')+
   '<div class="surface"><div class="rauso-inbox-summary"><div><h2 class="inbox-overview-heading">Chats</h2>'+
   '<p class="quiet">'+rows.length+' Gespräche · '+unread+' ungelesen</p></div>'+
-  '<button type="button" class="primary-btn" id="chooseChatRecipient">＋ Schreiben</button></div>'+
+  '<button type="button" class="primary-btn" id="chooseChatRecipient"><span class="rauso-plus-mark" aria-hidden="true"></span> Schreiben</button></div>'+
   '<div class="rauso-inbox-tabs">'+
    '<button type="button" data-inbox-view="all" class="'+(rausoInboxView==='all'?'active':'')+'">Alle</button>'+
    '<button type="button" data-inbox-view="unread" class="'+(rausoInboxView==='unread'?'active':'')+'">Ungelesen ('+unread+')</button>'+
@@ -1075,7 +1109,7 @@ async function renderProfilePhotos(){
    '<button class="small-btn '+(row.is_public?'photo-public':'')+'" data-public-photo="'+esc(row.id)+'" '+(row.moderation_status!=='approved'?'disabled':'')+'>'+(row.is_public?'🌐 Sichtbar':row.moderation_status==='approved'?'🔒 Privat':'⏳ Noch nicht geprüft')+'</button>'+
    '<button class="small-btn" data-delete-photo="'+esc(row.id)+'">Entfernen</button></div></div>'
  }
- html+='</div><label class="outline-btn photo-upload-btn">＋ Foto hinzufügen'+
+ html+='</div><label class="outline-btn photo-upload-btn"><span class="rauso-plus-mark" aria-hidden="true"></span> Foto hinzufügen'+
   '<input id="photoPicker" type="file" accept="image/jpeg,image/png,image/webp" hidden '+(rows.length>=6?'disabled':'')+'></label>'+
   '<p class="quiet">Nur vollständig bekleidete Personen. Keine Bikini-, Badebekleidungs-, Unterwäsche- oder Nacktbilder. Neue Fotos sind privat und werden erst nach Moderation und deiner Freigabe sichtbar. Maximal 6 Fotos bis 5 MB.</p>';
  zone.innerHTML=html;
@@ -1102,7 +1136,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.8.0';
+const APP_VERSION='2.8.1';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
