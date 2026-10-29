@@ -1,6 +1,5 @@
-// Configure only a public publishable key for RAUSO's dedicated Supabase project.
-// Never commit any secret/service-role key or a database password.
+// Öffentlicher Supabase Publishable Key – kein Service-Role-Schlüssel.
 window.ERLEBEN_CONFIG = {
-  supabaseUrl: "",
-  supabasePublishableKey: ""
+  supabaseUrl: "https://tznqehoipxkmvhtbgtzy.supabase.co",
+  supabasePublishableKey: "sb_publishable_fhM9c3XMzfeK6c62wFm1mA_E8-qXULq"
 };
