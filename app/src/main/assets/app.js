@@ -549,6 +549,8 @@ function attachRausoRealtime(){
  rausRealtimeChannel=api.channel('rauso-live-'+state.user.id)
   .on('postgres_changes',{event:'*',schema:'public',table:'rauso_rsvps'},scheduleRausoRefresh)
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'rauso_notifications',filter:'user_id=eq.'+state.user.id},scheduleRausoRefresh)
+  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_friendships'},()=>{if(state.user)loadSocial()})
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'rauso_messages'},event=>{const m=event.new;if(state.user&&m&&(m.sender_id===state.user.id||m.recipient_id===state.user.id)){if(state.currentChat&&(m.sender_id===state.currentChat||m.recipient_id===state.currentChat))loadChat();pollRausoNotifications(true)}})
   .subscribe();
 }
 async function refreshUser(){const {data:{user}}=await api.auth.getUser();state.user=user||null;attachRausoRealtime();if(!user){state.profile=null;return}const {data,error}=await api.from('rauso_profiles').select('*').eq('id',user.id).maybeSingle();if(error)console.error(error);if(data)state.profile=data;else{state.profile={...state.demoProfile,dating_enabled:false,adult_confirmed:false};const {error:e}=await api.from('rauso_profiles').insert({id:user.id,display_name:state.profile.display_name,city:state.profile.city,bio:state.profile.bio});if(e)toast('Bitte Profil prüfen: '+e.message)}await Promise.all([loadOutings(),loadSocial(),loadBookmarks()]);await pollRausoNotifications(false);subscribeRausoNotifications();renderProfile()}
