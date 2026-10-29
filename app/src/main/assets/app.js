@@ -434,11 +434,26 @@ function renderEvents(){const data=eventList().filter(e=>new Date(e.starts_at).g
 // Participation is a user's own RSVP. "going" is not an organizer-confirmed booking.
 function meetingReaction(e){return demoMode()?(state.demoReactions[e.id]||''):(e.mineReaction||'')}
 function myMeetingData(){return eventList().filter(e=>e.author_id===myId()||meetingReaction(e)==='going')}
+let rausoMeetingDataReady=false;
 function refreshMeetingBadge(){
- const count=myMeetingData().filter(e=>Date.parse(e.starts_at)>=Date.now()-3600000 && (e.author_id===myId()||meetingReaction(e)==='going')).length;
  const badge=$('meetingNavCount');if(!badge)return;
- badge.classList.toggle('hidden',count===0);badge.textContent=count>99?'99+':String(count);
- badge.setAttribute('aria-label',count+' bevorstehende zugesagte oder organisierte Treffen');
+ if(!rausoMeetingDataReady){badge.classList.add('hidden');return}
+ const key='rauso-meeting-changes:'+myId(),current={};
+ for(const e of myMeetingData()){
+  if(Date.parse(e.starts_at)<Date.now()-3600000)continue;
+  current[e.id]=[(e.author_id===myId()?'organized':'going'),(e.availability?.confirmed??'unknown')].join(':');
+ }
+ let old=null;try{old=JSON.parse(localStorage.getItem(key)||'null')}catch{}
+ const pending=Array.isArray(old?.pending)?old.pending:[];
+ if(old?.current)for(const id of new Set([...Object.keys(old.current),...Object.keys(current)])){
+  if(old.current[id]!==current[id]&&!pending.includes(id))pending.push(id);
+ }
+ if(state.tab==='myMeetings')pending.length=0;
+ try{localStorage.setItem(key,JSON.stringify({current,pending}))}catch{}
+ const count=pending.length;
+ badge.classList.toggle('hidden',count===0);
+ badge.textContent=count>99?'99+':String(count);
+ badge.setAttribute('aria-label',count+' neue Zusagen, Absagen oder Treffen');
 }
 function renderMyMeetings(){
  const root=$('myMeetingsList');if(!root)return;
@@ -912,7 +927,7 @@ async function rausoCompleteProfile(){
   closeModal();await loadSocial();renderProfile();updateHeaderAccount();toast('Profilname gespeichert.')
  };
 }
-async function logout(){if(rausoNotificationsChannel){api.removeChannel(rausoNotificationsChannel);rausoNotificationsChannel=null}await api.auth.signOut();state.user=null;rausoOwnBirthdate=null;rausoBirthdateReady=false;state.profile=null;state.outings=[];state.people=[];state.connections=[];rausoInboxMessages=[];rausoUpdateMessageBadge();updateHeaderAccount();switchTab('discover')}
+async function logout(){rausoMeetingDataReady=false;if(rausoNotificationsChannel){api.removeChannel(rausoNotificationsChannel);rausoNotificationsChannel=null}await api.auth.signOut();state.user=null;rausoOwnBirthdate=null;rausoBirthdateReady=false;state.profile=null;state.outings=[];state.people=[];state.connections=[];rausoInboxMessages=[];rausoUpdateMessageBadge();updateHeaderAccount();switchTab('discover')}
 let rausRealtimeChannel=null;
 let rausRefreshPending=false;
 function scheduleRausoRefresh(){
@@ -937,7 +952,7 @@ function attachRausoRealtime(){
 }
 async function refreshUser(){
  const {data:{user}}=await api.auth.getUser();
- state.user=user||null;rausoOwnBirthdate=null;rausoBirthdateReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
+ state.user=user||null;rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
  if(!user){
   state.profile=null;state.profilePhotoUrl=null;updateHeaderAccount();rausoInboxMessages=[];rausoUpdateMessageBadge();renderMessages();return
  }
