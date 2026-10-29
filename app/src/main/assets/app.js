@@ -93,7 +93,13 @@ function switchTab(tab, recordHistory=true){
  state.tab=tab;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages')renderMessages();if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();if($('headerBookmarks'))$('headerBookmarks').classList.toggle('active',tab==='collections')}
 function rausoBack(){
  const dialog=document.querySelector('#modalRoot .modal-overlay');
- if(dialog){closeModal();return true;}
+ if(dialog){
+    // Einstellungen > Design is a two-step flow; Back returns to Einstellungen.
+    if($('uiSave') && state.tab==='profile' && typeof openSettings==='function'){
+       openSettings();return true;
+    }
+    closeModal();return true;
+ }
  if(state.tab==='discover' && state.mapOpen){showMap();return true;}
  if(rausoTabHistory.length){
     const prior=rausoTabHistory.pop();
