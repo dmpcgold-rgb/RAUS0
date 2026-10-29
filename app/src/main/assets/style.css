@@ -1234,3 +1234,14 @@ html[data-rauso-theme] #heroPlan.rauso-header-create:focus-visible{
  .rauso-share-options{grid-template-columns:1fr}
  .rauso-share-options>.quiet,.rauso-share-options #shareCopy{grid-column:auto}
 }
+
+
+/* Keep six header shortcuts fully accessible on Samsung-sized viewports. */
+@media(max-width:420px){
+ #accountShortcutLabel{display:none!important}
+ #accountShortcut{
+  flex:0 0 38px!important;min-width:38px!important;max-width:38px!important;
+  padding:3px!important;gap:0!important
+ }
+ #accountShortcutIcon{flex:0 0 27px!important;width:27px!important;height:27px!important}
+}
