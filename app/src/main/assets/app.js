@@ -525,10 +525,37 @@ function renderDating(){const opt=profile().dating_enabled===true;const main=$('
 function likedPerson(id){return demoMode()?!!state.demoDatingLikes[id]:state.datingLikes.some(l=>l.liker_id===myId()&&l.liked_id===id)}
 async function dateLike(id){if(!mustVerify('Dating-Likes'))return;if(demoMode()){state.demoDatingLikes[id]=state.demoDatingLikes[id]?'':(id==='demo-u2'?'match':'liked');persist();renderDating();renderMessages();toast(state.demoDatingLikes[id]==='match'?'Demo-Match! Du kannst den Test-Chat ausprobieren.':'Demo-Like gespeichert.');return}try{const req=likedPerson(id)?api.from('dating_likes').delete().eq('liker_id',myId()).eq('liked_id',id):api.from('dating_likes').insert({liker_id:myId(),liked_id:id});const {error}=await req;if(error)throw error;await loadSocial();toast(mutualLike(id)?'Match! Ihr könnt jetzt schreiben.':'Like gespeichert.')}catch(err){toast(err.message)}}
 async function setDating(enabled,adult){if(enabled&&!mustVerify('Dating aktivieren'))return;try{if(demoMode()){state.demoProfile={...state.demoProfile,dating_enabled:enabled,adult_confirmed:adult};persist()}else{const {error}=await api.from('rauso_profiles').update({dating_enabled:enabled,adult_confirmed:enabled?adult:profile().adult_confirmed}).eq('id',myId());if(error)throw error;state.profile={...state.profile,dating_enabled:enabled,adult_confirmed:adult}}renderDating();renderProfile();toast(enabled?'Dating aktiviert.':'Dating deaktiviert.')}catch(err){toast(err.message)}}
-function renderProfile(){const p=profile();$('profileContent').innerHTML=`<div class="surface stack"><div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')} · ${demoMode()?'Demo-Vorschau':'RAUSO-Mitglied'}</small></div></div><form id="profileForm" class="stack"><div class="input-group"><label for="myName">Anzeigename</label><input id="myName" minlength="2" maxlength="40" required  value="${esc(p.display_name)}"></div><div class="input-group"><label for="myCity">Wohnort / Region</label><input id="myCity" maxlength="80" value="${esc(p.city)}"></div><div class="input-group"><label for="myBio">Über mich</label><textarea id="myBio" maxlength="500">${esc(p.bio)}</textarea></div><button class="primary-btn" type="submit">Profil speichern</button></form><div class="section-head"><h2>Dating</h2><span class="pill">${p.dating_enabled?'Aktiv':'Aus'}</span></div><p class="quiet">Dating ist freiwillig und nur für Erwachsene ab 18 vorgesehen.</p><button class="outline-btn" id="openDatingSettings">Dating-Einstellungen</button></div><div class="section-head"><h2>Mein Konto</h2></div><div class="surface stack"><button id="reportSafety" class="safety-action">🛡 Sicherheitsfall melden · Notfall 133 / 112</button><p class="quiet">${demoMode()?'Alle sozialen Daten und Musterprofile sind lokale Vorschau.':'Angemeldet als '+esc(state.user?.email||'')}</p>${demoMode()?'<button class="outline-btn" id="loginBtn">Konto erstellen / Anmelden</button>':'<button class="outline-btn" id="logoutBtn">Abmelden</button>'}<button class="outline-btn" id="mySaved">♡ Gemerkte Orte (${state.favorites.size})</button><button class="outline-btn" id="deleteLocal">Lokale Testdaten löschen</button><p class="quiet">RAUSO v${APP_VERSION} · Ortsdaten © OpenStreetMap</p></div>`;
- $('profileForm').onsubmit=saveProfile;$('openDatingSettings').onclick=()=>switchTab('dating');$('reportSafety').onclick=()=>openSafetyReport(null);$('mySaved').onclick=()=>{switchTab('collections')};$('deleteLocal').onclick=()=>{if(confirm('Testdaten auf diesem Gerät wirklich löschen?')){localStorage.removeItem(STORE);location.reload()}};if(demoMode())$('loginBtn').onclick=showAuth;else $('logoutBtn').onclick=logout;injectProfileExtras()}
-async function saveProfile(e){e.preventDefault();const data={display_name:$('myName').value.trim(),city:$('myCity').value.trim(),bio:$('myBio').value.trim()};try{if(demoMode()){state.demoProfile={...state.demoProfile,...data};persist()}else{const {error}=await api.from('rauso_profiles').upsert({id:myId(),...data});if(error)throw error;state.profile={...state.profile,...data}}toast('Profil gespeichert.');renderProfile();injectProfileExtras();addMoreLink();addAppearanceLink();addReadiness()}catch(err){toast(err.message)}}
-function showAuth(){if(!hasBackend){modal('RAUSO-Konto noch nicht eingerichtet','<p>Für echte Profile, Nachrichten und Treffen muss zuerst das RAUSO-Supabase-Projekt in <code>assets/config.js</code> verbunden und das Datenbankschema eingerichtet werden. Die Echtzeit-Ortssuche funktioniert bereits ohne Konto.</p>');return}modal('Anmelden oder registrieren',`<form class="stack" id="authForm"><div class="input-group"><label>E-Mail</label><input id="authEmail" type="email" required autocomplete="email"></div><div class="input-group"><label>Passwort (mind. 8 Zeichen)</label><input id="authPassword" type="password" minlength="8" required autocomplete="current-password"></div><div class="form-actions"><button class="primary-btn" type="submit" data-act="login">Anmelden</button><button class="outline-btn" type="button" id="signup">Registrieren</button></div><button class="outline-btn" type="button" id="resendConfirmation">Bestätigungs-E-Mail erneut senden</button><p class="quiet">Wenn dein Konto bereits bestätigt ist, nutze „Anmelden“. Ältere Bestätigungslinks können weiterhin zu localhost führen.</p></form>`);$('authForm').onsubmit=e=>{e.preventDefault();runAuth(false)};$('signup').onclick=()=>runAuth(true);$('resendConfirmation').onclick=resendConfirmationEmail}
+function renderProfile(){const p=profile();$('profileContent').innerHTML=`<div class="surface stack"><div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')} · ${demoMode()?'Demo-Vorschau':'RAUSO-Mitglied'}</small></div></div><form id="profileForm" class="stack"><div class="input-group"><label for="myName">Anzeigename</label><input id="myName" minlength="2" maxlength="40" required  value="${esc(p.display_name)}"></div><div class="input-group"><label for="myCity">Wohnort / Region</label><input id="myCity" maxlength="80" value="${esc(p.city)}"></div><div class="input-group"><label for="myBio">Über mich</label><textarea id="myBio" maxlength="500">${esc(p.bio)}</textarea></div><button class="primary-btn" type="submit">Profil speichern</button></form></div><div class="section-head"><h2>Mein Konto</h2></div><div class="surface stack"><button id="reportSafety" class="safety-action">🛡 Sicherheitsfall melden · Notfall 133 / 112</button><p class="quiet">${demoMode()?'Alle sozialen Daten und Musterprofile sind lokale Vorschau.':'Angemeldet als '+esc(state.user?.email||'')}</p>${demoMode()?'<button class="outline-btn" id="loginBtn">Konto erstellen / Anmelden</button>':'<button class="outline-btn" id="logoutBtn">Abmelden</button>'}<button class="outline-btn" id="mySaved">♡ Gemerkte Orte (${state.favorites.size})</button><button class="outline-btn" id="deleteLocal">Lokale Testdaten löschen</button><p class="quiet">RAUSO v${APP_VERSION} · Ortsdaten © OpenStreetMap</p></div>`;
+ $('profileForm').onsubmit=saveProfile;$('reportSafety').onclick=()=>openSafetyReport(null);$('mySaved').onclick=()=>{switchTab('collections')};$('deleteLocal').onclick=()=>{if(confirm('Testdaten auf diesem Gerät wirklich löschen?')){localStorage.removeItem(STORE);location.reload()}};if(demoMode())$('loginBtn').onclick=showAuth;else $('logoutBtn').onclick=logout;injectProfileExtras()}
+async function saveProfile(e){e.preventDefault();const name=$('myName').value.trim();if(!rausoValidDisplayName(name)){toast('Bitte einen eigenen Profilnamen mit 2–40 Zeichen eingeben.');$('myName').focus();return}const data={display_name:name,city:$('myCity').value.trim(),bio:$('myBio').value.trim()};try{if(demoMode()){state.demoProfile={...state.demoProfile,...data};persist()}else{const {error}=await api.from('rauso_profiles').upsert({id:myId(),...data});if(error)throw error;state.profile={...state.profile,...data}}toast('Profil gespeichert.');renderProfile();injectProfileExtras();addMoreLink();addAppearanceLink();addReadiness()}catch(err){toast(err.message)}}
+function rausoValidDisplayName(value){
+ const name=String(value||'').trim();
+ return name.length>=2 && name.length<=40 && !['RAUSO-Mitglied','Mein RAUSO-Profil'].includes(name);
+}
+function showAuth(){
+ if(!hasBackend){modal('RAUSO-Konto noch nicht eingerichtet','<p>Die Online-Anmeldung ist momentan nicht konfiguriert.</p>');return}
+ modal('Anmelden oder registrieren',
+  '<form class="stack" id="authForm">'+
+  '<div class="input-group" id="signupNameWrap" hidden><label for="signupName">Dein Profilname (Pflichtfeld)</label>'+
+  '<input id="signupName" minlength="2" maxlength="40" autocomplete="nickname" placeholder="Wie sollen andere dich sehen?">'+
+  '<small>Jeder RAUSO-Account benötigt einen selbst gewählten Namen.</small></div>'+
+  '<div class="input-group"><label for="authEmail">E-Mail</label><input id="authEmail" type="email" required autocomplete="email"></div>'+
+  '<div class="input-group"><label for="authPassword">Passwort (mind. 8 Zeichen)</label>'+
+  '<input id="authPassword" type="password" minlength="8" required autocomplete="current-password"></div>'+
+  '<div class="form-actions"><button class="primary-btn" type="submit" id="authSubmit">Anmelden</button>'+
+  '<button class="outline-btn" type="button" id="signup">Registrieren</button></div>'+
+  '<button class="outline-btn" type="button" id="resendConfirmation">Bestätigungs-E-Mail erneut senden</button>'+
+  '<p class="quiet">Bei Registrierung erst Profilnamen wählen, danach E-Mail und Passwort eingeben.</p></form>');
+ let register=false;
+ $('authForm').onsubmit=e=>{e.preventDefault();runAuth(register)};
+ $('signup').onclick=()=>{
+  register=true;$('signupNameWrap').hidden=false;$('signupName').required=true;
+  $('authSubmit').textContent='Konto registrieren';$('signup').textContent='Zur Anmeldung';
+  $('signup').onclick=()=>showAuth();
+  $('signupName').focus()
+ };
+ $('resendConfirmation').onclick=resendConfirmationEmail;
+}
 async function resendConfirmationEmail(){
  const email=$('authEmail')?.value.trim();
  if(!email){toast('Bitte zuerst deine E-Mail-Adresse eintragen.');return}
@@ -540,8 +567,37 @@ async function resendConfirmationEmail(){
  }catch(err){toast('Bestätigung konnte nicht angefordert werden: '+err.message)}
  finally{button.disabled=false}
 }
-async function runAuth(signup){const email=$('authEmail').value,password=$('authPassword').value;const {data,error}=signup?await api.auth.signUp({email,password,options:{emailRedirectTo:'rauso://auth/callback'}}):await api.auth.signInWithPassword({email,password});if(error){toast(error.message);return}closeModal();if(data.session){await refreshUser();toast('Angemeldet.')}else toast('Bitte bestätige deine E-Mail-Adresse.');}
-async function logout(){if(rausoNotificationsChannel){api.removeChannel(rausoNotificationsChannel);rausoNotificationsChannel=null}await api.auth.signOut();state.user=null;state.profile=null;state.outings=[];state.people=[];state.connections=[];switchTab('profile')}
+async function runAuth(signup){
+ const email=$('authEmail')?.value.trim(),password=$('authPassword')?.value;
+ const name=signup?$('signupName')?.value.trim():'';
+ if(signup&&!rausoValidDisplayName(name)){toast('Profilname verpflichtend: 2–40 Zeichen und kein Platzhalter.');$('signupName').focus();return}
+ const options={emailRedirectTo:'rauso://auth/callback'};
+ if(signup)options.data={display_name:name};
+ const {data,error}=signup
+  ?await api.auth.signUp({email,password,options})
+  :await api.auth.signInWithPassword({email,password});
+ if(error){toast(error.message);return}
+ closeModal();
+ if(data.session){await refreshUser();toast('Angemeldet.')}
+ else toast('Bitte bestätige deine E-Mail-Adresse.');
+}
+async function rausoCompleteProfile(){
+ if(!state.user)return;
+ modal('Profilname erforderlich',
+  '<form id="finishProfileForm" class="stack"><p>Bitte wähle einen Profilnamen, damit du RAUSO vollständig verwenden kannst.</p>'+
+  '<label for="finishProfileName">Dein Profilname</label>'+
+  '<input id="finishProfileName" required minlength="2" maxlength="40" placeholder="Dein Anzeigename" autocomplete="nickname">'+
+  '<button class="primary-btn" type="submit">Profilnamen speichern</button></form>');
+ $('finishProfileForm').onsubmit=async e=>{
+  e.preventDefault();const name=$('finishProfileName').value.trim();
+  if(!rausoValidDisplayName(name)){toast('Bitte einen gültigen Namen mit 2–40 Zeichen eingeben.');return}
+  const {error}=await api.from('rauso_profiles').upsert({id:myId(),display_name:name});
+  if(error){toast(error.message);return}
+  state.profile={...state.profile,display_name:name};
+  closeModal();await loadSocial();renderProfile();updateHeaderAccount();toast('Profilname gespeichert.')
+ };
+}
+async function logout(){if(rausoNotificationsChannel){api.removeChannel(rausoNotificationsChannel);rausoNotificationsChannel=null}await api.auth.signOut();state.user=null;state.profile=null;state.outings=[];state.people=[];state.connections=[];rausoInboxMessages=[];rausoUpdateMessageBadge();updateHeaderAccount();switchTab('discover')}
 let rausRealtimeChannel=null;
 let rausRefreshPending=false;
 function scheduleRausoRefresh(){
@@ -564,8 +620,31 @@ function attachRausoRealtime(){
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'rauso_messages'},event=>{const m=event.new;if(state.user&&m&&(m.sender_id===state.user.id||m.recipient_id===state.user.id)){if(state.currentChat&&(m.sender_id===state.currentChat||m.recipient_id===state.currentChat))loadChat();pollRausoNotifications(true)}})
   .subscribe();
 }
-async function refreshUser(){const {data:{user}}=await api.auth.getUser();state.user=user||null;attachRausoRealtime();if(!user){state.profile=null;return}const {data,error}=await api.from('rauso_profiles').select('*').eq('id',user.id).maybeSingle();if(error)console.error(error);if(data)state.profile=data;else{state.profile={...state.demoProfile,dating_enabled:false,adult_confirmed:false};const {error:e}=await api.from('rauso_profiles').insert({id:user.id,display_name:state.profile.display_name,city:state.profile.city,bio:state.profile.bio});if(e)toast('Bitte Profil prüfen: '+e.message)}await Promise.all([loadOutings(),loadSocial(),loadBookmarks()]);await pollRausoNotifications(false);subscribeRausoNotifications();renderProfile()}
-
+async function refreshUser(){
+ const {data:{user}}=await api.auth.getUser();
+ state.user=user||null;attachRausoRealtime();updateHeaderAccount();
+ if(!user){
+  state.profile=null;rausoInboxMessages=[];rausoUpdateMessageBadge();renderMessages();return
+ }
+ const {data,error}=await api.from('rauso_profiles').select('*').eq('id',user.id).maybeSingle();
+ if(error)console.error(error);
+ if(data)state.profile=data;
+ else{
+  const metadataName=String(user.user_metadata?.display_name||'').trim();
+  if(rausoValidDisplayName(metadataName)){
+   const {data:created,error:insertError}=await api.from('rauso_profiles')
+    .insert({id:user.id,display_name:metadataName,city:'',bio:''}).select('*').single();
+   if(insertError){console.warn('Profil:',insertError.message);state.profile=null}
+   else state.profile=created;
+  }else state.profile=null
+ }
+ await Promise.all([loadOutings(),loadSocial(),loadBookmarks(),loadMessageInbox()]);
+ await pollRausoNotifications(false);
+ subscribeRausoNotifications();renderProfile();updateHeaderAccount();
+ if(!state.profile||!rausoValidDisplayName(state.profile.display_name)){
+  rausoCompleteProfile()
+ }
+}
 const configV16 = config || {};
 async function requireUserFor(feature){if(!state.user){showAuth();toast('Bitte für '+feature+' anmelden.');return false}return true}
 async function openWishlist(id){const {data,error}=await api.from('wishlist_items').select('id,place_id,place_name,notes').eq('wishlist_id',id);modal('Wunschliste',`<div class="stack">${error?esc(error.message):(data||[]).map(x=>`<div class="surface">${esc(x.place_name)} · ${esc(x.notes||'')}</div>`).join('')||'Liste ist leer.'}<form id="addWish"><input id="wishPlace" required maxlength="120" placeholder="Ort / Ausflugsziel"><button class="primary-btn">Ort hinzufügen</button></form></div>`);$('addWish').onsubmit=async e=>{e.preventDefault();const {error}=await api.from('wishlist_items').insert({wishlist_id:id,place_name:$('wishPlace').value.trim(),added_by:myId()});if(error)toast(error.message);else openWishlist(id)}}
@@ -773,6 +852,16 @@ modal('Design & Startseite',`<div class="stack"><p class="quiet">Wähle ein Desi
 $('uiStart').value=uiPref.start;
 $('uiSave').onclick=()=>{uiPref.theme=document.querySelector('input[name="theme"]:checked').value;uiPref.autoTheme=$('uiAuto').checked;uiPref.start=$('uiStart').value;saveUi();setAppearance();closeModal();toast('Einstellungen gespeichert.')};
 }
+function updateHeaderAccount(){
+ const logged=!!state.user;
+ const label=$('accountShortcutLabel'),icon=$('accountShortcutIcon'),btn=$('accountShortcut');
+ if(label)label.textContent=logged?'Mein Profil':'Anmelden';
+ if(icon)icon.textContent=logged?'🙂':'↪';
+ if(btn){
+  btn.setAttribute('aria-label',logged?'Mein Profil öffnen':'Anmelden');
+  btn.title=logged?'Mein Profil':'Anmelden';
+ }
+}
 function openSettings(){
  modal('⚙ Einstellungen', '<div class="stack"><p class="quiet">Passe das Aussehen und die Startseite von RAUSO an.</p>'+
  '<button class="outline-btn" id="settingDesign">🎨 Design auswählen</button>'+
@@ -827,7 +916,7 @@ function restoreDiscoverySettings(){
  if(cats[saved.category]){state.cat=saved.category;document.querySelectorAll('[data-cat]').forEach(b=>b.classList.toggle('selected',b.dataset.cat===state.cat))}const categoryDropdown=$('categorySelect');if(categoryDropdown)categoryDropdown.value=state.cat;
 }
 
-function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>switchTab('profile');$('heroPlan').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
+function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
  $('categorySelect').onchange=e=>{document.querySelector('[data-cat="'+e.target.value+'"]')?.click()};
  $('loadPlaces').onclick=queryPlaces;state.places=[];renderPlaces();renderEvents();renderFamily();renderMyMeetings();renderMessages();renderProfile();injectProfileExtras();queryPlaces();if(hasBackend){api.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(()=>refreshUser().then(()=>{updateOnlinePresence();switchTab(state.tab)}),0)});refreshUser().then(()=>switchTab(state.tab))}
 }
