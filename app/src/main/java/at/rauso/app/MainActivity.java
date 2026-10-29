@@ -29,11 +29,13 @@ public class MainActivity extends Activity {
  private GeolocationPermissions.Callback pendingGeoCallback;
  private String pendingGeoOrigin;
  private int systemBottomPx=0;
+ private int systemTopPx=0;
  private void applyWebSafeArea(){
   if(web==null)return;
   final float density=getResources().getDisplayMetrics().density;
   final int bottomCss=Math.max(0,Math.round(systemBottomPx/Math.max(density,0.1f)));
-  web.evaluateJavascript("document.documentElement.style.setProperty('--rauso-native-bottom','"+bottomCss+"px')",null);
+  final int topCss=Math.max(0,Math.round(systemTopPx/Math.max(density,0.1f)));
+  web.evaluateJavascript("(function(){document.documentElement.style.setProperty('--rauso-native-bottom','"+bottomCss+"px');document.documentElement.style.setProperty('--rauso-native-top','"+topCss+"px');})()",null);
  }
 
  private void navigateBackWithinRauso(){
@@ -62,6 +64,9 @@ public class MainActivity extends Activity {
  }
  @Override public void onCreate(Bundle state) {
   super.onCreate(state);
+  getWindow().setStatusBarColor(Color.rgb(9,9,10));
+  getWindow().setNavigationBarColor(Color.rgb(9,9,10));
+  getWindow().getDecorView().setSystemUiVisibility(0);
   WebViewAssetLoader loader=new WebViewAssetLoader.Builder().addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
   web=new WebView(this);
   // Keep app content below Android's status bar (clock, signal and battery).
@@ -77,12 +82,13 @@ public class MainActivity extends Activity {
     top=insets.getSystemWindowInsetTop();
     bottom=insets.getSystemWindowInsetBottom();
    }
-   // Keep clock and battery clear with native top padding. Bottom space must be
-   // applied to the CSS fixed navigation, which WebView padding alone does not move.
-   if(web.getPaddingTop()!=top || web.getPaddingBottom()!=0){
-    web.setPadding(0,top,0,0);
+   // Android 15/16 enforce edge-to-edge. The web document must reserve
+   // status bar and navigation bar insets without double-offsetting WebView.
+   if(web.getPaddingTop()!=0 || web.getPaddingBottom()!=0){
+    web.setPadding(0,0,0,0);
    }
-   if(systemBottomPx!=bottom){
+   if(systemBottomPx!=bottom || systemTopPx!=top){
+    systemTopPx=top;
     systemBottomPx=bottom;
     applyWebSafeArea();
    }
