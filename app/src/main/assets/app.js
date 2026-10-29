@@ -59,11 +59,11 @@ const demoEventDefaults = [
 const state = {
  tab:'discover',cat:'restaurants',region:'wiener-neustadt',radius:25000,query:'',places:[],placesLive:false,placeLoading:false,
  map:null,markers:null,mapOpen:false, session:null,profile:null,user:null,
- favorites:new Set(cache.favorites||[]), demoProfile:cache.profile||{display_name:'Mein RAUSO-Profil',city:'Wiener Neustadt',bio:'Ich bin gerne unterwegs.',dating_enabled:false,adult_confirmed:false},
+ favorites:new Set(cache.favorites||[]), bookmarks:{...(cache.bookmarks||{})}, profilePhotoUrl:null, demoProfile:cache.profile||{display_name:'Mein RAUSO-Profil',city:'Wiener Neustadt',bio:'Ich bin gerne unterwegs.',dating_enabled:false,adult_confirmed:false},
  demoEvents:[], demoReactions:cache.reactions||{}, demoConnections:{}, demoDatingLikes:cache.datingLikes||{}, demoMessages:cache.messages||{}, demoBlocks:cache.blocks||{},
  outings:[], people:[], connections:[], datingLikes:[], blocks:[], currentChat:null, eventMode:'all', meetFilter:'upcoming', verification:{identity_status:'not_started',face_match:false,name_match:false,vehicle_status:'not_started',vehicle_match:false,plate_match:false}
 };
-const persist = () => {try{localStorage.setItem(STORE,JSON.stringify({favorites:[...state.favorites],profile:state.demoProfile,events:state.demoEvents,reactions:state.demoReactions,connections:state.demoConnections,datingLikes:state.demoDatingLikes,messages:state.demoMessages,blocks:state.demoBlocks,...Object.fromEntries(Object.entries(cache).filter(([k])=>k.startsWith('osm:')))}))}catch{}};
+const persist = () => {try{localStorage.setItem(STORE,JSON.stringify({favorites:[...state.favorites],bookmarks:state.bookmarks,profile:state.demoProfile,events:state.demoEvents,reactions:state.demoReactions,connections:state.demoConnections,datingLikes:state.demoDatingLikes,messages:state.demoMessages,blocks:state.demoBlocks,...Object.fromEntries(Object.entries(cache).filter(([k])=>k.startsWith('osm:')))}))}catch{}};
 const myId = () => state.user?.id||'local-user';
 const profile = () => state.profile||state.demoProfile;
 const demoMode = () => !state.user;
@@ -267,13 +267,92 @@ async function renderNotifications(){const el=$('notificationsContent');if(!stat
 }
 async function renderShows(){const el=$('showsContent');el.innerHTML=`<div class="surface stack"><h2>Verlässliche Veranstaltungstermine</h2><p>Derzeit kein lizenzierter Datenlieferant konfiguriert. Es werden ausdrücklich keine erfundenen Filmzeiten, Tickets oder freien Plätze angezeigt.</p><button id="showPlaceSearch" class="outline-btn">🎬 Kinos in meiner Region finden</button><button id="showEvents" class="outline-btn">Offizielle Veranstaltungsseiten öffnen</button></div>`;$('showPlaceSearch').onclick=()=>{switchTab('discover');document.querySelector('[data-cat="kino"]').click()};$('showEvents').onclick=()=>window.open('https://www.wien.info/de/aktuell/veranstaltungen','_blank','noopener')}
 async function renderAdmin(){const el=$('adminContent');if(!state.user){el.innerHTML='<div class="status-banner">Anmeldung erforderlich.</div>';return}const {data:role,error:roleError}=await api.from('app_admins').select('user_id,role').eq('user_id',myId()).maybeSingle();if(roleError||!role){el.innerHTML='<div class="status-banner">Kein administrativer Zugriff. Die Berechtigung wird vom Server überprüft.</div>';return}const {data,error}=await api.from('reports').select('id,reason,created_at,status').order('created_at',{ascending:false}).limit(100);el.innerHTML=`<div class="surface stack"><h2>RAUSO-Verwaltung · ${role.role==='owner'?'Hauptadministratorin':'Administrator'}</h2><p class="quiet">Beide Rollen dürfen Meldungen bearbeiten. Rollen werden ausschließlich serverseitig vergeben. Die Hauptadministratorin bleibt für Betreiberentscheidungen zuständig.</p><h2>Offene Meldungen</h2>${error?esc(error.message):(data||[]).map(r=>`<div class="moderation-card"><strong>${esc('Meldung')}</strong><p>${esc(r.reason||'')}</p><small>${esc(r.status||'offen')} · ${fmt(r.created_at)}</small><button class="outline-btn" data-close-report="${esc(r.id)}">Als bearbeitet markieren</button></div>`).join('')||'<p>Keine Meldungen.</p>'}</div>`;el.querySelectorAll('[data-close-report]').forEach(b=>b.onclick=async()=>{const {error}=await api.from('reports').update({status:'resolved'}).eq('id',b.dataset.closeReport);if(error)toast(error.message);else renderAdmin()})}
-async function addProfilePhoto(file){if(!state.user)return showAuth();if(!file||!file.type.startsWith('image/')||file.size>5*1024*1024){toast('Nur Bilddateien bis 5 MB.');return}const path=`${myId()}/${crypto.randomUUID()}.${file.type==='image/png'?'png':'jpg'}`;const {error:uploadError}=await api.storage.from('profile-photos').upload(path,file,{contentType:file.type,upsert:false});if(uploadError){toast(uploadError.message);return}const {error}=await api.from('profile_photos').insert({user_id:myId(),storage_path:path});if(error)toast(error.message);else{toast('Foto hochgeladen.');renderProfilePhotos()}}
-async function renderProfilePhotos(){let zone=$('myPhotos');if(!zone)return;if(!state.user){zone.innerHTML='<p>Für echte Profilfotos bitte anmelden.</p>';return}const {data,error}=await api.from('profile_photos').select('id,storage_path').eq('user_id',myId()).order('created_at',{ascending:false});zone.innerHTML=error?'<p>Fotoverwaltung ist noch nicht mit dem Backend verbunden.</p>':`<div class="photo-row">${(data||[]).map(x=>{const u=api.storage.from('profile-photos').getPublicUrl(x.storage_path).data.publicUrl;return `<div class="photo-tile"><img loading="lazy" src="${esc(u)}" alt="Profilfoto"><button data-delete-photo="${esc(x.id)}">Entfernen</button></div>`}).join('')}</div><label class="outline-btn">＋ Foto hinzufügen<input type="file" accept="image/*" id="photoPicker" hidden></label>`;const picker=$('photoPicker');if(picker)picker.onchange=e=>addProfilePhoto(e.target.files[0]);zone.querySelectorAll('[data-delete-photo]').forEach(b=>b.onclick=async()=>{const row=(data||[]).find(x=>x.id===b.dataset.deletePhoto);if(!row)return;await api.storage.from('profile-photos').remove([row.storage_path]);await api.from('profile_photos').delete().eq('id',row.id);renderProfilePhotos()})}
+
+async function addProfilePhoto(file){
+ if(!state.user){showAuth();return}
+ if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024||file.size===0){
+  toast('Nur JPG, PNG oder WebP bis 5 MB.');return
+ }
+ const path=myId()+'/'+crypto.randomUUID()+'.'+(file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg');
+ try{
+  const {data:existing,error:readError}=await api.from('profile_photos').select('id').eq('user_id',myId());
+  if(readError)throw readError;
+  if((existing||[]).length>=6)throw Error('Maximal sechs Profilfotos.');
+  const {error:uploadError}=await api.storage.from('profile-photos').upload(path,file,{contentType:file.type,upsert:false});
+  if(uploadError)throw uploadError;
+  const {error}=await api.from('profile_photos').insert({
+   user_id:myId(),storage_path:path,is_primary:(existing||[]).length===0,is_public:false
+  });
+  if(error){await api.storage.from('profile-photos').remove([path]);throw error}
+  toast('Profilfoto gespeichert – zunächst privat.');
+  await renderProfilePhotos()
+ }catch(err){toast('Foto konnte nicht gespeichert werden: '+(err.message||String(err)))}
+}
+async function makePrimaryProfilePhoto(row){
+ if(!state.user||!row)return;
+ const {error:e1}=await api.from('profile_photos').update({is_primary:false})
+  .eq('user_id',myId()).eq('is_primary',true);
+ if(e1){toast(e1.message);return}
+ const {error:e2}=await api.from('profile_photos').update({is_primary:true})
+  .eq('user_id',myId()).eq('id',row.id);
+ if(e2){toast(e2.message);return}
+ await renderProfilePhotos();
+}
+async function renderProfilePhotos(){
+ const zone=$('myPhotos');if(!zone)return;
+ if(!state.user){zone.innerHTML='<p class="quiet">Für Profilfotos bitte anmelden.</p>';return}
+ const {data,error}=await api.from('profile_photos').select('id,storage_path,is_primary,is_public,created_at')
+  .eq('user_id',myId()).order('created_at',{ascending:false});
+ if(error){zone.innerHTML='<p class="status-banner">'+esc(error.message)+'</p>';return}
+ const rows=await Promise.all((data||[]).map(async row=>{
+  const {data:signed,error:err}=await api.storage.from('profile-photos').createSignedUrl(row.storage_path,1800);
+  return Object.assign({},row,{url:err?'':signed?.signedUrl||''})
+ }));
+ const first=rows.find(x=>x.is_primary)||rows[0];
+ state.profilePhotoUrl=first?.url||null;
+ const header=document.querySelector('#profileContent .profile-row .avatar');
+ if(header&&state.profilePhotoUrl){
+  header.innerHTML='<img src="'+esc(state.profilePhotoUrl)+'" alt="Profilbild">';
+  header.classList.add('profile-avatar-photo')
+ }
+ let html='<div class="photo-row">';
+ for(const row of rows){
+  html+='<div class="photo-tile"><div class="photo-thumb">'+
+   (row.url?'<img loading="lazy" src="'+esc(row.url)+'" alt="Profilfoto">':'<span>Bild nicht verfügbar</span>')+
+   (row.is_primary?'<span class="profile-primary-label">★ Hauptbild</span>':'')+
+   '</div><div class="photo-controls">'+
+   '<button class="small-btn" data-main-photo="'+esc(row.id)+'" '+(row.is_primary?'disabled':'')+'>★ Hauptbild</button>'+
+   '<button class="small-btn '+(row.is_public?'photo-public':'')+'" data-public-photo="'+esc(row.id)+'">'+(row.is_public?'🌐 Sichtbar':'🔒 Privat')+'</button>'+
+   '<button class="small-btn" data-delete-photo="'+esc(row.id)+'">Entfernen</button></div></div>'
+ }
+ html+='</div><label class="outline-btn photo-upload-btn">＋ Foto hinzufügen'+
+  '<input id="photoPicker" type="file" accept="image/jpeg,image/png,image/webp" hidden '+(rows.length>=6?'disabled':'')+'></label>'+
+  '<p class="quiet">Bis zu 6 Fotos (je 5 MB). Neue Fotos sind privat. Nur ausdrücklich freigegebene Bilder sind für andere angemeldete Mitglieder sichtbar.</p>';
+ zone.innerHTML=html;
+ const picker=$('photoPicker');if(picker)picker.onchange=e=>{const file=e.target.files?.[0];if(file)addProfilePhoto(file)};
+ zone.querySelectorAll('[data-main-photo]').forEach(btn=>btn.onclick=()=>makePrimaryProfilePhoto(rows.find(x=>x.id===btn.dataset.mainPhoto)));
+ zone.querySelectorAll('[data-public-photo]').forEach(btn=>btn.onclick=async()=>{
+  const row=rows.find(x=>x.id===btn.dataset.publicPhoto);if(!row)return;
+  const {error:err}=await api.from('profile_photos').update({is_public:!row.is_public})
+   .eq('user_id',myId()).eq('id',row.id);
+  if(err)toast(err.message);
+  else{toast(row.is_public?'Bild wieder privat.':'Bild für angemeldete Mitglieder freigegeben.');await renderProfilePhotos()}
+ });
+ zone.querySelectorAll('[data-delete-photo]').forEach(btn=>btn.onclick=async()=>{
+  const row=rows.find(x=>x.id===btn.dataset.deletePhoto);if(!row||!confirm('Foto dauerhaft löschen?'))return;
+  const {error:err}=await api.storage.from('profile-photos').remove([row.storage_path]);
+  if(err){toast(err.message);return}
+  const {error:delErr}=await api.from('profile_photos').delete().eq('user_id',myId()).eq('id',row.id);
+  if(delErr){toast(delErr.message);return}
+  if(row.is_primary){const next=rows.find(x=>x.id!==row.id);if(next)await makePrimaryProfilePhoto(next)}
+  await renderProfilePhotos();toast('Foto gelöscht.')
+ })
+}
 function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$('myPhotos')){const wrap=document.createElement('div');wrap.className='surface stack';wrap.innerHTML='<h2>Meine Profilfotos</h2><p>Bis zu 5 MB pro Bild. Fotos können jederzeit gelöscht werden.</p><div id="myPhotos"></div>';el.prepend(wrap)}if(state.user && !$('notificationAccess')){const b=document.createElement('button');b.id='notificationAccess';b.className='outline-btn';b.textContent='🔔 Meine Benachrichtigungen';b.onclick=()=>switchTab('notifications');el.appendChild(b)}if(state.user && !$('adminAccess')){const b=document.createElement('button');b.id='adminAccess';b.className='outline-btn';b.textContent='⚙ Verwaltung (nur Berechtigte)';b.onclick=()=>switchTab('admin');el.appendChild(b)}renderProfilePhotos()}
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.2.2';
+const APP_VERSION='2.3.0';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'light',autoTheme:false,start:'discover',...readPref()};
