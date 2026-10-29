@@ -92,7 +92,7 @@ function switchTab(tab, recordHistory=true){
    rausoTabHistory.push(state.tab);
    if(rausoTabHistory.length>60)rausoTabHistory.shift();
  }
- state.tab=tab;if($('headerMessages'))$('headerMessages').classList.toggle('active',tab==='messages');document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();if($('headerBookmarks'))$('headerBookmarks').classList.toggle('active',tab==='collections')}
+ state.tab=tab;if($('headerMessages'))$('headerMessages').classList.toggle('active',tab==='messages');document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();if($('headerBookmarks'))$('headerBookmarks').classList.toggle('active',tab==='collections')}
 function rausoBack(){
  const dialog=document.querySelector('#modalRoot .modal-overlay');
  if(dialog){
@@ -141,6 +141,7 @@ function rausoSiteUrl(place){
  return 'https://www.openstreetmap.org/search?query='+encodeURIComponent((place.name||place.title||'')+' '+(place.addr||place.region||''));
 }
 function rausoOpenPlace(place){window.location.assign(rausoSiteUrl(place))}
+function rausoHasVenueWebsite(place){return /^(https?:\/\/|www\.)/i.test(String(place.website||'').trim())}
 function rausoRequestLocation(){
  const btn=$('distanceLocation');
  if(!navigator.geolocation){toast('Standort nicht verfügbar. Entfernung ab der gewählten Region.');return}
@@ -265,12 +266,12 @@ function renderViennaHighlights(){
  const list=rausoShowAllHighlights?sorted:[first,different].filter(Boolean);
  el.innerHTML=list.map(p=>{
   const liked=isBookmarked('place',p.id);
-  const label=p.category==='thermen'?'♨ Thermen':'🍽 Restaurants';
-  return '<article class="featured-card rauso-place-link" data-featured-open="'+esc(p.id)+'" tabindex="0" role="link" title="Website von '+esc(p.name)+' öffnen">'+
-   '<div class="featured-image rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-featured-create="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen">☆ Unternehmung starten</button></div>'+
+  const label=p.category==='thermen'?'♨ THERMEN':'🍽 RESTAURANTS';
+  return '<article class="featured-card rauso-place-link" data-venue-category="'+esc(p.category)+'" data-featured-open="'+esc(p.id)+'" tabindex="0" role="link" title="Website von '+esc(p.name)+' öffnen">'+
+   '<div class="featured-image rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-featured-create="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen" title="Unternehmung erstellen">＋</button></div>'+
    '<span class="featured-map venue-distance" title="'+esc(rausoDistanceOrigin())+'">★ '+esc(rausoDistanceLabel(p))+'</span>'+
    '<div class="featured-text"><h4>'+esc(p.name)+'</h4><p>'+esc(p.short)+'</p>'+
-   '<span class="featured-cat '+(p.category==='thermen'?'thermal':'')+'">'+esc(label)+'</span></div>'+
+   '<span class="featured-cat '+(p.category==='thermen'?'thermal':'')+'">'+esc(label)+'</span></div>'+'<button type="button" class="rauso-venue-site rauso-featured-site" data-featured-site="'+esc(p.id)+'" aria-label="'+(rausoHasVenueWebsite(p)?'Website':'Karte')+' von '+esc(p.name)+' öffnen">'+(rausoHasVenueWebsite(p)?'WEBSEITE ↗':'KARTE ↗')+'</button>'+
    '<button type="button" class="featured-heart heart-btn star-btn '+(liked?'is-liked':'')+'" '+
    'aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" '+
    'aria-pressed="'+liked+'" data-featured-like="'+esc(p.id)+'">'+(liked?'★':'☆')+'</button></article>';
@@ -281,6 +282,7 @@ function renderViennaHighlights(){
   card.onkeydown=e=>{if(e.target===card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();open()}}
  });
  el.querySelectorAll('[data-featured-create]').forEach(b=>b.onclick=e=>{e.stopPropagation();const p=rausoViennaPicks.find(x=>x.id===b.dataset.featuredCreate);if(p)createOuting(p)});
+ el.querySelectorAll('[data-featured-site]').forEach(b=>b.onclick=e=>{e.stopPropagation();const p=rausoViennaPicks.find(x=>x.id===b.dataset.featuredSite);if(p)rausoOpenPlace(p)});
  el.querySelectorAll('[data-featured-like]').forEach(b=>b.onclick=e=>{
   e.stopPropagation();const item=rausoViennaPicks.find(x=>x.id===b.dataset.featuredLike);
   if(item)toggleBookmark('place',item)
@@ -302,12 +304,12 @@ function renderPlaces(){
  $('placeStatus').textContent=state.placesLive?filtered.length+' Orte · OpenStreetMap · Angaben ohne Gewähr':state.placeLoading?'Orte werden geladen …':'Keine Live-Daten geladen. Tippe auf „Orte laden“.';
  $('places').innerHTML=filtered.length?filtered.slice(0,100).map(p=>{
   const liked=isBookmarked('place',p.id);
-  return '<article class="place-card rauso-place-link" data-place-open="'+esc(p.id)+'" tabindex="0" role="link" title="'+esc(p.name)+' – '+(p.website?'Website':'Karte')+' öffnen">'+
-   '<div class="place-cover rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-with="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen">☆ Unternehmung starten</button></div>'+
+  return '<article class="place-card rauso-place-link" data-venue-category="'+esc(p.category||state.cat)+'" data-place-open="'+esc(p.id)+'" tabindex="0" role="link" title="'+esc(p.name)+' – '+(p.website?'Website':'Karte')+' öffnen">'+
+   '<div class="place-cover rauso-place-create"><button type="button" class="rauso-create-venue-btn" data-with="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen" title="Unternehmung erstellen">＋</button></div>'+
    '<span class="venue-distance osm-distance" title="'+esc(rausoDistanceOrigin())+'">★ '+esc(rausoDistanceLabel(p))+'</span>'+
    '<div class="place-header"><div class="place-emoji">'+cats[state.cat].icon+'</div><div class="place-body">'+
    '<h3>'+esc(p.name)+'</h3><p class="place-sub">'+esc([p.region,p.addr].filter(Boolean).join(' · ')||'Österreich')+'</p></div></div>'+
-   '<div class="place-actions">'+
+   '<div class="place-actions"><button type="button" class="rauso-venue-site" data-place-site="'+esc(p.id)+'" aria-label="'+(rausoHasVenueWebsite(p)?'Website':'Karte')+' von '+esc(p.name)+' öffnen">'+(rausoHasVenueWebsite(p)?'WEBSEITE ↗':'KARTE ↗')+'</button>'+
    '<button class="small-btn heart-btn star-btn '+(liked?'is-liked':'')+'" data-favorite="'+esc(p.id)+'" aria-label="'+(liked?'Aus Merkliste entfernen':'In Merkliste speichern')+'" aria-pressed="'+liked+'">'+(liked?'★':'☆')+'</button></div></article>';
  }).join(''):'<div class="empty"><strong>Keine Orte gefunden</strong>Versuche eine andere Kategorie oder einen größeren Umkreis.</div>';
  $('places').querySelectorAll('[data-place-open]').forEach(card=>{
@@ -316,6 +318,7 @@ function renderPlaces(){
   card.onclick=e=>{if(!e.target.closest('button'))rausoOpenPlace(p)};
   card.onkeydown=e=>{if(e.target===card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();rausoOpenPlace(p)}};
  });
+ $('places').querySelectorAll('[data-place-site]').forEach(b=>b.onclick=e=>{e.stopPropagation();const p=state.places.find(item=>String(item.id)===b.dataset.placeSite);if(p)rausoOpenPlace(p)});
  $('places').querySelectorAll('[data-favorite]').forEach(b=>b.onclick=e=>{
   e.stopPropagation();const p=state.places.find(item=>String(item.id)===b.dataset.favorite);
   if(p)toggleBookmark('place',p)
@@ -748,7 +751,7 @@ async function dateLike(id){if(!mustVerify('Dating-Likes'))return;if(demoMode())
 async function setDating(enabled,adult){if(enabled&&!mustVerify('Dating aktivieren'))return;try{if(demoMode()){state.demoProfile={...state.demoProfile,dating_enabled:enabled,adult_confirmed:adult};persist()}else{const {error}=await api.from('rauso_profiles').update({dating_enabled:enabled,adult_confirmed:enabled?adult:profile().adult_confirmed}).eq('id',myId());if(error)throw error;state.profile={...state.profile,dating_enabled:enabled,adult_confirmed:adult}}renderDating();renderProfile();toast(enabled?'Dating aktiviert.':'Dating deaktiviert.')}catch(err){toast(err.message)}}
 function renderProfile(){const p=profile();$('profileContent').innerHTML=`<div class="surface stack"><div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')} · ${demoMode()?'Demo-Vorschau':'RAUSO-Mitglied'}</small></div></div><form id="profileForm" class="stack"><div class="input-group"><label for="myName">Anzeigename</label><input id="myName" minlength="2" maxlength="40" required  value="${esc(p.display_name)}"></div><div class="input-group"><label for="myCity">Wohnort / Region</label><input id="myCity" maxlength="80" value="${esc(p.city)}"></div><div class="input-group"><label for="myBio">Über mich</label><textarea id="myBio" maxlength="500">${esc(p.bio)}</textarea></div><button class="primary-btn" type="submit">Profil speichern</button></form></div><div class="section-head"><h2>Mein Konto</h2></div><div class="surface stack"><button id="reportSafety" class="safety-action">🛡 Sicherheitsfall melden · Notfall 133 / 112</button><p class="quiet">${demoMode()?'Alle sozialen Daten und Musterprofile sind lokale Vorschau.':'Angemeldet als '+esc(state.user?.email||'')}</p>${demoMode()?'<button class="outline-btn" id="loginBtn">Konto erstellen / Anmelden</button>':'<button class="outline-btn" id="logoutBtn">Abmelden</button>'}<button class="outline-btn" id="mySaved">♡ Gemerkte Orte (${state.favorites.size})</button><button class="outline-btn" id="deleteLocal">Lokale Testdaten löschen</button><p class="quiet">RAUSO v${APP_VERSION} · Ortsdaten © OpenStreetMap</p></div>`;
  $('profileForm').onsubmit=saveProfile;$('reportSafety').onclick=()=>openSafetyReport(null);$('mySaved').onclick=()=>{switchTab('collections')};$('deleteLocal').onclick=()=>{if(confirm('Testdaten auf diesem Gerät wirklich löschen?')){localStorage.removeItem(STORE);location.reload()}};if(demoMode())$('loginBtn').onclick=showAuth;else $('logoutBtn').onclick=logout;injectProfileExtras()}
-async function saveProfile(e){e.preventDefault();const name=$('myName').value.trim();if(!rausoValidDisplayName(name)){toast('Bitte einen eigenen Profilnamen mit 2–40 Zeichen eingeben.');$('myName').focus();return}const data={display_name:name,city:$('myCity').value.trim(),bio:$('myBio').value.trim()};try{if(demoMode()){state.demoProfile={...state.demoProfile,...data};persist()}else{const {error}=await api.from('rauso_profiles').upsert({id:myId(),...data});if(error)throw error;state.profile={...state.profile,...data}}toast('Profil gespeichert.');updateHeaderAccount();renderProfile();injectProfileExtras();addMoreLink();addAppearanceLink();addReadiness()}catch(err){toast(err.message)}}
+async function saveProfile(e){e.preventDefault();const name=$('myName').value.trim();if(!rausoValidDisplayName(name)){toast('Bitte einen eigenen Profilnamen mit 2–40 Zeichen eingeben.');$('myName').focus();return}const data={display_name:name,city:$('myCity').value.trim(),bio:$('myBio').value.trim()};try{if(demoMode()){state.demoProfile={...state.demoProfile,...data};persist()}else{const {error}=await api.from('rauso_profiles').upsert({id:myId(),...data});if(error)throw error;state.profile={...state.profile,...data}}toast('Profil gespeichert.');updateHeaderAccount();renderProfile();injectProfileExtras();addMoreLink();addReadiness()}catch(err){toast(err.message)}}
 function rausoValidDisplayName(value){
  const name=String(value||'').trim();
  return name.length>=2 && name.length<=40 && !['RAUSO-Mitglied','Mein RAUSO-Profil'].includes(name);
@@ -1061,7 +1064,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.7.0';
+const APP_VERSION='2.7.3';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
@@ -1089,12 +1092,6 @@ function openSettings(){
  '<p class="quiet">Deine Auswahl bleibt auf diesem Smartphone gespeichert.</p></div>');
  $('settingDesign').onclick=openAppearance;
  $('settingStart').onclick=openAppearance;
-}
-function addAppearanceLink(){
- const el=$('profileContent');if(!el||$('appearanceBtn'))return;
- const b=document.createElement('button');b.id='appearanceBtn';
- b.className='outline-btn';b.textContent='⚙ Einstellungen';
- b.onclick=openSettings;el.prepend(b);
 }
 function openReadiness(){
 const configured=!!(window.ERLEBEN_CONFIG?.supabaseUrl&&window.ERLEBEN_CONFIG?.supabasePublishableKey);
@@ -1149,7 +1146,7 @@ setInterval(()=>{if(!document.hidden&&state.user)loadMessageInbox()},15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateOnlinePresence()});
 document.addEventListener('DOMContentLoaded',()=>{
  if(!uiPref.referenceDesign24){uiPref.theme='orange';uiPref.autoTheme=false;uiPref.referenceDesign24=true;saveUi()}
- setAppearance();init();addNavMore();addOfflineState();addAppearanceLink();addReadiness();
+ setAppearance();init();addNavMore();addOfflineState();addReadiness();
  if($('headerFriends'))$('headerFriends').onclick=openFriendsPanel;
  if($('headerMessages'))$('headerMessages').onclick=()=>switchTab('messages');
  if($('heroBookmarks'))$('heroBookmarks').onclick=()=>switchTab('collections');

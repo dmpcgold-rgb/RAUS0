@@ -20,3 +20,16 @@ assert(html.indexOf('id="headerFriends"')<html.indexOf('id="headerMessages"')&&h
 assert(js.includes("$('headerMessages').onclick=()=>switchTab('messages')"),'Header messages must open messages tab');
 assert(js.includes("headerBadge.classList.toggle('hidden',num===0)"),'Header unread badge must update');
 assert(css.includes('#headerMessages.active')&&css.includes('@media(max-width:355px)'), 'Message button must have responsive styles');
+
+/* RAUSO 2.7.3: Round photo categories, explicit website and create controls, profile clean-up. */
+for(const category of ["thermen","restaurants","kino","ausfluege","familie","bowling","spielspass","natur","kultur","uebernachten","sport","anime"]){
+ assert(html.includes('data-cat="'+category+'"'),'Missing category: '+category);
+ assert(css.includes('#categoryStrip .chip[data-cat="'+category+'"]'),'Missing category color/photo: '+category);
+}
+assert(html.includes('data-cat="thermen">♨ THERMEN')&&html.includes('data-cat="restaurants">🍽 RESTAURANTS'),'Uppercase category names');
+assert(js.includes('data-featured-site')&&js.includes('data-place-site'),'Per-place website buttons missing');
+assert(js.includes("rausoHasVenueWebsite(p)?'WEBSEITE ↗':'KARTE ↗'"),'Website/map fallback missing');
+assert(js.includes('data-with=')&&js.includes('data-featured-create='),'Create shortcuts missing');
+assert(!js.includes('☆ Unternehmung starten'),'Legacy full text still visible');
+assert(!js.includes('function addAppearanceLink'),'Profile settings tile not removed');
+assert(css.includes('border-radius:50%!important')&&css.includes('var(--category-image)'),'Circular photo categories missing');
