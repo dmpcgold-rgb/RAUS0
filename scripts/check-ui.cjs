@@ -65,7 +65,7 @@ for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-n
  assert(html.includes(cls),'Screenshot UI missing class '+cls);
 }
 assert(js.includes("data-rauso-hero-go")&&js.includes("destination==='friends'"),'Hero shortcuts must navigate');
-assert(css.includes('RAUSO 2.9.2 — screenshot-inspired Carbon/Orange'),'Reference layout CSS missing');
+assert(css.includes('RAUSO 2.9: screenshot-inspired compact discovery'),'Reference layout CSS missing');
 
 /* RAUSO 2.9.2: approval actions and pending state. */
 assert(html.includes('data-meeting-filter="pending"'));
