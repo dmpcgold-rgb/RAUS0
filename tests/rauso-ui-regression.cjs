@@ -35,7 +35,7 @@ assert(!js.includes('function addAppearanceLink'),'Profile settings tile not rem
 assert(css.includes('border-radius:50%!important')&&css.includes('var(--category-image)'),'Circular photo categories missing');
 
 /* RAUSO 2.7.4: one main navigation Merkliste, messages only in the header. */
-const nav=html.match(/<nav class="bottomnav"[\\s\\S]*?<\\/nav>/)[0];
+const nav=html.slice(html.indexOf('<nav class="bottomnav"'),html.indexOf('</nav>')+6);
 assert((nav.match(/data-tab="collections"/g)||[]).length===1,'Bottom nav must contain Merkliste once');
 assert(!nav.includes('data-tab="messages"'),'Messages must no longer occupy the bottom navigation');
 assert(nav.indexOf('data-tab="myMeetings"')<nav.indexOf('data-tab="collections"')&&nav.indexOf('data-tab="collections"')<nav.indexOf('data-tab="dating"'),'Merkliste must be in former Messages position');
