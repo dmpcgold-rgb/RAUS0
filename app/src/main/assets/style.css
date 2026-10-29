@@ -1785,3 +1785,18 @@ html[data-rauso-theme] .bottomnav .nav-item.active{border-radius:13px!important}
 @media(prefers-reduced-motion:reduce){
  html[data-rauso-theme="orange"] .rauso-place-link :is(.place-cover,.featured-image){transition:none!important}
 }
+
+/* RAUSO 2.9.2: per-event organizer approval, compact mobile review controls. */
+.rauso-approval-setting{display:flex;align-items:flex-start;gap:10px;font-size:13px;font-weight:700}
+.rauso-approval-setting input{width:18px;height:18px;margin-top:2px;accent-color:#ff902e;flex-shrink:0}
+.rauso-approval-panel{margin:9px 0;padding:10px;border:1px solid #ff99364f;border-radius:12px;background:#19151b}
+.rauso-approval-panel>strong{color:#ffbd75;font-size:12px}
+.rauso-approval-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #ffffff18;margin-top:9px;padding-top:9px;font-size:12px}
+.rauso-approval-row>span{min-width:0;overflow-wrap:anywhere}
+.rauso-approval-row>div{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.rauso-approval-row button{font-size:11px!important;padding:6px 8px!important;min-height:30px!important}
+.rauso-approval-row .rauso-approve{border:1px solid #22ca72;color:#7dffb2;background:#09281b}
+.rauso-approval-row .rauso-reject{border:1px solid #ed697a;color:#ffa7aa;background:#33191f}
+.join-btn.is-pending,.meeting-status.pending{border-color:#d59e35!important;background:#372911!important;color:#ffd28a!important}
+.meeting-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(max-width:360px){.rauso-approval-row{align-items:flex-start;flex-direction:column}.rauso-approval-row>div{justify-content:flex-start}}
