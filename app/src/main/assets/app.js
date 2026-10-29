@@ -85,7 +85,7 @@ function switchTab(tab, recordHistory=true){
    rausoTabHistory.push(state.tab);
    if(rausoTabHistory.length>60)rausoTabHistory.shift();
  }
- state.tab=tab;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages')renderMessages();if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();if($('headerBookmarks'))$('headerBookmarks').classList.toggle('active',tab==='collections')}
+ state.tab=tab;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addAppearanceLink();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();if($('headerBookmarks'))$('headerBookmarks').classList.toggle('active',tab==='collections')}
 function rausoBack(){
  const dialog=document.querySelector('#modalRoot .modal-overlay');
  if(dialog){
@@ -798,7 +798,7 @@ function attachRausoRealtime(){
   .on('postgres_changes',{event:'*',schema:'public',table:'rauso_rsvps'},scheduleRausoRefresh)
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'rauso_notifications',filter:'user_id=eq.'+state.user.id},scheduleRausoRefresh)
   .on('postgres_changes',{event:'*',schema:'public',table:'rauso_friendships'},()=>{if(state.user)loadSocial()})
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'rauso_messages'},event=>{const m=event.new;if(state.user&&m&&(m.sender_id===state.user.id||m.recipient_id===state.user.id)){if(state.currentChat&&(m.sender_id===state.currentChat||m.recipient_id===state.currentChat))loadChat();pollRausoNotifications(true)}})
+  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_messages'},event=>{const m=event.new||event.old;if(state.user&&m&&(m.sender_id===state.user.id||m.recipient_id===state.user.id)){loadMessageInbox();if($('chatMessages')&&state.currentChat&&(m.sender_id===state.currentChat||m.recipient_id===state.currentChat))loadChat();pollRausoNotifications(true)}})
   .subscribe();
 }
 async function refreshUser(){
@@ -1099,13 +1099,14 @@ function restoreDiscoverySettings(){
 
 function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
  $('categorySelect').onchange=e=>{document.querySelector('[data-cat="'+e.target.value+'"]')?.click()};
- $('loadPlaces').onclick=queryPlaces;state.places=[];renderPlaces();renderEvents();renderFamily();renderMyMeetings();renderMessages();renderProfile();injectProfileExtras();queryPlaces();if(hasBackend){api.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(()=>refreshUser().then(()=>{updateOnlinePresence();switchTab(state.tab)}),0)});refreshUser().then(()=>switchTab(state.tab))}
+ $('loadPlaces').onclick=queryPlaces;state.places=[];renderPlaces();renderEvents();renderFamily();renderMyMeetings();renderMessages();loadMessageInbox();renderProfile();injectProfileExtras();queryPlaces();if(hasBackend){api.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(()=>refreshUser().then(()=>{updateOnlinePresence();switchTab(state.tab)}),0)});refreshUser().then(()=>switchTab(state.tab))}
 }
 async function updateOnlinePresence(){
  if(!state.user||!navigator.onLine)return;
  try{await api.from('rauso_presence').upsert({user_id:myId(),last_seen_at:new Date().toISOString()},{onConflict:'user_id'})}catch{}
 }
 setInterval(()=>{if(!document.hidden)updateOnlinePresence()},30000);
+setInterval(()=>{if(!document.hidden&&state.user)loadMessageInbox()},15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateOnlinePresence()});
 document.addEventListener('DOMContentLoaded',()=>{
  if(!uiPref.referenceDesign24){uiPref.theme='orange';uiPref.autoTheme=false;uiPref.referenceDesign24=true;saveUi()}
