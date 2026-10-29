@@ -775,3 +775,12 @@ html[data-rauso-theme="orange"] .nav-item small{font-size:9px}
  html[data-rauso-theme="orange"] .place-card{height:clamp(144px,43vw,165px)}
  html[data-rauso-theme="orange"] .place-actions .small-btn{font-size:8px;padding:4px}
 }
+
+html[data-rauso-theme="orange"] .more-highlights{
+ display:block;margin:10px auto 2px;min-height:34px;font-size:11px;
+ padding:7px 16px;border-color:#f58a35;border-radius:11px;
+ color:#ffb367;background:#1a1718;
+}
+html[data-rauso-theme="orange"] .more-highlights:focus-visible{
+ outline:2px solid #ffe6ba;outline-offset:2px
+}
