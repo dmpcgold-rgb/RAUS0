@@ -32,8 +32,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='2\.9\.5'/);
-assert.match(gradle,/versionCode 46; versionName '2\.9\.5'/);
+assert.match(js,/const APP_VERSION='2\.9\.6'/);
+assert.match(gradle,/versionCode 47; versionName '2\.9\.6'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -77,3 +77,7 @@ assert.match(css,/RAUSO 2\.9\.5: rounded green RSVP shortcut/);
 assert.ok(!css.includes('RAUSO 2.9.4: universal black surface'));
 assert.ok(html.includes('id="heroGoing"')&&html.includes('id="heroOrganized"'));
 
+
+/* RAUSO 2.9.6 event test linked */
+for(const id of ['rausoEventTime','rausoEventCategory','rausoEventOpen','rausoEventAge','rausoEventReset'])assert(html.includes('id="'+id+'"'),'Missing event filter: '+id);
+assert(js.includes('rausoEventMatchesFilters')&&js.includes('rausoAttendeePreview'),'Event discovery must be active');
