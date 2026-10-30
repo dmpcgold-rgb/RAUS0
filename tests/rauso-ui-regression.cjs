@@ -16,7 +16,8 @@ assert(!html.includes('📍')&&!js.includes('📍'));
 for(const t of ['orange','purple','carbon','rainbow','light'])assert(css.includes('html[data-rauso-theme="'+t+'"]{--rauso-glow:'));
 console.log('RAUSO category, UI, navigation, native share and theme checks passed');
 
-assert(html.indexOf('id="headerFriends"')<html.indexOf('id="headerMessages"')&&html.indexOf('id="headerMessages"')<html.indexOf('id="notificationBell"'),'Messages must be directly beside Friends');
+assert(!html.slice(html.indexOf('<header'),html.indexOf('</header>')).includes('id="headerMessages"'),'Messages must not appear in header');
+assert(html.includes('id="incognitoToggle"')&&html.includes('id="heroBookmarksCircle"'),'Privacy icon and bookmark circle required');
 assert(js.includes("$('headerMessages').onclick=()=>switchTab('messages')"),'Header messages must open messages tab');
 assert(js.includes("headerBadge.classList.toggle('hidden',num===0)"),'Header unread badge must update');
 assert(css.includes('#headerMessages.active')&&css.includes('@media(max-width:355px)'), 'Message button must have responsive styles');
@@ -37,8 +38,8 @@ assert(css.includes('/* RAUSO 2.9.3: neon category circles and round meeting sho
 /* RAUSO 2.7.4: one main navigation Merkliste, messages only in the header. */
 const nav=html.slice(html.indexOf('<nav class="bottomnav"'),html.indexOf('</nav>')+6);
 assert((nav.match(/data-tab="collections"/g)||[]).length===1,'Bottom nav must contain Merkliste once');
-assert(!nav.includes('data-tab="messages"'),'Messages must no longer occupy the bottom navigation');
-assert(nav.indexOf('data-tab="myMeetings"')<nav.indexOf('data-tab="collections"')&&!nav.includes('data-tab="dating"'),'Merkliste retained, Dating removed');
+assert(nav.includes('data-tab="messages"')&&!nav.includes('data-tab="myMeetings"'),'Messages must replace Meine Treffen in bottom navigation');
+assert(nav.indexOf('data-tab="messages"')<nav.indexOf('data-tab="collections"')&&!nav.includes('data-tab="dating"'),'Nachrichten beside Merkliste; Dating removed');
 assert(!html.includes('id="heroBookmarks"'),'Hero must not duplicate Merkliste');
 assert(!js.includes('id="mySaved"')&&!js.includes("['🧡 Meine Merkliste','collections']"),'Profile and More must not duplicate Merkliste');
 assert(!js.includes("for(const tab of ['collections','shows','notifications'])"),'Merkliste must never be hidden in nav');
@@ -56,15 +57,15 @@ assert(css.includes('.rauso-age-fields')&&css.includes('.rauso-age-note'),'Age i
 
 /* RAUSO 2.9: updated icon and discovery layout checks. */
 assert(html.includes('id="heroCreate"')&&html.includes('id="eventDateFilter"'),'Missing discover controls');
-for(const klass of ['rauso-created-exclamation','rauso-nav-smile','rauso-nav-star','rauso-nav-family'])assert(html.includes(klass),'Missing navigation symbol '+klass);
+for(const klass of ['rauso-created-exclamation','rauso-nav-star','rauso-nav-family'])assert(html.includes(klass),'Missing navigation symbol '+klass);
 assert(css.includes('/* RAUSO 2.9: screenshot-inspired compact discovery')&&css.includes('#headerMessages>span:first-child'),'Missing 2.9 UI styles');
 assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'Price-filter and highlights integration missing');
 
 /* RAUSO 2.9.1: new navigation and shortcuts. */
-for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
+for(const cls of ['rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Missing visual token '+cls);
 }
-assert(js.includes("const APP_VERSION='3.0.0'"),'JS version should be 2.9.2');
+assert(js.includes("const APP_VERSION='3.0.1'"),'JS version should be 2.9.2');
 assert(js.includes("destination==='friends'")&&js.includes("destination==='events'"),'Hero shortcuts must navigate');
 assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
 
@@ -78,3 +79,8 @@ assert(!css.includes('RAUSO 2.9.4: universal black surface'));
 assert(css.includes('/* RAUSO 2.9.5: rounded green RSVP shortcut retained across all display modes */'));
 assert(html.includes('id="heroGoing"')&&html.includes('id="heroOrganized"'));
 assert(css.includes('aspect-ratio:1/1!important;border-radius:50%!important'));
+
+assert(html.includes('✓ Zugesagte Treffen')&&html.includes('id="heroOrganized"')&&html.includes('id="heroBookmarksCircle"'),'Three home shortcuts');
+assert(css.includes('RAUSO 3.0.1: symmetric orange header')&&css.includes('Equal-sized, symmetrical green/orange/black circles'),'Layout and colors');
+assert(!html.includes('INKOGNITO</small>')&&html.includes('rauso-incognito-icon'),'Icon-only incognito');
+assert(!nav.includes('meetingNavCount')&&html.includes('id="meetingNavCount"'),'Meeting-change badge belongs to home');

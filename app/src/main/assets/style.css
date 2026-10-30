@@ -2061,3 +2061,137 @@ html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category="kino"] :i
  background:#08090b!important;background-color:#08090b!important;background-image:none!important;
 }
 html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image).rauso-place-create::after{display:none!important;content:none!important}
+
+/* RAUSO 3.0.1: symmetric orange header, icon-only privacy and three home circles. */
+html[data-rauso-theme] .topbar.compact-topbar,
+html[data-rauso-theme="orange"] .topbar.compact-topbar{
+ display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+ align-items:center!important;justify-items:center!important;
+ gap:5px!important;padding:5px 8px!important;
+ min-height:52px!important;height:52px!important;
+ background:#08090b!important;border-bottom:1px solid #df741e!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar>button,
+html[data-rauso-theme="orange"] .topbar.compact-topbar>button,
+html[data-rauso-theme] .topbar.compact-topbar #heroPlan.rauso-header-create{
+ box-sizing:border-box!important;display:grid!important;place-items:center!important;
+ flex:none!important;width:36px!important;min-width:36px!important;max-width:36px!important;
+ height:36px!important;min-height:36px!important;max-height:36px!important;
+ padding:0!important;margin:0!important;gap:0!important;line-height:1!important;
+ border:1.5px solid #f58a2a!important;border-radius:10px!important;
+ background:#08090b!important;color:#ff9a3e!important;
+ box-shadow:0 0 5px #e7732128!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar :is(.header-bookmarks-text,#accountShortcutLabel){display:none!important}
+html[data-rauso-theme] .topbar.compact-topbar #headerFriends>span:first-child{
+ display:grid!important;place-items:center!important;font-size:20px!important;line-height:1!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar #accountShortcutIcon{
+ display:grid!important;place-items:center!important;flex:none!important;
+ width:27px!important;min-width:27px!important;max-width:27px!important;
+ height:27px!important;min-height:27px!important;margin:auto!important;font-size:21px!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar #notificationBell{
+ position:relative!important;font-size:21px!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar #headerSettings{font-size:22px!important}
+html[data-rauso-theme] .topbar.compact-topbar #heroPlan .rauso-plus-mark{
+ margin:auto!important;color:#ff9a3e!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar #incognitoToggle{
+ border:1.5px solid #f58a2a!important;background:#000!important;color:#ff9a3e!important;
+ transition:background .18s,border-color .18s,color .18s,box-shadow .18s!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar #incognitoToggle .rauso-incognito-icon{
+ width:25px!important;height:25px!important;display:block!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar #incognitoToggle[aria-checked="true"]{
+ background:#082d18!important;border-color:#4dff84!important;color:#75ffa5!important;
+ box-shadow:0 0 13px #43f67c99,inset 0 0 9px #20b45150!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar>button:focus-visible{
+ outline:2px solid #fff!important;outline-offset:2px!important;
+}
+/* Messages now occupies the old Meine Treffen bottom-navigation position. */
+html[data-rauso-theme] .bottomnav #headerMessages{
+ box-sizing:border-box!important;position:relative!important;display:flex!important;
+ flex:1 1 0!important;flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;gap:4px!important;
+ width:auto!important;min-width:0!important;max-width:none!important;
+ height:auto!important;min-height:60px!important;max-height:none!important;
+ padding:7px 1px!important;margin:0!important;
+ border:1px solid transparent!important;border-radius:13px!important;
+ background:transparent!important;box-shadow:none!important;text-shadow:none!important;
+}
+html[data-rauso-theme] .bottomnav #headerMessages.active{
+ border:1px solid #fa862c!important;background:#301c11!important;
+}
+html[data-rauso-theme] .bottomnav #headerMessages .rauso-neon-envelope{
+ display:grid!important;place-items:center!important;
+ width:auto!important;height:25px!important;
+ font-size:25px!important;line-height:1!important;color:#ff962f!important;
+ text-shadow:0 0 5px #fb7e28a0!important;
+}
+html[data-rauso-theme] .bottomnav #headerMessages small{
+ display:block!important;font-size:clamp(7px,2vw,9px)!important;
+ color:inherit!important;font-weight:650!important;white-space:nowrap!important;text-shadow:none!important;
+}
+html[data-rauso-theme] .bottomnav #headerMessageCount{
+ position:absolute!important;top:2px!important;right:16%!important;z-index:4!important;
+}
+html[data-rauso-theme] .bottomnav .nav-item[data-tab="myMeetings"]{display:none!important}
+/* Equal-sized, symmetrical green/orange/black circles on the home screen. */
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status{
+ display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
+ justify-content:space-evenly!important;width:100%!important;max-width:100%!important;
+ padding:4px 0 8px!important;margin:12px 0 0!important;gap:8px!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status>button,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status>button,
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroGoing,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroGoing{
+ box-sizing:border-box!important;position:relative!important;display:inline-flex!important;
+ flex:0 0 82px!important;width:82px!important;min-width:82px!important;max-width:82px!important;
+ height:82px!important;min-height:82px!important;max-height:82px!important;
+ aspect-ratio:1/1!important;border-radius:50%!important;
+ padding:8px!important;margin:0!important;
+ align-items:center!important;justify-content:center!important;
+ text-align:center!important;white-space:normal!important;
+ font-size:10px!important;font-weight:800!important;line-height:1.2!important;
+ box-shadow:none!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroGoing{
+ background:#145d35!important;border:2px solid #000!important;color:#fff!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroOrganized,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroOrganized{
+ background:#e57619!important;border:2px solid #f89b44!important;color:#111!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroBookmarksCircle,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroBookmarksCircle{
+ background:#000!important;border:2px solid #f58a2a!important;color:#fff!important;
+ display:flex!important;flex-direction:column!important;gap:2px!important;
+}
+.rauso-bookmark-circle-star{display:block;color:#ff9a35;font-size:25px;line-height:1}
+html[data-rauso-theme] #heroOrganized #meetingNavCount{
+ position:absolute!important;right:-5px!important;top:-5px!important;z-index:3;
+ min-width:17px!important;height:17px!important;padding:1px 3px!important;
+ border-radius:11px!important;background:#eb3838!important;color:#fff!important;
+ border:1px solid #fff!important;font-size:10px!important;
+}
+@media(max-width:345px){
+ html[data-rauso-theme] .topbar.compact-topbar,html[data-rauso-theme="orange"] .topbar.compact-topbar{
+  padding:5px 3px!important;gap:2px!important;
+ }
+ html[data-rauso-theme] .topbar.compact-topbar>button,
+ html[data-rauso-theme] .topbar.compact-topbar #heroPlan.rauso-header-create{
+  width:33px!important;min-width:33px!important;max-width:33px!important;
+  height:33px!important;min-height:33px!important;max-height:33px!important;
+ }
+ html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status>button,
+ html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroGoing{
+  flex-basis:78px!important;width:78px!important;min-width:78px!important;max-width:78px!important;
+  height:78px!important;min-height:78px!important;font-size:9.4px!important;
+ }
+}

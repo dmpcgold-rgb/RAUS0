@@ -12,7 +12,9 @@ const gradle=read('app/build.gradle');
 new vm.Script(js,{filename:'app.js'}); // Validate all JavaScript syntax.
 const header=html.match(/<header[\s\S]*?<\/header>/)?.[0]||'';
 const footer=html.match(/<nav class="bottomnav"[\s\S]*?<\/nav>/)?.[0]||'';
-assert.match(header,/id="heroPlan"[^>]*><span class="rauso-plus-mark"[^>]*><\/span><\/button>[\s\S]*id="headerFriends"[\s\S]*id="headerMessages"/);
+assert.match(header,/id="heroPlan"[^>]*><span class="rauso-plus-mark"[^>]*><\/span><\/button>[\s\S]*id="headerFriends"/);
+assert(!header.includes('id="headerMessages"'),"Messages removed from header");
+assert(footer.includes('data-tab="messages"')&&!footer.includes('data-tab="myMeetings"'),"Bottom navigation now contains Nachrichten instead of Meine Treffen");
 assert.equal((html.match(/id="heroPlan"/g)||[]).length,1);
 assert.match(header,/id="headerSettings"/);
 assert.match(header,/id="accountShortcut"/);
@@ -32,8 +34,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='3\.0\.0'/);
-assert.match(gradle,/versionCode 51; versionName '3\.0\.0'/);
+assert.match(js,/const APP_VERSION='3\.0\.1'/);
+assert.match(gradle,/versionCode 52; versionName '3\.0\.1'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -51,8 +53,8 @@ assert(js.includes('rausoOwnBirthdate')&&js.includes('signupBirth')&&js.includes
 assert(js.includes('rauso-meeting-changes:')&&!js.includes("count+' bevorstehende zugesagte"),'Unread-only meeting changes missing');
 
 /* RAUSO 2.9.0: screenshot-style discovery with actual controls. */
-for(const id of ['heroCreate','eventDateFilter','eventClockFilter','incognitoToggle','headerMessages'])assert(html.includes('id="'+id+'"'),'Missing '+id);
-for(const nav of ['rauso-nav-star','rauso-nav-smile','rauso-nav-family','rauso-created-exclamation'])assert(html.includes(nav),'Missing nav symbol '+nav);
+for(const id of ['heroCreate','eventDateFilter','eventClockFilter','incognitoToggle','headerMessages','heroBookmarksCircle'])assert(html.includes('id="'+id+'"'),'Missing '+id);
+for(const nav of ['rauso-nav-star','rauso-nav-family','rauso-created-exclamation'])assert(html.includes(nav),'Missing nav symbol '+nav);
 assert.match(css,/RAUSO 2\.9: screenshot-inspired compact discovery/);
 assert.match(css,/\.rauso-place-link\[data-venue-category="thermen"\]/);
 assert.match(css,/#headerMessages>span:first-child/);
@@ -61,7 +63,7 @@ assert.match(js,/\$\('heroCreate'\)\.onclick=/);
 assert.match(js,/function rausoMatchesPrice/);
 
 /* Screenshot reference UI: icons and shortcuts are implemented and functional. */
-for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
+for(const cls of ['rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Screenshot UI missing class '+cls);
 }
 assert(js.includes("data-rauso-hero-go")&&js.includes("destination==='friends'"),'Hero shortcuts must navigate');
@@ -92,3 +94,7 @@ assert(js.includes('data-inbox-group')&&js.includes('data-inbox-view="groups"'),
 /* RAUSO 2.9.9 unread group marker check */
 assert(js.includes('rausoUnreadGroupTotal')&&js.includes('rausoMarkGroupRead'),'Unread group messages must be counted and marked read');
 assert(js.includes("rauso_group_chat_unread_counts"),'Database unread-count function must be used');
+
+assert(html.includes('✓ Zugesagte Treffen')&&html.includes('id="heroOrganized"')&&html.includes('id="heroBookmarksCircle"'),'Three circular shortcuts required');
+assert(!html.includes('INKOGNITO</small>')&&html.includes('rauso-incognito-icon'),'Inkognito must have icon only');
+assert(footer.includes('id="headerMessages"')&&!header.includes('id="headerMessages"'),'Message badge moved with button');

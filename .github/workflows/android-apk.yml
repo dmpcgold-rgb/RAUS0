@@ -60,7 +60,7 @@ jobs:
       - name: Upload Android debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: RAUSO-3.0.0-debug-apk
+          name: RAUSO-3.0.1-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -68,15 +68,15 @@ jobs:
       - name: Prepare direct-download APK
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/RAUSO-3.0.0-debug.apk
+          cp app/build/outputs/apk/debug/app-debug.apk dist/RAUSO-3.0.1-debug.apk
 
       - name: Publish downloadable GitHub pre-release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: rauso-debug-latest
-          name: RAUSO 3.0.0 – Test APK
+          name: RAUSO 3.0.1 – Test APK
           body: |
-            RAUSO 3.0.0 Android Debug APK.
+            RAUSO 3.0.1 Android Debug APK.
             Dies ist eine Testversion, keine signierte Produktionsversion.
             Bei inkompatibler Android-Signatur ist ein direktes Update eventuell nicht möglich.
             Bitte vor einer eventuellen Neuinstallation Daten sichern.
@@ -84,5 +84,5 @@ jobs:
           prerelease: true
           make_latest: false
           target_commitish: main
-          files: dist/RAUSO-3.0.0-debug.apk
+          files: dist/RAUSO-3.0.1-debug.apk
           fail_on_unmatched_files: true

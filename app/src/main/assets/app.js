@@ -1527,7 +1527,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='3.0.0';
+const APP_VERSION='3.0.1';
 const UI_PREF='rauso-ui-2';
 const rausoIncognitoKey=()=> 'rauso-incognito:'+myId();
 let rausoIncognito=false;
@@ -1633,6 +1633,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
  if($('heroGoing'))$('heroGoing').onclick=()=>{state.meetFilter='going';switchTab('myMeetings')};
  if($('heroOrganized'))$('heroOrganized').onclick=()=>{state.meetFilter='organized';switchTab('myMeetings')};
+ if($('heroBookmarksCircle'))$('heroBookmarksCircle').onclick=()=>switchTab('collections');
  if(uiPref.start!=='discover')switchTab(uiPref.start)
 });
 })();
