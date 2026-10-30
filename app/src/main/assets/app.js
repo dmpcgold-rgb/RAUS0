@@ -843,6 +843,42 @@ let rausoInboxMessages=[];
 let rausoInboxView='all';
 let rausoInboxBusy=false;
 let rausoInboxSearch='';
+
+let rausoGroupInbox=[];
+let rausoGroupInboxBusy=false;
+function rausoEligibleGroupOutings(){
+ if(!state.user)return [];
+ return (state.outings||[]).filter(e=>e.author_id===myId()||e.mineReaction==='going');
+}
+// The table's RLS restricts preview reads to organizers and confirmed participants.
+async function rausoLoadGroupInbox(){
+ if(rausoGroupInboxBusy)return;
+ if(!state.user){rausoGroupInbox=[];if(state.tab==='messages')renderMessages();return}
+ const allowed=rausoEligibleGroupOutings();
+ if(!allowed.length){rausoGroupInbox=[];if(state.tab==='messages')renderMessages();return}
+ rausoGroupInboxBusy=true;
+ try{
+  const {data,error}=await api.from('rauso_outing_messages')
+   .select('outing_id,sender_id,body,created_at')
+   .in('outing_id',allowed.map(e=>e.id))
+   .order('created_at',{ascending:false}).limit(400);
+  if(error)console.warn('Gruppenchat-Vorschau:',error.message);
+  const mostRecent=new Map();
+  for(const m of (error?[]:data||[])){
+   if(!mostRecent.has(m.outing_id))mostRecent.set(m.outing_id,m);
+  }
+  rausoGroupInbox=allowed.map(e=>({
+   id:String(e.id),title:String(e.title||'Treffen'),place:String(e.place_name||''),
+   startsAt:e.starts_at,last:mostRecent.get(e.id)||null
+  })).sort((a,b)=>{
+   const aTime=Date.parse(a.last?.created_at)||0,bTime=Date.parse(b.last?.created_at)||0;
+   if(aTime!==bTime)return bTime-aTime;
+   return (Date.parse(a.startsAt)||0)-(Date.parse(b.startsAt)||0);
+  });
+  if(state.tab==='messages')renderMessages();
+ }finally{rausoGroupInboxBusy=false}
+}
+
 function rausoReadColor(message){return message.read_at?'read':'unread'}
 function rausoReadLabel(message){return message.read_at?'✓ Gelesen':'✓ Ungelesen'}
 function rausoUpdateMessageBadge(){
@@ -899,29 +935,46 @@ function rausoChatRows(){
 }
 function renderInboxRows(){
  const target=$('rausoInboxRows');if(!target)return;
- const rows=rausoChatRows().filter(row=>{
+ const query=rausoInboxSearch.toLocaleLowerCase('de-AT');
+ const privateRows=rausoChatRows().filter(row=>{
+  if(rausoInboxView==='groups')return false;
   if(rausoInboxView==='unread'&&!row.unread)return false;
-  if(rausoInboxView==='contacts'){
-   const p=state.people.find(p=>p.id===row.id);
-   if(!p||connection(p)!=='accepted')return false;
-  }
   const person=state.people.find(p=>p.id===row.id);
-  return (person?.display_name||row.id).toLocaleLowerCase('de-AT').includes(rausoInboxSearch.toLocaleLowerCase('de-AT'))||
-    row.last.body.toLocaleLowerCase('de-AT').includes(rausoInboxSearch.toLocaleLowerCase('de-AT'))
+  if(rausoInboxView==='contacts'&&(!person||connection(person)!=='accepted'))return false;
+  return (person?.display_name||row.id).toLocaleLowerCase('de-AT').includes(query)||
+   String(row.last.body||'').toLocaleLowerCase('de-AT').includes(query);
  });
- target.innerHTML=rows.length?rows.map(item=>{
+ const groupRows=(rausoInboxView==='all'||rausoInboxView==='groups'?rausoGroupInbox:[])
+  .filter(row=>(row.title+' '+row.place+' '+(row.last?.body||'')).toLocaleLowerCase('de-AT').includes(query));
+ const mixed=[
+  ...privateRows.map(item=>({kind:'direct',item,time:Date.parse(item.last.created_at)||0,unread:item.unread||0})),
+  ...groupRows.map(item=>({kind:'group',item,time:Date.parse(item.last?.created_at)||0,unread:0}))
+ ];
+ if(rausoInboxView==='all')mixed.sort((a,b)=>Number(b.unread>0)-Number(a.unread>0)||b.time-a.time);
+ target.innerHTML=mixed.map(row=>{
+  if(row.kind==='group'){
+   const group=row.item,last=group.last;
+   const preview=last?(last.sender_id===myId()?'Du: ':'')+last.body:'Noch keine Nachrichten – Gruppe öffnen';
+   return '<button type="button" class="rauso-chat-row rauso-group-inbox-row" data-inbox-group="'+esc(group.id)+'" aria-label="Gruppenchat '+esc(group.title)+' öffnen">'+
+    '<span class="avatar rauso-group-avatar" aria-hidden="true">👥</span>'+
+    '<span class="profile-meta"><strong>'+esc(group.title)+'</strong>'+
+    '<small class="rauso-group-inbox-label">Gruppenchat · '+esc(group.place)+'</small>'+
+    '<small>'+esc(preview.length>75?preview.slice(0,75)+'…':preview)+'</small></span>'+
+    '<span class="rauso-chat-tail">'+(last?'<span class="rauso-chat-time">'+esc(rausoMessageDate(last.created_at))+'</span>':'')+
+    '<span class="rauso-group-inbox-badge">Gruppe</span></span></button>';
+  }
+  const item=row.item;
   const p=state.people.find(p=>p.id===item.id)||{id:item.id,display_name:'RAUSO-Mitglied',city:''};
-  const last=item.last;
-  const mine=last.sender_id===myId();
-  const cls=rausoReadColor(last);
+  const last=item.last,mine=last.sender_id===myId(),cls=rausoReadColor(last);
   return '<button type="button" class="rauso-chat-row '+(item.unread?'unread':'')+'" data-inbox-chat="'+esc(item.id)+'" aria-label="Chat mit '+esc(p.display_name)+' öffnen">'+
    avatar(p)+'<span class="profile-meta"><strong>'+esc(p.display_name)+'</strong>'+
    '<small>'+(mine?'Du: ':'')+esc(last.body.length>60?last.body.slice(0,60)+'…':last.body)+'</small></span>'+
    '<span class="rauso-chat-tail"><span class="rauso-chat-time">'+esc(rausoMessageDate(last.created_at))+'</span>'+
    (item.unread?'<span class="rauso-unread-count">'+item.unread+'</span>':'')+
    (mine?'<span class="rauso-read-status '+cls+'" title="'+rausoReadLabel(last)+'">✓</span>':'')+'</span></button>';
- }).join(''):'<div class="inbox-empty">Keine Gespräche in dieser Ansicht.</div>';
+ }).join('')||'<div class="inbox-empty">Keine Gespräche in dieser Ansicht.</div>';
  target.querySelectorAll('[data-inbox-chat]').forEach(btn=>btn.onclick=()=>openChat(btn.dataset.inboxChat));
+ target.querySelectorAll('[data-inbox-group]').forEach(btn=>btn.onclick=()=>rausoOpenOutingChat(btn.dataset.inboxGroup));
 }
 function renderMessages(){
  const list=availablePeople();
@@ -931,14 +984,15 @@ function renderMessages(){
  el.innerHTML=
   (demoMode()?'<div class="status-banner">Vorschau: Nachrichten werden nicht an andere Personen gesendet. <button class="small-btn" id="contactsLogin">Jetzt anmelden</button></div>':'')+
   '<div class="surface"><div class="rauso-inbox-summary"><div><h2 class="inbox-overview-heading">Chats</h2>'+
-  '<p class="quiet">'+rows.length+' Gespräche · '+unread+' ungelesen</p></div>'+
+  '<p class="quiet">'+(rows.length+rausoGroupInbox.length)+' Gespräche · '+unread+' private Nachrichten ungelesen</p></div>'+
   '<button type="button" class="primary-btn" id="chooseChatRecipient"><span class="rauso-plus-mark" aria-hidden="true"></span> Schreiben</button></div>'+
   '<div class="rauso-inbox-tabs">'+
    '<button type="button" data-inbox-view="all" class="'+(rausoInboxView==='all'?'active':'')+'">Alle</button>'+
    '<button type="button" data-inbox-view="unread" class="'+(rausoInboxView==='unread'?'active':'')+'">Ungelesen ('+unread+')</button>'+
-   '<button type="button" data-inbox-view="contacts" class="'+(rausoInboxView==='contacts'?'active':'')+'">Kontakte</button></div>'+
+   '<button type="button" data-inbox-view="contacts" class="'+(rausoInboxView==='contacts'?'active':'')+'">Kontakte</button>'+ 
+   '<button type="button" data-inbox-view="groups" class="'+(rausoInboxView==='groups'?'active':'')+'">Gruppen ('+rausoGroupInbox.length+')</button></div>'+
   '<div class="searchbox rauso-message-search"><span>⌕</span><input type="search" id="inboxSearch" autocomplete="off" placeholder="Nachricht oder Name suchen" value="'+esc(rausoInboxSearch)+'"></div>'+
-  '<p class="rauso-chat-hint">Ungelesene Chats zuerst · Rot / Grün: Lesestatus gesendeter Nachrichten</p>'+
+  '<p class="rauso-chat-hint">Private Chats und Gruppen bestätigter Treffen · Ungelesen/Lesestatus derzeit nur für private Chats.</p>'+
   '<div id="rausoInboxRows" class="rauso-inbox-list"></div></div>'+
   '<details class="surface" id="rausoFindPeople"><summary>★ Freunde finden und Anfragen senden</summary>'+
   '<div class="searchbox"><span>⌕</span><input id="peopleSearch" placeholder="Namen suchen" autocomplete="off"></div>'+ 
@@ -1397,7 +1451,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.9.7';
+const APP_VERSION='2.9.8';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
