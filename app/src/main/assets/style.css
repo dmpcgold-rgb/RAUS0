@@ -2195,3 +2195,36 @@ html[data-rauso-theme] #heroOrganized #meetingNavCount{
   height:78px!important;min-height:78px!important;font-size:9.4px!important;
  }
 }
+
+/* RAUSO 3.0.2: precisely centered circular header controls. */
+html[data-rauso-theme] .topbar.compact-topbar,
+html[data-rauso-theme="orange"] .topbar.compact-topbar{
+ grid-template-columns:repeat(6,minmax(0,1fr))!important;
+ justify-items:center!important;align-items:center!important;
+ column-gap:5px!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar>button,
+html[data-rauso-theme="orange"] .topbar.compact-topbar>button,
+html[data-rauso-theme] .topbar.compact-topbar #heroPlan.rauso-header-create,
+html[data-rauso-theme] .topbar.compact-topbar #incognitoToggle{
+ display:grid!important;place-items:center!important;
+ box-sizing:border-box!important;
+ width:36px!important;min-width:36px!important;max-width:36px!important;
+ height:36px!important;min-height:36px!important;max-height:36px!important;
+ border-radius:50%!important;
+ border:1.5px solid #f58a2a!important;
+ padding:0!important;margin:0!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar #incognitoToggle[aria-checked="true"]{
+ border-color:#4dff84!important;
+ background:#082d18!important;color:#75ffa5!important;
+ box-shadow:0 0 13px #43f67c99,inset 0 0 9px #20b45150!important;
+}
+@media(max-width:345px){
+ html[data-rauso-theme] .topbar.compact-topbar>button,
+ html[data-rauso-theme] .topbar.compact-topbar #heroPlan.rauso-header-create,
+ html[data-rauso-theme] .topbar.compact-topbar #incognitoToggle{
+  width:33px!important;min-width:33px!important;max-width:33px!important;
+  height:33px!important;min-height:33px!important;max-height:33px!important;border-radius:50%!important;
+ }
+}

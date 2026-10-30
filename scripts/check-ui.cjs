@@ -34,8 +34,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='3\.0\.1'/);
-assert.match(gradle,/versionCode 52; versionName '3\.0\.1'/);
+assert.match(js,/const APP_VERSION='3\.0\.2'/);
+assert.match(gradle,/versionCode 53; versionName '3\.0\.2'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -98,3 +98,8 @@ assert(js.includes("rauso_group_chat_unread_counts"),'Database unread-count func
 assert(html.includes('✓ Zugesagte Treffen')&&html.includes('id="heroOrganized"')&&html.includes('id="heroBookmarksCircle"'),'Three circular shortcuts required');
 assert(!html.includes('INKOGNITO</small>')&&html.includes('rauso-incognito-icon'),'Inkognito must have icon only');
 assert(footer.includes('id="headerMessages"')&&!header.includes('id="headerMessages"'),'Message badge moved with button');
+
+/* RAUSO 3.0.2: all six top controls must be circular and evenly sized. */
+assert(html.includes('class="topbar compact-topbar"') && html.includes('id="incognitoToggle"'));
+assert(css.includes('RAUSO 3.0.2: precisely centered circular header controls.'));
+assert(css.includes('border-radius:50%!important;'));
