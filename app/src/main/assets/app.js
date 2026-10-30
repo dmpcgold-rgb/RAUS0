@@ -1144,22 +1144,39 @@ async function loadChat(){
  target.scrollTop=target.scrollHeight;
  loadMessageInbox()
 }
+let rausChatSending=false;
 async function sendChat(e){
  e.preventDefault();
+ if(rausChatSending)return;
  if(!mustVerify('Nachrichten schreiben'))return;
- const input=$('chatInput');const body=input?.value.trim();if(!body||!state.currentChat)return;
+ const input=$('chatInput');
+ const form=$('chatForm');
+ const button=form?.querySelector('button[type="submit"]');
+ const recipient=state.currentChat;
+ const body=input?.value.trim();
+ if(!body||!recipient)return;
+ rausChatSending=true;
+ if(button){button.disabled=true;button.textContent='…'}
+ if(input)input.disabled=true;
  try{
   if(demoMode()){
-   (state.demoMessages[state.currentChat]??=[]).push({
-    sender_id:myId(),recipient_id:state.currentChat,body,created_at:new Date().toISOString(),read_at:null
-   });persist()
+   (state.demoMessages[recipient]??=[]).push({sender_id:myId(),recipient_id:recipient,body,created_at:new Date().toISOString(),read_at:null});
+   persist();
   }else{
-   const {error}=await api.from('rauso_messages').insert({sender_id:myId(),recipient_id:state.currentChat,body});
-   if(error)throw error
+   if(!navigator.onLine)throw new Error('Keine Internetverbindung. Nachricht nicht versendet.');
+   const {error}=await api.from('rauso_messages').insert({sender_id:myId(),recipient_id:recipient,body});
+   if(error)throw error;
   }
   if(input)input.value='';
-  await loadChat();
- }catch(err){toast(err.message)}
+  if(state.currentChat===recipient)await loadChat();
+ }catch(err){
+  toast('Nachricht nicht gesendet: '+(err?.message||String(err)));
+ }finally{
+  rausChatSending=false;
+  if(input)input.disabled=false;
+  if(button){button.disabled=false;button.textContent='➤'}
+  if(input&&input.isConnected)input.focus();
+ }
 }
 function personOptions(id){const p=availablePeople().find(p=>p.id===id);if(!p)return;modal(`${p.display_name} · Optionen`,`<div class="stack"><p class="quiet">Du kannst Nutzer blockieren oder unangemessenes Verhalten melden.</p><button id="blockPerson" class="outline-btn">⛔ ${demoMode()?'Testprofil ausblenden':'Nutzer blockieren'}</button><button id="reportPerson" class="outline-btn">⚑ Profil melden</button></div>`);$('blockPerson').onclick=()=>blockPerson(id);$('reportPerson').onclick=()=>reportPerson(id)}
 async function blockPerson(id){try{if(demoMode()){state.demoBlocks[id]=true;persist()}else{const {error}=await api.from('blocks').insert({blocker_id:myId(),blocked_id:id});if(error)throw error;await loadSocial()}closeModal();renderMessages();toast('Profil ausgeblendet.')}catch(err){toast(err.message)}}
