@@ -65,7 +65,7 @@ assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'
 for(const cls of ['rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Missing visual token '+cls);
 }
-assert(js.includes("const APP_VERSION='3.0.4'"),'JS version should be 2.9.2');
+assert(js.includes("const APP_VERSION='3.0.5'"),'JS version should be 2.9.2');
 assert(js.includes("destination==='nearby'")&&js.includes("rausoOpenMeetingsFromHero"),'Hero shortcuts must navigate');
 assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
 
@@ -93,5 +93,8 @@ assert(html.includes('id="heroMeetingCategory"')&&html.includes('data-rauso-hero
 assert(!html.includes('> Erleben</button>')&&!html.includes('> Verbinden</button>'));
 
 /* RAUSO 3.0.4: meetup-counter and colorful filter regression */
-assert(html.includes('class="rauso-quick-count"')&&js.includes('rausoQuickMeetupCount'));
+assert(html.includes('class="rauso-quick-offer"')&&js.includes('rausoQuickMeetupOffers'));
 assert(js.includes('rausoSyncFilterTextColors')&&css.includes('RAUSO 3.0.4: colored text and live event counts'));
+
+assert(css.includes('RAUSO 3.0.5: discover uncommitted meetup offers')&&css.includes('RAUSO 3.0.5: three symmetric personal circles'));
+assert(!html.includes('class="rauso-quick-count"'),'Quick filters must show real offers, not RSVP totals');

@@ -653,7 +653,8 @@ function rausoEventMatchesFilters(e,now=Date.now()){
  return true;
 }
 // Actual number of upcoming meetups visible to this account, for a selected period/category.
-function rausoQuickMeetupCount(events,period,category,now=Date.now()){
+// All public and visible offers are shown, irrespective of the viewer's RSVP.
+function rausoQuickMeetupOffers(events,period,category,now=Date.now()){
  const today=rausoLocalEventDay(now);
  const weekday=new Date(today+'T12:00:00Z').getUTCDay();
  const saturday=rausoOffsetEventDay(today,weekday===0?-1:6-weekday);
@@ -673,21 +674,32 @@ function rausoQuickMeetupCount(events,period,category,now=Date.now()){
    case 'next-month':return day.slice(0,7)===nextMonth;
    default:return false;
   }
- }).length;
+ }).sort((a,b)=>Date.parse(a.starts_at)-Date.parse(b.starts_at));
 }
-function rausoUpdateQuickPeriodCounts(){
+// Retain a pure count helper for regression tests; do not display totals in UI.
+function rausoQuickMeetupCount(events,period,category,now=Date.now()){
+ return rausoQuickMeetupOffers(events,period,category,now).length;
+}
+function rausoUpdateQuickPeriodOffers(){
  const category=$('heroMeetingCategory')?.value||'all';
  const pending=!!state.user&&!rausoMeetingDataReady;
  const events=pending?[]:eventList(),now=Date.now();
  document.querySelectorAll('[data-quick-meeting-period]').forEach(button=>{
   const label=button.querySelector('.rauso-quick-label')?.textContent.trim()||'Treffen';
-  const count=pending?null:rausoQuickMeetupCount(events,button.dataset.quickMeetingPeriod,category,now);
-  const counter=button.querySelector('.rauso-quick-count');
-  if(counter)counter.textContent=count===null?'–':String(count);
-  button.dataset.hasMeetings=count===null?'pending':count?'yes':'no';
-  const countText=count===null?'Treffen werden geladen':count+' Treffen';
-  button.setAttribute('aria-label',label+': '+countText);
-  button.title=label+': '+countText;
+  const offers=pending?[]:rausoQuickMeetupOffers(events,button.dataset.quickMeetingPeriod,category,now);
+  const preview=button.querySelector('.rauso-quick-offer');
+  if(preview){
+   if(pending)preview.textContent='Wird geladen …';
+   else if(!offers.length)preview.textContent='Noch keine Angebote';
+   else {
+    const first=offers[0];
+    preview.textContent=String(first.title||'Treffen')+(first.author?' · von '+first.author:'');
+   }
+  }
+  button.dataset.hasMeetings=pending?'pending':offers.length?'yes':'no';
+  const details=pending?'Angebote werden geladen':offers.length?offers.slice(0,3).map(e=>(e.title||'Treffen')+(e.author?' von '+e.author:'')).join('; '):'Noch keine Angebote';
+  button.setAttribute('aria-label',label+': '+details);
+  button.title=label+': '+details;
  });
 }
 function rausoSyncFilterTextColors(){
@@ -707,7 +719,7 @@ function renderEvents(){
  (list.length?list.map(renderEventCard).join(''):'<div class="empty"><strong>Keine passenden Treffen</strong>'+esc(label)+'</div>');
  document.querySelectorAll('[data-event-mode]').forEach(b=>b.classList.toggle('active',b.dataset.eventMode===state.eventMode));
  const count=$('rausoEventResultCount');if(count)count.textContent=list.length+' passende Treffen';
- rausoUpdateQuickPeriodCounts();rausoSyncFilterTextColors();
+ rausoUpdateQuickPeriodOffers();rausoSyncFilterTextColors();
  const info=$('rausoNearbyContext');if(info){info.classList.toggle('hidden',!state.eventNearbyOnly);info.textContent=state.eventNearbyOnly?'⌖ '+(Number(state.radius||25000)/1000)+' km ab '+(rausoGps?'deinem freigegebenen Standort':'dem Zentrum der gewählten Region')+'. Treffen ohne erkennbare Ortsangabe werden nicht angezeigt.':'';}
  wireEventButtons($('eventList'),list);
 }
@@ -1602,7 +1614,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='3.0.4';
+const APP_VERSION='3.0.5';
 const UI_PREF='rauso-ui-2';
 const rausoIncognitoKey=()=> 'rauso-incognito:'+myId();
 let rausoIncognito=false;
@@ -1692,7 +1704,7 @@ function rausoOpenMeetingsFromHero(period,nearby=false){
   });
  }
 }
-function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();if($('heroCreate'))$('heroCreate').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});if($('rausoEventTime'))$('rausoEventTime').onchange=e=>{state.eventTime=e.target.value;renderEvents()};if($('rausoEventCategory'))$('rausoEventCategory').onchange=e=>{state.eventCategory=e.target.value;if($('heroMeetingCategory'))$('heroMeetingCategory').value=e.target.value;rausoSyncFilterTextColors();renderEvents()};if($('rausoEventOpen'))$('rausoEventOpen').onchange=e=>{state.eventOpenOnly=e.target.checked;renderEvents()};if($('rausoEventAge'))$('rausoEventAge').onchange=e=>{state.eventAgeOnly=e.target.checked;renderEvents()};if($('rausoEventNearby'))$('rausoEventNearby').onchange=e=>{state.eventNearbyOnly=e.target.checked;renderEvents()};if($('heroMeetingCategory'))$('heroMeetingCategory').onchange=e=>{state.eventCategory=e.target.value;if($('rausoEventCategory'))$('rausoEventCategory').value=e.target.value;rausoSyncFilterTextColors();rausoUpdateQuickPeriodCounts();if(state.tab==='events')renderEvents()};if($('rausoEventReset'))$('rausoEventReset').onclick=()=>{state.eventTime='all';state.eventCategory='all';state.eventOpenOnly=false;state.eventAgeOnly=false;state.eventNearbyOnly=false;state.eventDate='';state.eventClock='';$('eventDateFilter').value='';$('eventClockFilter').value='';saveDiscoverySettings();$('rausoEventTime').value='all';$('rausoEventCategory').value='all';$('rausoEventOpen').checked=false;$('rausoEventAge').checked=false;$('rausoEventNearby').checked=false;if($('heroMeetingCategory'))$('heroMeetingCategory').value='all';renderEvents()};$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('eventDateFilter').onchange=e=>{state.eventDate=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('eventClockFilter').onchange=e=>{state.eventClock=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;rausoSyncFilterTextColors();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
+function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();if($('heroCreate'))$('heroCreate').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});if($('rausoEventTime'))$('rausoEventTime').onchange=e=>{state.eventTime=e.target.value;renderEvents()};if($('rausoEventCategory'))$('rausoEventCategory').onchange=e=>{state.eventCategory=e.target.value;if($('heroMeetingCategory'))$('heroMeetingCategory').value=e.target.value;rausoSyncFilterTextColors();renderEvents()};if($('rausoEventOpen'))$('rausoEventOpen').onchange=e=>{state.eventOpenOnly=e.target.checked;renderEvents()};if($('rausoEventAge'))$('rausoEventAge').onchange=e=>{state.eventAgeOnly=e.target.checked;renderEvents()};if($('rausoEventNearby'))$('rausoEventNearby').onchange=e=>{state.eventNearbyOnly=e.target.checked;renderEvents()};if($('heroMeetingCategory'))$('heroMeetingCategory').onchange=e=>{state.eventCategory=e.target.value;if($('rausoEventCategory'))$('rausoEventCategory').value=e.target.value;rausoSyncFilterTextColors();rausoUpdateQuickPeriodOffers();if(state.tab==='events')renderEvents()};if($('rausoEventReset'))$('rausoEventReset').onclick=()=>{state.eventTime='all';state.eventCategory='all';state.eventOpenOnly=false;state.eventAgeOnly=false;state.eventNearbyOnly=false;state.eventDate='';state.eventClock='';$('eventDateFilter').value='';$('eventClockFilter').value='';saveDiscoverySettings();$('rausoEventTime').value='all';$('rausoEventCategory').value='all';$('rausoEventOpen').checked=false;$('rausoEventAge').checked=false;$('rausoEventNearby').checked=false;if($('heroMeetingCategory'))$('heroMeetingCategory').value='all';renderEvents()};$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('eventDateFilter').onchange=e=>{state.eventDate=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('eventClockFilter').onchange=e=>{state.eventClock=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;rausoSyncFilterTextColors();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
  $('categorySelect').onchange=e=>{document.querySelector('[data-cat="'+e.target.value+'"]')?.click();rausoSyncFilterTextColors()};
  $('loadPlaces').onclick=queryPlaces;state.places=[];renderPlaces();renderEvents();renderFamily();renderMyMeetings();renderMessages();loadMessageInbox();renderProfile();injectProfileExtras();queryPlaces();if(hasBackend){api.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(()=>refreshUser().then(()=>{updateOnlinePresence();switchTab(state.tab)}),0)});refreshUser().then(()=>switchTab(state.tab))}
 }

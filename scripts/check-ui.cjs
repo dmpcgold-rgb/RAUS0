@@ -34,8 +34,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='3\.0\.4'/);
-assert.match(gradle,/versionCode 55; versionName '3\.0\.4'/);
+assert.match(js,/const APP_VERSION='3\.0\.5'/);
+assert.match(gradle,/versionCode 56; versionName '3\.0\.5'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -110,6 +110,10 @@ assert(html.includes('id="heroMeetingCategory"')&&html.includes('id="rausoEventN
 assert(js.includes('rausoOpenMeetingsFromHero')&&js.includes('rausoNearbyEventMatches'),'Meetup discovery handlers missing');
 assert(css.includes('RAUSO 3.0.3: five small circular date filters'));
 
-/* RAUSO 3.0.4: meetup-counter and colorful filter regression */
-assert(html.includes('class="rauso-quick-count"')&&js.includes('rausoQuickMeetupCount'));
+/* RAUSO 3.0.5: meetup-counter and colorful filter regression */
+assert(html.includes('class="rauso-quick-offer"')&&js.includes('rausoQuickMeetupOffers')&&js.includes('rausoUpdateQuickPeriodOffers'));
 assert(js.includes('rausoSyncFilterTextColors')&&css.includes('RAUSO 3.0.4: colored text and live event counts'));
+
+/* RAUSO 3.0.5: black and orange meeting offer cards with three custom glow circles. */
+assert(css.includes('RAUSO 3.0.5: discover uncommitted meetup offers')&&css.includes('RAUSO 3.0.5: three symmetric personal circles'));
+assert(!html.includes('class="rauso-quick-count"'));

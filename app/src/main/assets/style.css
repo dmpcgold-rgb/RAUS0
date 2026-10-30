@@ -2369,3 +2369,158 @@ html[data-rauso-theme] #categoryStrip .chip,html[data-rauso-theme="orange"] #cat
  color:var(--category-color)!important;
  text-shadow:0 0 5px var(--category-color)!important;
 }
+
+/* RAUSO 3.0.5: discover uncommitted meetup offers in black/orange rectangular controls. */
+html[data-rauso-theme] .rauso-meeting-quick-filters,
+html[data-rauso-theme="orange"] .rauso-meeting-quick-filters{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ gap:8px!important;max-width:100%!important;width:100%!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods,
+html[data-rauso-theme="orange"] .rauso-meeting-periods{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ grid-template-rows:none!important;gap:7px!important;width:100%!important;
+ flex:none!important;align-items:stretch!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods>button,
+html[data-rauso-theme="orange"] .rauso-meeting-periods>button,
+html[data-rauso-theme] .rauso-meeting-periods>button[data-has-meetings="yes"]{
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:none!important;
+ height:auto!important;min-height:76px!important;aspect-ratio:auto!important;
+ padding:9px 8px!important;margin:0!important;gap:6px!important;
+ border:1.5px solid #ff8d31!important;border-radius:10px!important;
+ background:#08090c!important;background-image:none!important;
+ color:#fff!important;box-shadow:none!important;text-shadow:none!important;
+ white-space:normal!important;hyphens:none!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods>button:last-child{
+ grid-column:1/-1!important;min-height:65px!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods .rauso-quick-label,
+html[data-rauso-theme] .rauso-meeting-periods>button .rauso-quick-label{
+ display:block!important;color:#fff!important;font-size:12px!important;
+ font-weight:800!important;line-height:1.2!important;text-shadow:none!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods .rauso-quick-offer{
+ display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow:hidden!important;max-width:100%;font-size:10px!important;
+ font-weight:500!important;line-height:1.25!important;
+ color:#fff!important;text-shadow:none!important;text-overflow:ellipsis;
+ overflow-wrap:anywhere!important;text-align:center!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods>button[data-has-meetings="no"] .rauso-quick-offer{
+ opacity:.65!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods>button:focus-visible{
+ outline:2px solid #fff!important;outline-offset:2px!important;
+}
+html[data-rauso-theme] .rauso-meeting-quick-category,
+html[data-rauso-theme="orange"] .rauso-meeting-quick-category{
+ flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important;
+ box-sizing:border-box!important;display:flex!important;flex-direction:row!important;
+ align-items:center!important;justify-content:space-between!important;
+ gap:9px!important;min-height:43px!important;padding:7px 10px!important;
+ border:1.5px solid #ff8d31!important;border-radius:10px!important;
+ background:#08090c!important;color:#fff!important;text-align:left!important;
+}
+html[data-rauso-theme] .rauso-meeting-quick-category select,
+html[data-rauso-theme] #heroMeetingCategory{
+ box-sizing:border-box!important;width:clamp(130px,55%,260px)!important;
+ min-width:0!important;max-width:100%!important;
+ background:#090a0e!important;color:#fff!important;
+ border:1px solid #ff8d31!important;border-radius:8px!important;
+ font-size:11px!important;
+}
+html[data-rauso-theme] #heroCreate.rauso-hero-cta,
+html[data-rauso-theme="orange"] #heroCreate.rauso-hero-cta,
+html[data-rauso-theme] .rauso-hero-shortcuts>button,
+html[data-rauso-theme="orange"] .rauso-hero-shortcuts>button{
+ background:#08090c!important;background-image:none!important;
+ border:1.5px solid #ff8d31!important;border-radius:11px!important;
+ color:#fff!important;box-shadow:none!important;
+ text-shadow:none!important;
+}
+html[data-rauso-theme] #heroCreate .rauso-hero-cta-label,
+html[data-rauso-theme] .rauso-hero-shortcuts [data-rauso-hero-go="discover"],
+html[data-rauso-theme] .rauso-hero-shortcuts [data-rauso-hero-go="nearby"],
+html[data-rauso-theme] .rauso-hero-shortcuts>button .rauso-shortcut-label{
+ color:#fff!important;text-shadow:none!important;
+}
+html[data-rauso-theme] #heroCreate .rauso-plus-mark{color:#ff8d31!important}
+/* Three special home buttons stay perfectly symmetric circles with centered labels. */
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ justify-items:center!important;align-items:center!important;gap:8px!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status>button,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status>button,
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroGoing,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroGoing{
+ display:flex!important;flex-direction:column!important;justify-content:center!important;
+ align-items:center!important;flex:none!important;box-sizing:border-box!important;
+ width:82px!important;min-width:82px!important;max-width:82px!important;
+ height:82px!important;min-height:82px!important;max-height:82px!important;
+ aspect-ratio:1/1!important;border-radius:50%!important;
+ margin:0!important;padding:8px 7px!important;overflow:visible!important;
+ text-align:center!important;font-size:10px!important;line-height:1.16!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;
+}
+html[data-rauso-theme] #heroBookmarksCircle .rauso-bookmark-circle-star{font-size:22px!important;line-height:1!important}
+@media(max-width:350px){
+ html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status>button,
+ html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroGoing{
+  width:76px!important;min-width:76px!important;max-width:76px!important;
+  height:76px!important;min-height:76px!important;max-height:76px!important;
+  font-size:9.5px!important;padding:7px 6px!important;
+ }
+ html[data-rauso-theme] .rauso-meeting-periods>button{min-height:75px!important}
+}
+/* Venue/category, timeframe and search radius: white labels, red outlines, black boxes. */
+html[data-rauso-theme] .filters.rauso-date-filters>.field,
+html[data-rauso-theme="orange"] .filters.rauso-date-filters>.field{
+ background:#08090c!important;border:1.5px solid #fa4048!important;
+ border-radius:11px!important;
+}
+html[data-rauso-theme] .filters.rauso-date-filters>.field>span,
+html[data-rauso-theme] .filters.rauso-date-filters>.field-category>span,
+html[data-rauso-theme] .filters.rauso-date-filters>.rauso-date-time-field>span,
+html[data-rauso-theme] .filters.rauso-date-filters>.small-field>span,
+html[data-rauso-theme] :is(#categorySelect,#radiusSelect),
+html[data-rauso-theme] .rauso-date-time-field input{
+ color:#fff!important;-webkit-text-fill-color:#fff!important;
+ text-shadow:none!important;-webkit-text-stroke:0!important;
+}
+html[data-rauso-theme] .rauso-date-time-field input{
+ background:#08090c!important;border:1px solid #fa4048!important;
+ color-scheme:dark!important;
+}
+
+/* RAUSO 3.0.5: three symmetric personal circles with matching colored type and outline. */
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroGoing,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroGoing{
+ background:#08090b!important;color:#65f9a0!important;border:2px solid #65f9a0!important;
+ text-shadow:0 0 6px #42fa96b8!important;
+ box-shadow:0 0 9px #42fa9660,inset 0 0 8px #42fa9620!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroOrganized,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroOrganized{
+ background:#08090b!important;color:#ffa54c!important;border:2px solid #ffa54c!important;
+ text-shadow:0 0 6px #ff9947b8!important;
+ box-shadow:0 0 9px #ff994760,inset 0 0 8px #ff994720!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroBookmarksCircle,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroBookmarksCircle{
+ background:#08090b!important;color:#ffe75b!important;border:2px solid #ffe75b!important;
+ text-shadow:0 0 6px #ffe75bb8!important;
+ box-shadow:0 0 9px #ffe75b60,inset 0 0 8px #ffe75b20!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroBookmarksCircle .rauso-bookmark-circle-star{
+ color:#ffe75b!important;text-shadow:0 0 6px #ffe75b90!important;
+}
+/* Keep personal navigation circles visually balanced and all labels inside them. */
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status>button,
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status>button span:not(.nav-count){
+ text-align:center!important;
+}

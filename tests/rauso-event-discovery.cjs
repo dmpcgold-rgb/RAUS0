@@ -7,7 +7,7 @@ const css=fs.readFileSync('app/src/main/assets/style.css','utf8');
 const start=js.indexOf('function rausoLocalEventDay(');
 const end=js.indexOf('function renderEvents(){',start);
 assert(start>=0&&end>start,'Pure discovery predicates missing');
-const functions=new Function('state','rausoOwnBirthdate','rausoEventAgeEligibility','myId','rausoReferencePoint','km','regionData',js.slice(start,end)+';return {rausoLocalEventDay,rausoEventMatchesFilters,rausoQuickMeetupCount};');
+const functions=new Function('state','rausoOwnBirthdate','rausoEventAgeEligibility','myId','rausoReferencePoint','km','regionData',js.slice(start,end)+';return {rausoLocalEventDay,rausoEventMatchesFilters,rausoQuickMeetupCount,rausoQuickMeetupOffers};');
 const state={eventMode:'all',eventTime:'all',eventCategory:'all',eventOpenOnly:false,eventAgeOnly:false};
 const f=functions(state,'1992-12-05',()=>({ok:true}),()=> 'myself',()=>[47.815,16.245],(a,b,c,d)=>Math.hypot(a-c,b-d)*111,{'wiener-neustadt':[47.815,16.245],wien:[48.208,16.373]});
 const now=Date.parse('2026-10-30T09:00:00Z'); // Friday in Austria
@@ -72,3 +72,11 @@ assert.equal(f.rausoQuickMeetupCount(upcoming,'next-week','all',now),0,'Next wee
 assert.equal(f.rausoQuickMeetupCount([event('2026-11-02T12:00:00Z')],'next-week','all',now),1,'Next week boundary');
 assert.equal(f.rausoQuickMeetupCount([event('2026-11-01T12:00:00Z')],'next-month','all',now),1,'Next month boundary');
 assert(html.includes('class="rauso-quick-count"')&&css.includes('RAUSO 3.0.4: colored text'));
+
+/* RAUSO 3.0.5: offer discovery is independent from RSVP. */
+const offers=[event('2026-10-31T11:00:00Z',{title:'Wandertour',author:'Alex',mineReaction:null}),event('2026-10-31T12:00:00Z',{title:'Therme',author:'Sam',mineReaction:'going'})];
+const preview=f.rausoQuickMeetupOffers(offers,'tomorrow','all',now);
+assert.equal(preview.length,2,'Show all offered meetups before deciding');
+assert.equal(preview[0].title,'Wandertour','Sort offerings chronologically');
+assert.equal(f.rausoQuickMeetupOffers(offers,'tomorrow','familie',now).length,0,'Category filters offers');
+assert(html.includes('class="rauso-quick-offer"')&&!html.includes('class="rauso-quick-count"'));
