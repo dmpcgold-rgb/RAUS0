@@ -1968,3 +1968,30 @@ html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroGo
  #eventsScreen .rauso-event-visual>span{font-size:40px}
 }
 @media(prefers-reduced-motion:reduce){#eventsScreen .rauso-discovery-event *{animation:none!important;transition:none!important}}
+
+/* RAUSO 2.9.7: member interests and protected event group-chat UI. */
+.rauso-interest-picker{border:1px solid #a9673d;border-radius:13px;padding:11px;background:#111116}
+.rauso-interest-picker legend{padding:0 7px;color:#ffc28a;font-weight:750;font-size:12px}
+.rauso-interest-options{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 9px}
+.rauso-interest-options label{display:inline-flex;align-items:center;gap:5px;border:1px solid #99643c;background:#201819;border-radius:20px;padding:6px 9px;font-size:11px;cursor:pointer;color:#fff2ea}
+.rauso-interest-options label:has(input:checked){background:#70401c;border-color:#ff9d3e;box-shadow:0 0 6px #fa7d2744}
+.rauso-interest-options input{margin:0;accent-color:#f88b2e;width:15px;height:15px}
+.rauso-interest-picker small{font-size:10px;color:#c4b7ae}
+.rauso-member-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 14px}
+.rauso-member-filters label{display:grid;gap:5px;color:#ffbe85;font-size:11px}
+.rauso-member-filters :is(input,select){width:100%;min-width:0;min-height:38px;color:#fef8f4;background:#13131a;border:1px solid #9f6a42;border-radius:9px;padding:7px;font-size:11px}
+.rauso-member-filters :is(input,select):focus-visible{outline:2px solid #ffaa62;outline-offset:1px}
+.rauso-member-interests{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.rauso-member-interests em{font-style:normal;border:1px solid #a56a42;border-radius:8px;background:#312119;padding:2px 5px;font-size:9px;color:#fcd7b4}
+.rauso-groupchat-info{padding:11px;margin:0 0 12px;border:1px solid #885b36;border-radius:11px;background:#1c1719;color:#dfc7af;font-size:11px;line-height:1.45}
+.rauso-outing-chat{min-height:185px;max-height:min(48vh,420px);overflow-y:auto;overscroll-behavior:contain;margin-bottom:9px}
+.rauso-groupchat-author{font-size:10px;display:block;margin-bottom:4px;color:#ffc58d}
+.rauso-outing-chat .bubble.mine .rauso-groupchat-author{color:#c3f3d3}
+.rauso-groupchat-button{border-color:#f29b52!important;background:#39251c!important;color:#ffe1b7!important;font-weight:750!important}
+.rauso-groupchat-button:focus-visible,.rauso-attendees-detail:focus-visible{outline:2px solid #ffa750;outline-offset:2px}
+.rauso-attendees-detail{min-height:27px;font-size:10px;background:#1f1a1a;color:#f5bf83;border:1px solid #95673f;margin:4px 0}
+@media(max-width:390px){
+ .rauso-member-filters{grid-template-columns:1fr}
+ .rauso-outing-chat{max-height:39vh}
+ .rauso-interest-options label{font-size:10px;padding:5px}
+}
