@@ -1298,6 +1298,7 @@ async function refreshUser(){
   }else state.profile=null
  }
  await Promise.all([rausoLoadOwnBirthdate(),loadOutings(),loadSocial(),loadBookmarks(),loadMessageInbox()]);
+ await rausoLoadGroupUnread();
  await pollRausoNotifications(false);
  subscribeRausoNotifications();renderProfile();updateHeaderAccount();
   if(rausoBirthdateReady&&!rausoOwnBirthdate){rausoRequestBirthdate();return}
