@@ -127,7 +127,7 @@ function switchTab(tab, recordHistory=true){
    rausoTabHistory.push(state.tab);
    if(rausoTabHistory.length>60)rausoTabHistory.shift();
  }
- state.tab=tab;if($('headerMessages'))$('headerMessages').classList.toggle('active',tab==='messages');document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();}
+ state.tab=tab;if($('headerMessages'))$('headerMessages').classList.toggle('active',tab==='messages');document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox();if(state.user)loadOutings();else rausoLoadGroupInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();}
 function rausoBack(){
  const dialog=document.querySelector('#modalRoot .modal-overlay');
  if(dialog){
@@ -580,6 +580,7 @@ async function rausoSendOutingChat(ev){
  if(error){toast('Nachricht nicht gesendet: '+error.message);return}
  input.value='';
  await rausoLoadOutingChat();
+ if(state.tab==='messages')rausoLoadGroupInbox();
 }
 function wireEventButtons(root,data){
  rausoWireApprovalButtons(root);
@@ -798,7 +799,7 @@ async function loadOutings(){
   if(response.status==='pending'){(pendingByOuting[response.outing_id]||(pendingByOuting[response.outing_id]=[])).push({user_id:response.user_id,name:names[response.user_id]||'Mitglied'});}
  }
  state.outings=(events||[]).map(e=>({...e,category:e.category&&cats[e.category]?e.category:null,transport_mode:e.transport_mode||null,family_friendly:e.family_friendly===true,author:names[e.author_id]||'Mitglied',authorOnline:online.has(e.author_id),mineReaction:mine[e.id],attendance:e.author_id===myId()?(attendees[e.id]||{going:0}):null,pendingRequests:e.author_id===myId()?(pendingByOuting[e.id]||[]):[],attendeePreview:e.visibility==='private'&&e.author_id!==myId()&&mine[e.id]!=='going'?[]:(confirmedVisible[e.id]||[]),availability:availability[e.id]||null}));
- rausoMeetingDataReady=true;renderEvents();refreshMeetingBadge();if(state.tab==='myMeetings')renderMyMeetings();
+ rausoMeetingDataReady=true;renderEvents();refreshMeetingBadge();if(state.tab==='myMeetings')renderMyMeetings();if(state.tab==='messages')rausoLoadGroupInbox();
 }
 function avatar(p){return `<span class="avatar">${esc((p.display_name||'?').replace(' (Demo)','').slice(0,1).toUpperCase())}</span>`}
 async function loadSocial(){
@@ -1234,7 +1235,7 @@ async function refreshUser(){
  const {data:{user}}=await api.auth.getUser();
  state.user=user||null;rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
  if(!user){
-  state.profile=null;state.profilePhotoUrl=null;updateHeaderAccount();rausoInboxMessages=[];rausoUpdateMessageBadge();renderMessages();return
+  state.profile=null;state.profilePhotoUrl=null;updateHeaderAccount();rausoInboxMessages=[];rausoGroupInbox=[];rausoUpdateMessageBadge();renderMessages();return
  }
  const {data,error}=await api.from('rauso_profiles').select('*').eq('id',user.id).maybeSingle();
  if(error)console.error(error);
@@ -1531,6 +1532,7 @@ async function updateOnlinePresence(){
 }
 setInterval(()=>{if(!document.hidden)updateOnlinePresence()},30000);
 setInterval(()=>{if(!document.hidden&&state.user)loadMessageInbox()},15000);
+setInterval(()=>{if(!document.hidden&&state.user&&state.tab==='messages')rausoLoadGroupInbox()},15000);
 setInterval(()=>{if(!document.hidden&&$('rausoOutingChatMessages'))rausoLoadOutingChat()},15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateOnlinePresence()});
 document.addEventListener('DOMContentLoaded',()=>{
