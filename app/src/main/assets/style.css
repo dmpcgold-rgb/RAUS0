@@ -2228,3 +2228,6 @@ html[data-rauso-theme] .topbar.compact-topbar #incognitoToggle[aria-checked="tru
   height:33px!important;min-height:33px!important;max-height:33px!important;border-radius:50%!important;
  }
 }
+
+/* RAUSO circular controls: single-tap actions without delayed mobile interactions. */
+html[data-rauso-theme] .topbar.compact-topbar>button{touch-action:manipulation!important}
