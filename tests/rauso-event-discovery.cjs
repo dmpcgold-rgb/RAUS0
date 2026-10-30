@@ -7,7 +7,7 @@ const css=fs.readFileSync('app/src/main/assets/style.css','utf8');
 const start=js.indexOf('function rausoLocalEventDay(');
 const end=js.indexOf('function renderEvents(){',start);
 assert(start>=0&&end>start,'Pure discovery predicates missing');
-const functions=new Function('state','rausoOwnBirthdate','rausoEventAgeEligibility','myId','rausoReferencePoint','km','regionData',js.slice(start,end)+';return {rausoLocalEventDay,rausoEventMatchesFilters};');
+const functions=new Function('state','rausoOwnBirthdate','rausoEventAgeEligibility','myId','rausoReferencePoint','km','regionData',js.slice(start,end)+';return {rausoLocalEventDay,rausoEventMatchesFilters,rausoQuickMeetupCount};');
 const state={eventMode:'all',eventTime:'all',eventCategory:'all',eventOpenOnly:false,eventAgeOnly:false};
 const f=functions(state,'1992-12-05',()=>({ok:true}),()=> 'myself',()=>[47.815,16.245],(a,b,c,d)=>Math.hypot(a-c,b-d)*111,{'wiener-neustadt':[47.815,16.245],wien:[48.208,16.373]});
 const now=Date.parse('2026-10-30T09:00:00Z'); // Friday in Austria
@@ -55,3 +55,20 @@ state.eventTime='all';state.eventNearbyOnly=true;state.radius=25000;
 assert(f.rausoEventMatchesFilters(event('2026-11-02T12:00:00Z',{place_name:'Wiener Neustadt Innenstadt'}),now),'Near town included');
 assert(!f.rausoEventMatchesFilters(event('2026-11-02T12:00:00Z',{place_name:'Wien Innenstadt'}),now),'Far town excluded');
 assert(!f.rausoEventMatchesFilters(event('2026-11-02T12:00:00Z',{place_name:'Geheimer Treffpunkt'}),now),'Unknown place excluded');
+
+/* RAUSO 3.0.4: actual circle counts from recorded events and optional category. */
+const upcoming=[
+ event('2026-10-30T17:00:00Z'),
+ event('2026-10-31T11:00:00Z'),
+ event('2026-10-31T12:00:00Z',{category:'kino'}),
+ event('2026-11-01T11:00:00Z')
+];
+assert.equal(f.rausoQuickMeetupCount(upcoming,'today','all',now),1,'Today count');
+assert.equal(f.rausoQuickMeetupCount(upcoming,'tomorrow','all',now),2,'Tomorrow count');
+assert.equal(f.rausoQuickMeetupCount(upcoming,'weekend','all',now),3,'Weekend count');
+assert.equal(f.rausoQuickMeetupCount(upcoming,'tomorrow','thermen',now),1,'Selected category count');
+assert.equal(f.rausoQuickMeetupCount(upcoming,'tomorrow','familie',now),0,'Empty category count');
+assert.equal(f.rausoQuickMeetupCount(upcoming,'next-week','all',now),0,'Next week count');
+assert.equal(f.rausoQuickMeetupCount([event('2026-11-02T12:00:00Z')],'next-week','all',now),1,'Next week boundary');
+assert.equal(f.rausoQuickMeetupCount([event('2026-11-01T12:00:00Z')],'next-month','all',now),1,'Next month boundary');
+assert(html.includes('class="rauso-quick-count"')&&css.includes('RAUSO 3.0.4: colored text'));
