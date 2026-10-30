@@ -1995,3 +1995,28 @@ html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroGo
  .rauso-outing-chat{max-height:39vh}
  .rauso-interest-options label{font-size:10px;padding:5px}
 }
+
+
+/* RAUSO 2.9.8: group conversations share the Nachrichten inbox. */
+.rauso-inbox-tabs{flex-wrap:wrap}
+.rauso-inbox-tabs button{min-width:64px;flex:1 1 auto}
+.rauso-group-inbox-row{
+ border-color:#bc7b43!important;
+ background:linear-gradient(128deg,#342218,#19151b 70%)!important;
+}
+.rauso-group-inbox-row .rauso-group-avatar{
+ flex:none;display:grid;place-items:center;
+ border:1px solid #ffa34e;border-radius:13px;
+ width:43px;height:43px;font-size:22px;
+ color:#ffd08a;background:radial-gradient(circle at 30% 18%,#ae551e,#362017 76%);
+ box-shadow:0 0 10px #ed8d3040;
+}
+.rauso-group-inbox-row .rauso-group-inbox-label{color:#ffc184!important;font-weight:650;font-size:10px!important}
+.rauso-group-inbox-badge{font-size:9px;letter-spacing:.2px;border:1px solid #ba7b46;background:#4a2a18;color:#ffd09b;border-radius:9px;padding:4px 6px}
+.rauso-group-inbox-row:focus-visible{outline:2px solid #ffc378;outline-offset:2px}
+@media(max-width:370px){
+ .rauso-inbox-tabs{gap:5px}
+ .rauso-inbox-tabs button{font-size:10px;padding:8px 6px;min-width:55px}
+ .rauso-group-inbox-badge{font-size:8px;padding:3px 5px}
+ .rauso-group-inbox-row .rauso-group-avatar{width:38px;height:38px;font-size:19px}
+}
