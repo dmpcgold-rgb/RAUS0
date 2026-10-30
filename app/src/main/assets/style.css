@@ -2020,3 +2020,34 @@ html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroGo
  .rauso-group-inbox-badge{font-size:8px;padding:3px 5px}
  .rauso-group-inbox-row .rauso-group-avatar{width:38px;height:38px;font-size:19px}
 }
+
+/* RAUSO 3.0 – black surfaces, colored category borders and compact status circles. */
+html[data-rauso-theme] :is(.place-card,.featured-card)[data-venue-category]{background:#08090b!important;background-image:none!important;border:3px solid var(--category-color,#ddd)!important;box-shadow:0 2px 10px #0008!important}
+html[data-rauso-theme] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image){background:#08090b!important;background-image:none!important}
+html[data-rauso-theme] #categoryStrip .chip{background:#08090b!important;background-image:none!important;border:2.5px solid var(--category-color)!important;color:var(--category-color)!important;-webkit-text-stroke:.24px white!important;text-shadow:0 0 1px #fff!important}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status button{flex:0 0 80px!important;width:80px!important;min-width:80px!important;max-width:80px!important;height:80px!important;min-height:80px!important;max-height:80px!important;font-size:9.2px!important;border:1px solid #eee!important;box-shadow:none!important}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroGoing{background:#155d36!important;border:2px solid #000!important;color:#fff!important}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroOrganized{background:#08090b!important;border:1px solid #eee!important}
+html[data-rauso-theme] .rauso-discovery-event.rauso-rsvp-green,html[data-rauso-theme] .meeting-card.rauso-rsvp-green{background:#103b26!important;border:2px solid #287048!important;box-shadow:0 2px 10px #0008!important}
+html[data-rauso-theme] .rauso-rsvp-green :is(h3,.event-meta,.meeting-detail,.event-date){color:#f5fff7!important}
+.rauso-delete-outing{border:1px solid #f4c2c2!important;color:#ffcccc!important;background:#231617!important}
+html[data-rauso-theme] .compact-topbar{gap:3px!important;padding:5px!important;justify-content:space-between!important}
+html[data-rauso-theme] .compact-topbar :is(#headerMessages,#notificationBell,#headerSettings,#accountShortcut){display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 34px!important;width:34px!important;min-width:34px!important;max-width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;margin:0!important;border:1px solid #ddd!important;border-radius:9px!important;background:#08090b!important;color:#fff!important;box-shadow:none!important}
+html[data-rauso-theme] .compact-topbar #accountShortcutLabel{display:none!important}
+html[data-rauso-theme] .compact-topbar #headerMessages .rauso-neon-envelope{color:#ff9132!important;font-size:22px!important}
+html[data-rauso-theme] .compact-topbar #headerFriends{min-width:30px!important;margin-right:0!important;border:1px solid #ddd!important}
+html[data-rauso-theme] .rauso-incognito-toggle{display:flex;flex:0 0 52px;min-width:52px;width:52px;height:34px;padding:2px;gap:1px;align-items:center;justify-content:center;flex-direction:column;background:#08090b;border:1px solid #ddd;border-radius:9px;color:#fff}
+.rauso-incognito-toggle small{font-size:6px;font-weight:800;letter-spacing:.1px}
+.rauso-incognito-track{display:flex;align-items:center;width:30px;height:14px;padding:1px;border-radius:8px;background:#000;border:1px solid #ddd}
+.rauso-incognito-thumb{width:10px;height:10px;background:#000;border:1px solid #fff;border-radius:50%;transition:transform .18s,background .18s}
+.rauso-incognito-toggle[aria-checked="true"] .rauso-incognito-track{background:#fff}
+.rauso-incognito-toggle[aria-checked="true"] .rauso-incognito-thumb{background:#fff;border:1px solid #000;transform:translateX(16px)}
+html[data-rauso-theme] .filters.rauso-date-filters{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,.85fr)!important;gap:5px!important}
+html[data-rauso-theme] .filters.rauso-date-filters>.field{grid-row:1!important;min-width:0!important;min-height:75px!important;padding:6px 4px!important;background:#08090b!important;border:1px solid #999!important}
+html[data-rauso-theme] .filters.rauso-date-filters>.field-category{grid-column:1!important}
+html[data-rauso-theme] .filters.rauso-date-filters>.rauso-date-time-field{grid-column:2!important}
+html[data-rauso-theme] .filters.rauso-date-filters>.small-field{grid-column:3!important}
+html[data-rauso-theme] .filters.rauso-date-filters>.field select{font-size:10px!important}
+html[data-rauso-theme] .rauso-date-time-field input{width:100%;min-width:0;min-height:23px;box-sizing:border-box;padding:2px;background:#08090b;color:#fff;color-scheme:dark;border:1px solid #777;border-radius:5px;font-size:10px}
+html[data-rauso-theme] .rauso-inbox-list .rauso-chat-row{background:#08090b!important;border:1px solid #ddd!important}
+@media(max-width:380px){html[data-rauso-theme] .compact-topbar #headerFriends .header-bookmarks-text{display:none!important}html[data-rauso-theme] .compact-topbar :is(#headerMessages,#notificationBell,#headerSettings,#accountShortcut){width:30px!important;min-width:30px!important;max-width:30px!important;flex-basis:30px!important}html[data-rauso-theme] .rauso-incognito-toggle{flex-basis:48px;width:48px;min-width:48px}}
