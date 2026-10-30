@@ -38,7 +38,7 @@ assert(css.includes('/* RAUSO 2.9.3: neon category circles and round meeting sho
 const nav=html.slice(html.indexOf('<nav class="bottomnav"'),html.indexOf('</nav>')+6);
 assert((nav.match(/data-tab="collections"/g)||[]).length===1,'Bottom nav must contain Merkliste once');
 assert(!nav.includes('data-tab="messages"'),'Messages must no longer occupy the bottom navigation');
-assert(nav.indexOf('data-tab="myMeetings"')<nav.indexOf('data-tab="collections"')&&nav.indexOf('data-tab="collections"')<nav.indexOf('data-tab="dating"'),'Merkliste must be in former Messages position');
+assert(nav.indexOf('data-tab="myMeetings"')<nav.indexOf('data-tab="collections"')&&!nav.includes('data-tab="dating"'),'Merkliste retained, Dating removed');
 assert(!html.includes('id="heroBookmarks"'),'Hero must not duplicate Merkliste');
 assert(!js.includes('id="mySaved"')&&!js.includes("['🧡 Meine Merkliste','collections']"),'Profile and More must not duplicate Merkliste');
 assert(!js.includes("for(const tab of ['collections','shows','notifications'])"),'Merkliste must never be hidden in nav');
@@ -55,16 +55,16 @@ assert(js.includes('rausoEventAgeEligibility(requested)'),'RSVP must check age')
 assert(css.includes('.rauso-age-fields')&&css.includes('.rauso-age-note'),'Age input styles missing');
 
 /* RAUSO 2.9: updated icon and discovery layout checks. */
-assert(html.includes('id="heroCreate"')&&html.includes('id="priceFilter"'),'Missing discover controls');
-for(const klass of ['rauso-created-exclamation','rauso-nav-smile','rauso-nav-star','rauso-nav-dating-heart','rauso-nav-family'])assert(html.includes(klass),'Missing navigation symbol '+klass);
+assert(html.includes('id="heroCreate"')&&html.includes('id="eventDateFilter"'),'Missing discover controls');
+for(const klass of ['rauso-created-exclamation','rauso-nav-smile','rauso-nav-star','rauso-nav-family'])assert(html.includes(klass),'Missing navigation symbol '+klass);
 assert(css.includes('/* RAUSO 2.9: screenshot-inspired compact discovery')&&css.includes('#headerMessages>span:first-child'),'Missing 2.9 UI styles');
 assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'Price-filter and highlights integration missing');
 
 /* RAUSO 2.9.1: new navigation and shortcuts. */
-for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-nav-dating-heart','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
+for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Missing visual token '+cls);
 }
-assert(js.includes("const APP_VERSION='2.9.9'"),'JS version should be 2.9.2');
+assert(js.includes("const APP_VERSION='3.0.0'"),'JS version should be 2.9.2');
 assert(js.includes("destination==='friends'")&&js.includes("destination==='events'"),'Hero shortcuts must navigate');
 assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
 
