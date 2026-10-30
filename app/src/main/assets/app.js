@@ -560,15 +560,16 @@ async function rausoLoadOutingChat(){
  const e=eventList().find(x=>String(x.id)===id);
  if(!rausoCanOpenOutingChat(e)){target.textContent='Der Zugang zu diesem Gruppenchat ist nicht mehr freigegeben.';return}
  const {data,error}=await api.from('rauso_outing_messages').select('id,outing_id,sender_id,body,created_at')
-  .eq('outing_id',id).order('created_at',{ascending:true}).limit(100);
+  .eq('outing_id',id).order('created_at',{ascending:false}).limit(100);
  if(!$('rausoOutingChatMessages')||id!==rausoCurrentOutingChat)return;
  if(error){target.textContent='Gruppenchat konnte nicht geladen werden: '+error.message;return}
- target.innerHTML=(data||[]).map(msg=>{
+ target.innerHTML=[...(data||[])].reverse().map(msg=>{
   const mine=msg.sender_id===myId(),person=state.people.find(p=>p.id===msg.sender_id);
   const name=mine?'Du':msg.sender_id===e.author_id?e.author:(person?.display_name||'Mitglied');
   return '<div class="bubble '+(mine?'mine':'')+'"><strong class="rauso-groupchat-author">'+esc(name)+'</strong><div>'+esc(msg.body)+'</div><small>'+esc(rausoMessageTime(msg.created_at))+'</small></div>';
  }).join('')||'<div class="quiet">Noch keine Nachrichten. Beginne die Planung.</div>';
  target.scrollTop=target.scrollHeight;
+ if((data||[]).length)await rausoMarkGroupRead(id,data[0].created_at);
 }
 async function rausoSendOutingChat(ev){
  ev.preventDefault();
@@ -1280,7 +1281,7 @@ function attachRausoRealtime(){
 }
 async function refreshUser(){
  const {data:{user}}=await api.auth.getUser();
- state.user=user||null;rausoGroupInbox=[];rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
+ state.user=user||null;rausoGroupInbox=[];rausoGroupUnread={};rausoLastGroupRead={};rausoGroupReadBusy.clear();rausoUpdateMessageBadge();rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
  if(!user){
   state.profile=null;state.profilePhotoUrl=null;updateHeaderAccount();rausoInboxMessages=[];rausoGroupInbox=[];rausoUpdateMessageBadge();renderMessages();return
  }
@@ -1580,6 +1581,7 @@ async function updateOnlinePresence(){
 setInterval(()=>{if(!document.hidden)updateOnlinePresence()},30000);
 setInterval(()=>{if(!document.hidden&&state.user)loadMessageInbox()},15000);
 setInterval(()=>{if(!document.hidden&&state.user&&state.tab==='messages')rausoLoadGroupInbox()},15000);
+setInterval(()=>{if(!document.hidden&&state.user&&state.tab!=='messages')rausoLoadGroupUnread()},30000);
 setInterval(()=>{if(!document.hidden&&$('rausoOutingChatMessages'))rausoLoadOutingChat()},15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateOnlinePresence()});
 document.addEventListener('DOMContentLoaded',()=>{
