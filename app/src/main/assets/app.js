@@ -857,12 +857,14 @@ async function rausoLoadGroupInbox(){
  if(!state.user){rausoGroupInbox=[];if(state.tab==='messages')renderMessages();return}
  const allowed=rausoEligibleGroupOutings();
  if(!allowed.length){rausoGroupInbox=[];if(state.tab==='messages')renderMessages();return}
+ const viewerId=myId();
  rausoGroupInboxBusy=true;
  try{
   const {data,error}=await api.from('rauso_outing_messages')
    .select('outing_id,sender_id,body,created_at')
    .in('outing_id',allowed.map(e=>e.id))
    .order('created_at',{ascending:false}).limit(400);
+  if(!state.user||myId()!==viewerId)return;
   if(error)console.warn('Gruppenchat-Vorschau:',error.message);
   const mostRecent=new Map();
   for(const m of (error?[]:data||[])){
@@ -1233,7 +1235,7 @@ function attachRausoRealtime(){
 }
 async function refreshUser(){
  const {data:{user}}=await api.auth.getUser();
- state.user=user||null;rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
+ state.user=user||null;rausoGroupInbox=[];rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
  if(!user){
   state.profile=null;state.profilePhotoUrl=null;updateHeaderAccount();rausoInboxMessages=[];rausoGroupInbox=[];rausoUpdateMessageBadge();renderMessages();return
  }
