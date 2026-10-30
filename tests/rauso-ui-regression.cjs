@@ -65,8 +65,8 @@ assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'
 for(const cls of ['rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Missing visual token '+cls);
 }
-assert(js.includes("const APP_VERSION='3.0.2'"),'JS version should be 2.9.2');
-assert(js.includes("destination==='friends'")&&js.includes("destination==='events'"),'Hero shortcuts must navigate');
+assert(js.includes("const APP_VERSION='3.0.3'"),'JS version should be 2.9.2');
+assert(js.includes("destination==='nearby'")&&js.includes("rausoOpenMeetingsFromHero"),'Hero shortcuts must navigate');
 assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
 
 /* Organizer confirmation: manual choice, pending state, participant notifications. */
@@ -85,5 +85,9 @@ assert(css.includes('RAUSO 3.0.1: symmetric orange header')&&css.includes('Equal
 assert(!html.includes('INKOGNITO</small>')&&html.includes('rauso-incognito-icon'),'Icon-only incognito');
 assert(!nav.includes('meetingNavCount')&&html.includes('id="meetingNavCount"'),'Meeting-change badge belongs to home');
 
-assert(css.includes('RAUSO 3.0.2: precisely centered circular header controls.'));
+assert(css.includes('RAUSO 3.0.3: precisely centered circular header controls.'));
 assert(html.includes('id="heroBookmarksCircle"') && html.includes('id="headerMessages"') && !html.includes('data-tab="myMeetings"'));
+
+for(const period of ['today','tomorrow','weekend','next-week','next-month'])assert(html.includes('data-quick-meeting-period="'+period+'"'),'Missing period '+period);
+assert(html.includes('id="heroMeetingCategory"')&&html.includes('data-rauso-hero-go="nearby"'));
+assert(!html.includes('> Erleben</button>')&&!html.includes('> Verbinden</button>'));
