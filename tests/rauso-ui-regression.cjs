@@ -32,7 +32,7 @@ assert(js.includes("rausoHasVenueWebsite(p)?'WEBSEITE ↗':'KARTE ↗'"),'Websit
 assert(js.includes('data-with=')&&js.includes('data-featured-create='),'Create shortcuts missing');
 assert(!js.includes('☆ Unternehmung starten'),'Legacy full text still visible');
 assert(!js.includes('function addAppearanceLink'),'Profile settings tile not removed');
-assert(css.includes('html[data-rauso-theme="orange"] #categoryStrip .chip{')&&css.includes('border-radius:13px!important'),'Compact rectangular category pills missing');
+assert(css.includes('/* RAUSO 2.9.3: neon category circles and round meeting shortcuts */')&&css.includes('color:var(--category-color)!important')&&css.includes('border-radius:50%!important'),'Neon category circles missing');
 
 /* RAUSO 2.7.4: one main navigation Merkliste, messages only in the header. */
 const nav=html.slice(html.indexOf('<nav class="bottomnav"'),html.indexOf('</nav>')+6);
@@ -64,7 +64,7 @@ assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'
 for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-nav-dating-heart','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Missing visual token '+cls);
 }
-assert(js.includes("const APP_VERSION='2.9.2'"),'JS version should be 2.9.2');
+assert(js.includes("const APP_VERSION='2.9.3'"),'JS version should be 2.9.2');
 assert(js.includes("destination==='friends'")&&js.includes("destination==='events'"),'Hero shortcuts must navigate');
 assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
 

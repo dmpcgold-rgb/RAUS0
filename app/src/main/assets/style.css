@@ -1800,3 +1800,65 @@ html[data-rauso-theme] .bottomnav .nav-item.active{border-radius:13px!important}
 .join-btn.is-pending,.meeting-status.pending{border-color:#d59e35!important;background:#372911!important;color:#ffd28a!important}
 .meeting-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 @media(max-width:360px){.rauso-approval-row{align-items:flex-start;flex-direction:column}.rauso-approval-row>div{justify-content:flex-start}}
+/* RAUSO 2.9.3: neon category circles and round meeting shortcuts */
+html[data-rauso-theme] #categoryStrip.category-strip,
+html[data-rauso-theme="orange"] #categoryStrip.category-strip{
+ display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
+ gap:10px!important;padding:7px 4px 15px!important;overflow-x:auto!important;overflow-y:visible!important;scroll-snap-type:x proximity;
+}
+html[data-rauso-theme] #categoryStrip .chip,
+html[data-rauso-theme="orange"] #categoryStrip .chip{
+ box-sizing:border-box!important;display:inline-flex!important;
+ flex:0 0 88px!important;width:88px!important;min-width:88px!important;max-width:88px!important;
+ height:88px!important;min-height:88px!important;max-height:88px!important;
+ aspect-ratio:1/1;align-items:center!important;justify-content:center!important;
+ padding:8px 6px!important;border:1.7px solid var(--category-color)!important;
+ border-radius:50%!important;background:#08090b!important;background-image:none!important;
+ color:var(--category-color)!important;font-size:10px!important;font-weight:850!important;line-height:1.15!important;
+ letter-spacing:.25px!important;text-transform:uppercase!important;white-space:normal!important;
+ overflow-wrap:anywhere!important;text-align:center!important;text-shadow:0 0 6px var(--category-color)!important;
+ box-shadow:0 0 8px color-mix(in srgb,var(--category-color) 38%,transparent),inset 0 0 0 1px #ffffff08!important;
+ transform:none!important;scroll-snap-align:start;
+}
+html[data-rauso-theme] #categoryStrip .chip.selected,
+html[data-rauso-theme="orange"] #categoryStrip .chip.selected{
+ border:2.6px solid var(--category-color)!important;border-radius:50%!important;
+ background:#08090b!important;background-image:none!important;color:var(--category-color)!important;
+ text-shadow:0 0 7px var(--category-color)!important;
+ box-shadow:0 0 0 1px color-mix(in srgb,var(--category-color) 45%,transparent),0 0 14px var(--category-color)!important;
+ transform:none!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status{
+ display:flex!important;grid-template-columns:none!important;flex-wrap:wrap!important;
+ align-items:center!important;justify-content:flex-start!important;gap:12px!important;
+ max-width:none!important;margin:12px 0 0!important;padding:0 0 7px!important;
+}
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status button,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status button{
+ box-sizing:border-box!important;display:inline-flex!important;flex:0 0 96px!important;
+ width:96px!important;min-width:96px!important;max-width:96px!important;
+ height:96px!important;min-height:96px!important;max-height:96px!important;
+ align-items:center!important;justify-content:center!important;padding:9px!important;border-radius:50%!important;
+ white-space:normal!important;text-align:center!important;font-size:10.5px!important;font-weight:800!important;line-height:1.25!important;
+ letter-spacing:0!important;
+}
+html[data-rauso-theme] #heroGoing,
+html[data-rauso-theme="orange"] #heroGoing{
+ border:2px solid #55ed92!important;background:#178543!important;color:#fff!important;box-shadow:0 0 12px #35e87970!important;
+}
+html[data-rauso-theme] #heroOrganized,
+html[data-rauso-theme="orange"] #heroOrganized{
+ border:1.8px solid #fa953e!important;background:#121013!important;color:#ffc08c!important;box-shadow:0 0 10px #f18a3e55!important;
+}
+@media(max-width:370px){
+ html[data-rauso-theme] #categoryStrip .chip,html[data-rauso-theme="orange"] #categoryStrip .chip{
+  flex:0 0 80px!important;width:80px!important;min-width:80px!important;max-width:80px!important;
+  height:80px!important;min-height:80px!important;max-height:80px!important;font-size:9px!important;padding:7px 5px!important;
+ }
+ html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status button,
+ html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status button{
+  flex-basis:88px!important;width:88px!important;min-width:88px!important;max-width:88px!important;
+  height:88px!important;min-height:88px!important;max-height:88px!important;font-size:10px!important;
+ }
+}
