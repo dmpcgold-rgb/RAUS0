@@ -64,7 +64,7 @@ assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'
 for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-nav-dating-heart','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Missing visual token '+cls);
 }
-assert(js.includes("const APP_VERSION='2.9.3'"),'JS version should be 2.9.2');
+assert(js.includes("const APP_VERSION='2.9.4'"),'JS version should be 2.9.2');
 assert(js.includes("destination==='friends'")&&js.includes("destination==='events'"),'Hero shortcuts must navigate');
 assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
 
@@ -72,3 +72,10 @@ assert(css.includes('background-image:none!important;'),'Pill category backgroun
 assert(html.includes('data-meeting-filter="pending"'));
 for(const key of ['oRequiresApproval','rausoPendingReviewHtml','rausoReviewRequest','pendingRequests','requires_approval:val.requires_approval'])assert(js.includes(key),'Missing approval flow '+key);
 assert(css.includes('.rauso-approval-row')&&css.includes('.join-btn.is-pending'));
+
+/* RAUSO 2.9.4: all themes retain a black/white/orange foundation, heading stroke and distinct category rings. */
+assert(css.includes('/* RAUSO 2.9.4: universal black surface, white body text and orange neon headings.'));
+assert(css.includes('--bg:#050505')&&css.includes('background:#050505!important'));
+assert(css.includes('-webkit-text-stroke:.7px #000!important'));
+assert(css.includes('border-color:#f58825!important'));
+assert(css.includes('per-category neon circles'));
