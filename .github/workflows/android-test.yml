@@ -34,7 +34,9 @@ jobs:
           node --check app/src/main/assets/config.js
           node --check app/src/main/assets/features16.js
       - name: Check RAUSO UI and theme functionality
-        run: node tests/rauso-ui-regression.cjs
+        run: |
+          node tests/rauso-ui-regression.cjs
+          node tests/rauso-event-discovery.cjs
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
