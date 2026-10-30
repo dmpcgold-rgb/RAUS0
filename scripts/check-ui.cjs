@@ -17,7 +17,7 @@ assert.equal((html.match(/id="heroPlan"/g)||[]).length,1);
 assert.match(header,/id="headerSettings"/);
 assert.match(header,/id="accountShortcut"/);
 assert.match(footer,/data-tab="collections"[\s\S]*<small>Merkliste<\/small>/);
-assert.match(footer,/id="datingNav"[\s\S]*<span class="nav-icon rauso-nav-dating-heart"[^>]*>♥<\/span>/);
+assert(!footer.includes('id="datingNav"'),'Dating must not appear in navigation');
 assert.match(html,/data-cat="anime"/);
 for(const key of ['thermen','restaurants','kino','anime','sport']){
  assert.match(css,new RegExp('#categoryStrip \\.chip\\[data-cat="'+key+'"\\]'));
@@ -32,8 +32,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='2\.9\.9'/);
-assert.match(gradle,/versionCode 50; versionName '2\.9\.9'/);
+assert.match(js,/const APP_VERSION='3\.0\.0'/);
+assert.match(gradle,/versionCode 51; versionName '3\.0\.0'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -51,17 +51,17 @@ assert(js.includes('rausoOwnBirthdate')&&js.includes('signupBirth')&&js.includes
 assert(js.includes('rauso-meeting-changes:')&&!js.includes("count+' bevorstehende zugesagte"),'Unread-only meeting changes missing');
 
 /* RAUSO 2.9.0: screenshot-style discovery with actual controls. */
-for(const id of ['heroCreate','priceFilter','headerMessages'])assert(html.includes('id="'+id+'"'),'Missing '+id);
-for(const nav of ['rauso-nav-star','rauso-nav-dating-heart','rauso-nav-smile','rauso-nav-family','rauso-created-exclamation'])assert(html.includes(nav),'Missing nav symbol '+nav);
+for(const id of ['heroCreate','eventDateFilter','eventClockFilter','incognitoToggle','headerMessages'])assert(html.includes('id="'+id+'"'),'Missing '+id);
+for(const nav of ['rauso-nav-star','rauso-nav-smile','rauso-nav-family','rauso-created-exclamation'])assert(html.includes(nav),'Missing nav symbol '+nav);
 assert.match(css,/RAUSO 2\.9: screenshot-inspired compact discovery/);
 assert.match(css,/\.rauso-place-link\[data-venue-category="thermen"\]/);
 assert.match(css,/#headerMessages>span:first-child/);
-assert.match(js,/\$\('priceFilter'\)\.onchange=/);
+assert(js.includes("$('eventDateFilter').onchange=")&&js.includes("$('eventClockFilter').onchange="));
 assert.match(js,/\$\('heroCreate'\)\.onclick=/);
 assert.match(js,/function rausoMatchesPrice/);
 
 /* Screenshot reference UI: icons and shortcuts are implemented and functional. */
-for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-nav-dating-heart','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
+for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Screenshot UI missing class '+cls);
 }
 assert(js.includes("data-rauso-hero-go")&&js.includes("destination==='friends'"),'Hero shortcuts must navigate');
