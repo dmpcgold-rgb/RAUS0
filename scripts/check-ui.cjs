@@ -32,8 +32,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='2\.9\.4'/);
-assert.match(gradle,/versionCode 45; versionName '2\.9\.4'/);
+assert.match(js,/const APP_VERSION='2\.9\.5'/);
+assert.match(gradle,/versionCode 46; versionName '2\.9\.5'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -73,5 +73,7 @@ assert(js.includes('id="oRequiresApproval"')&&js.includes('requires_approval:val
 assert(js.includes('function rausoReviewRequest(')&&js.includes('function rausoPendingReviewHtml(')&&js.includes("actual==='pending'"));
 assert(css.includes('.rauso-approval-panel')&&css.includes('.rauso-approve'));
 
-assert.match(css,/RAUSO 2\.9\.4: universal black surface/);
-assert.match(css,/-webkit-text-stroke:\.7px #000!important/);
+assert.match(css,/RAUSO 2\.9\.5: rounded green RSVP shortcut/);
+assert.ok(!css.includes('RAUSO 2.9.4: universal black surface'));
+assert.ok(html.includes('id="heroGoing"')&&html.includes('id="heroOrganized"'));
+

@@ -64,7 +64,7 @@ assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'
 for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-nav-dating-heart','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Missing visual token '+cls);
 }
-assert(js.includes("const APP_VERSION='2.9.4'"),'JS version should be 2.9.2');
+assert(js.includes("const APP_VERSION='2.9.5'"),'JS version should be 2.9.2');
 assert(js.includes("destination==='friends'")&&js.includes("destination==='events'"),'Hero shortcuts must navigate');
 assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
 
@@ -72,10 +72,9 @@ assert(css.includes('background-image:none!important;'),'Pill category backgroun
 assert(html.includes('data-meeting-filter="pending"'));
 for(const key of ['oRequiresApproval','rausoPendingReviewHtml','rausoReviewRequest','pendingRequests','requires_approval:val.requires_approval'])assert(js.includes(key),'Missing approval flow '+key);
 assert(css.includes('.rauso-approval-row')&&css.includes('.join-btn.is-pending'));
-
-/* RAUSO 2.9.4: all themes retain a black/white/orange foundation, heading stroke and distinct category rings. */
-assert(css.includes('/* RAUSO 2.9.4: universal black surface, white body text and orange neon headings.'));
-assert(css.includes('--bg:#050505')&&css.includes('background:#050505!important'));
-assert(css.includes('-webkit-text-stroke:.7px #000!important'));
-assert(css.includes('border-color:#f58825!important'));
-assert(css.includes('per-category neon circles'));
+/* RAUSO 2.9.5: restore the previous design with circular category and meeting buttons. */
+assert(css.includes('RAUSO 2.9.3: neon category circles and round meeting shortcuts'));
+assert(!css.includes('RAUSO 2.9.4: universal black surface'));
+assert(css.includes('/* RAUSO 2.9.5: rounded green RSVP shortcut retained across all display modes */'));
+assert(html.includes('id="heroGoing"')&&html.includes('id="heroOrganized"'));
+assert(css.includes('aspect-ratio:1/1!important;border-radius:50%!important'));

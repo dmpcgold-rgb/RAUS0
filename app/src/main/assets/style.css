@@ -1862,117 +1862,20 @@ html[data-rauso-theme="orange"] #heroOrganized{
   height:88px!important;min-height:88px!important;max-height:88px!important;font-size:10px!important;
  }
 }
-/* RAUSO 2.9.4: universal black surface, white body text and orange neon headings.
-   The category circles retain their own independent neon palette and RSVP states keep semantic colors. */
-html[data-rauso-theme][data-rauso-theme]{
-  color-scheme:dark!important;
-  --bg:#050505;--panel:#090909;--panel2:#101010;
-  --line:rgba(255,133,34,.68);--fg:#fff;--muted:#f0f0f0;--accent:#ff8d20;
+/* RAUSO 2.9.5: rounded green RSVP shortcut retained across all display modes */
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroGoing,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroGoing{
+  width:96px!important;min-width:96px!important;max-width:96px!important;
+  height:96px!important;min-height:96px!important;max-height:96px!important;
+  aspect-ratio:1/1!important;border-radius:50%!important;
+  background:#178543!important;border:2px solid #55ed92!important;
+  color:#fff!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:8px!important;text-align:center!important;white-space:normal!important;
 }
-html[data-rauso-theme][data-rauso-theme] body{
-  color:#fff!important;background:#050505!important;background-image:none!important;
+@media(max-width:370px){
+  html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status #heroGoing,
+  html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroGoing{
+    width:88px!important;min-width:88px!important;max-width:88px!important;
+    height:88px!important;min-height:88px!important;max-height:88px!important;
+  }
 }
-html[data-rauso-theme][data-rauso-theme] :is(#app,main,.screen){
-  background-color:transparent!important;
-}
-html[data-rauso-theme][data-rauso-theme] #app::before{display:none!important}
-html[data-rauso-theme][data-rauso-theme] :is(.topbar,.compact-topbar,.bottomnav){
-  background:#050505!important;background-image:none!important;
-  border-color:#ff8b24!important;color:#fff!important;
-}
-html[data-rauso-theme][data-rauso-theme] .hero{
-  background:#060606!important;background-image:none!important;
-  border:1.6px solid #ff861a!important;color:#fff!important;
-  box-shadow:0 0 14px rgba(255,126,23,.23)!important;
-}
-html[data-rauso-theme][data-rauso-theme] .hero::before,
-html[data-rauso-theme][data-rauso-theme] .hero::after{
-  background:none!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(
- .surface,.event-card,.place-card,.featured-card,.private-teaser,
- .modal,.empty,.chat-board,.bubble,.mode-switch,.photo-thumb,
- .rauso-approval-panel,.status-banner,.profile-row,.meeting-summary
-){
-  background:#090909!important;background-image:none!important;color:#fff!important;
-  border-color:#f58825!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(.place-card,.featured-card)[data-venue-category]{
-  background:#080808!important;background-image:none!important;
-  border:1.5px solid #f58825!important;box-shadow:0 0 8px #f5882526!important;
-}
-html[data-rauso-theme][data-rauso-theme] .rauso-place-link[data-venue-category]
-  :is(.place-cover,.featured-image).rauso-place-create{
-  background:#080808!important;background-image:none!important;
-}
-html[data-rauso-theme][data-rauso-theme] .rauso-place-link[data-venue-category]
-  :is(.place-cover,.featured-image)::after{
-  display:none!important;content:none!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(
- .field,.searchbox,.round-btn,.outline-btn,.small-btn,.secondary-btn,
- .theme-picker-btn,.location-shortcut,.region-details summary,
- .hero .rauso-hero-shortcuts button,.nav-item.active,.modal-header button,
- .mode-btn,.status-banner,.sendline input
-){
-  background:#101010!important;background-image:none!important;color:#fff!important;
-  border-color:#f58825!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(
- .input-group input,.input-group textarea,.input-group select,
- .field select,.searchbox input,.sendline input,textarea,input,select
-){
-  color:#fff!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(
- .input-group input,.input-group textarea,.input-group select,
- .rauso-age-display,.field select option,.input-group select option
-){
-  background-color:#090909!important;border-color:#f58825!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(
- .hero p,.page-heading p,.section-head p,.hint,.quiet,
- .place-sub,.subline,.place-body p,.featured-text p,.event-meta,
- .event-descr,.field span,.input-group label,.profile-meta small,
- .event-transport,.featured-note,.attribution,.brand small
-){
-  color:#fff!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(
- .hero h1,.page-heading h1,.section-head h2,.discover-heading h2,
- .featured-head h3,.event-card h3,.place-card h3,.featured-text h4,
- .modal-header h2,.surface h2,.surface h3,.event-list h3,
- .profile-content h2
-),
-html[data-rauso-theme][data-rauso-theme] :is(
- .hero h1,.page-heading h1,.section-head h2,.discover-heading h2,
- .featured-head h3,.event-card h3,.place-card h3,.featured-text h4,
- .modal-header h2,.surface h2,.surface h3
-) :is(span,em){
-  color:#ff9226!important;-webkit-text-fill-color:#ff9226!important;
-  background-image:none!important;background:none!important;
-  -webkit-text-stroke:.7px #000!important;
-  paint-order:stroke fill!important;
-  text-shadow:-1px -1px 0 #000,1px 1px 0 #000,0 0 7px #ff811a,0 0 14px #ff740d9c!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(.hero-label,.eyebrow){
-  color:#ff9226!important;text-shadow:0 0 8px #ff811a!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(.nav-item,.nav-item small){
-  color:#fff!important;
-}
-html[data-rauso-theme][data-rauso-theme] .nav-item.active{
-  color:#ff9226!important;border:1px solid #ff851a!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(
- .primary-btn,.hero .rauso-hero-cta,.sendline button
-){
-  border:1px solid #ffad57!important;
-}
-html[data-rauso-theme][data-rauso-theme] :is(a,.rauso-venue-site){
-  color:#ff9b36!important;
-}
-html[data-rauso-theme][data-rauso-theme] .modal-overlay{
-  background:rgba(0,0,0,.83)!important;
-}
-/* Above universal rules deliberately do not recolor the per-category neon circles. */
