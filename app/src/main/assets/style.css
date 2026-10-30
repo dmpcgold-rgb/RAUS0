@@ -1879,3 +1879,92 @@ html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status #heroGo
     height:88px!important;min-height:88px!important;max-height:88px!important;
   }
 }
+
+
+/* RAUSO 2.9.6: event discovery and participant cards; deliberately no fake event photos */
+#eventsScreen .rauso-event-filterbar{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+ padding:12px;margin:10px 0 15px;
+ background:linear-gradient(135deg,rgba(29,24,24,.94),rgba(18,19,25,.95));
+ border:1px solid rgba(255,137,55,.45);border-radius:16px;
+ box-shadow:0 5px 15px #0004;
+}
+#eventsScreen .rauso-event-filter{display:grid;gap:5px;min-width:0}
+#eventsScreen .rauso-event-filter>span{font-size:11px;color:#ffac62;font-weight:700}
+#eventsScreen .rauso-event-filter select{
+ width:100%;min-width:0;min-height:39px;
+ font-size:12px;color:#fff;outline:none;
+ background:#101217;border:1px solid #7c4e3a;border-radius:10px;padding:8px;
+}
+#eventsScreen .rauso-event-filter select:focus-visible,
+#eventsScreen .rauso-event-reset:focus-visible{outline:2px solid #ffb064;outline-offset:2px}
+#eventsScreen .rauso-event-filter-options{
+ grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 16px;
+ font-size:11px;color:#f3ebe5;
+}
+#eventsScreen .rauso-event-filter-options label{display:flex;align-items:center;gap:7px;min-height:28px}
+#eventsScreen .rauso-event-filter-options input{accent-color:#fe8e30;width:16px;height:16px;margin:0}
+#eventsScreen .rauso-event-filter-footer{
+ grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;
+ border-top:1px solid #ffffff18;padding-top:8px;font-size:10px;color:#bdb8b5;
+}
+#eventsScreen .rauso-event-reset{
+ background:#181517;color:#ffb373;border:1px solid #8a5737;
+ border-radius:9px;padding:6px 8px;font-size:10px;
+}
+#eventsScreen .rauso-discovery-event{
+ overflow:hidden;padding:0 14px 14px!important;
+ border:1.2px solid #bc7442!important;border-radius:17px!important;
+ background:linear-gradient(140deg,#201b1d,#151418 60%,#17161c)!important;
+ box-shadow:0 3px 12px #0006,0 0 8px #f37e2924!important;
+}
+#eventsScreen .rauso-discovery-event .rauso-event-visual{
+ position:relative;display:flex;align-items:center;justify-content:space-between;
+ height:88px;margin:0 -14px 12px;padding:13px 20px;
+ background:radial-gradient(circle at 18% 45%,#ff8e3152,transparent 40%),linear-gradient(115deg,#322018,#100f15);
+ border-bottom:1px solid #ff953c54;
+}
+#eventsScreen .rauso-event-visual>span{
+ font-size:49px;line-height:1;filter:drop-shadow(0 0 10px #ffa33185);
+}
+#eventsScreen .rauso-event-visual strong{
+ font-size:13px;color:#ffe0b9;padding:7px 10px;
+ border-radius:12px;border:1px solid #ef8a4a;
+ background:#0f1016cb;
+}
+#eventsScreen .rauso-discovery-event[data-event-category="familie"] .rauso-event-visual{background:radial-gradient(circle at 20% 40%,#287bf65a,transparent 42%),linear-gradient(115deg,#151b31,#111017)}
+#eventsScreen .rauso-discovery-event[data-event-category="restaurants"] .rauso-event-visual{background:radial-gradient(circle at 20% 40%,#fd5b6655,transparent 42%),linear-gradient(115deg,#29171b,#111017)}
+#eventsScreen .rauso-discovery-event[data-event-category="natur"] .rauso-event-visual{background:radial-gradient(circle at 20% 40%,#45c78250,transparent 42%),linear-gradient(115deg,#172a20,#111017)}
+#eventsScreen .rauso-discovery-event .event-top{align-items:center;gap:7px}
+#eventsScreen .rauso-discovery-event .event-top .pill{background:#2b2323;color:#ffca91;border:1px solid #ad6f3f}
+#eventsScreen .rauso-event-status{font-size:10px;color:#c5e0d0;border:1px solid #4c8e68;border-radius:15px;padding:5px 7px;white-space:nowrap}
+#eventsScreen .rauso-discovery-event h3{font-size:17px;margin:11px 0 6px!important;color:#fff!important;-webkit-text-fill-color:#fff!important;background:none!important;line-height:1.24}
+#eventsScreen .rauso-discovery-event .event-meta{color:#dfd5cc;line-height:1.55}
+#eventsScreen .rauso-discovery-event .rauso-age-note{font-size:11px;color:#e4bc9c;margin:7px 0}
+#eventsScreen .rauso-discovery-event .event-descr{font-size:12px;color:#c4bdc0;max-height:5.5em;overflow:hidden}
+#eventsScreen .rauso-event-attendees{
+ display:flex;align-items:center;gap:9px;padding:7px 0 4px;
+ color:#d5cdd0;font-size:10px;
+}
+#eventsScreen .rauso-attendee-faces{display:flex;padding-left:4px;flex-shrink:0}
+#eventsScreen .rauso-attendee-face{
+ width:26px;height:26px;margin-left:-4px;border-radius:50%;
+ display:grid;place-items:center;font-weight:800;font-size:11px;color:#fff;
+ border:2px solid #171418;background:linear-gradient(130deg,#8e3f11,#d66c2d);
+}
+#eventsScreen .rauso-attendee-face:nth-child(2){background:linear-gradient(135deg,#194a8e,#387fd3)}
+#eventsScreen .rauso-attendee-face:nth-child(3){background:linear-gradient(135deg,#672481,#ae67ce)}
+#eventsScreen .rauso-attendee-face:nth-child(4){background:linear-gradient(135deg,#126843,#1dbb80)}
+#eventsScreen .rauso-event-attendee-note{font-size:10px;color:#a89da4;margin:6px 0}
+#eventsScreen .rauso-discovery-event .event-actions{gap:6px}
+#eventsScreen .rauso-discovery-event .event-actions button{
+ min-height:32px;font-size:10px;padding:5px 9px;border-radius:10px;
+}
+#eventsScreen .rauso-discovery-event .join-btn{font-weight:800}
+@media(max-width:360px){
+ #eventsScreen .rauso-event-filterbar{padding:9px;gap:7px}
+ #eventsScreen .rauso-event-filter select{font-size:10px;padding:6px}
+ #eventsScreen .rauso-discovery-event .rauso-event-visual{height:73px}
+ #eventsScreen .rauso-event-visual>span{font-size:40px}
+}
+@media(prefers-reduced-motion:reduce){#eventsScreen .rauso-discovery-event *{animation:none!important;transition:none!important}}
