@@ -17,7 +17,7 @@ for(const t of ['orange','purple','carbon','rainbow','light'])assert(css.include
 console.log('RAUSO category, UI, navigation, native share and theme checks passed');
 
 assert(!html.slice(html.indexOf('<header'),html.indexOf('</header>')).includes('id="headerMessages"'),'Messages must not appear in header');
-assert(html.includes('id="incognitoToggle"')&&html.includes('id="heroBookmarksCircle"'),'Privacy icon and bookmark circle required');
+assert(html.includes('id="incognitoToggle"')&&!html.includes('id="heroBookmarksCircle"'),'Privacy icon and bookmark circle required');
 assert(js.includes("$('headerMessages').onclick=()=>switchTab('messages')"),'Header messages must open messages tab');
 assert(js.includes("headerBadge.classList.toggle('hidden',num===0)"),'Header unread badge must update');
 assert(css.includes('#headerMessages.active')&&css.includes('@media(max-width:355px)'), 'Message button must have responsive styles');
@@ -65,7 +65,7 @@ assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'
 for(const cls of ['rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Missing visual token '+cls);
 }
-assert(js.includes("const APP_VERSION='3.0.5'"),'JS version should be 2.9.2');
+assert(js.includes("const APP_VERSION='3.0.6'"),'JS version should be 2.9.2');
 assert(js.includes("destination==='nearby'")&&js.includes("rausoOpenMeetingsFromHero"),'Hero shortcuts must navigate');
 assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
 
@@ -80,13 +80,13 @@ assert(css.includes('/* RAUSO 2.9.5: rounded green RSVP shortcut retained across
 assert(html.includes('id="heroGoing"')&&html.includes('id="heroOrganized"'));
 assert(css.includes('aspect-ratio:1/1!important;border-radius:50%!important'));
 
-assert(html.includes('✓ Zugesagte Treffen')&&html.includes('id="heroOrganized"')&&html.includes('id="heroBookmarksCircle"'),'Three home shortcuts');
+assert(html.includes('✓ Zugesagte Treffen')&&html.includes('id="heroOrganized"')&&!html.includes('id="heroBookmarksCircle"'),'Two personal home shortcuts');
 assert(css.includes('RAUSO 3.0.1: symmetric orange header')&&css.includes('Equal-sized, symmetrical green/orange/black circles'),'Layout and colors');
 assert(!html.includes('INKOGNITO</small>')&&html.includes('rauso-incognito-icon'),'Icon-only incognito');
 assert(!nav.includes('meetingNavCount')&&html.includes('id="meetingNavCount"'),'Meeting-change badge belongs to home');
 
 assert(css.includes('RAUSO 3.0.2: precisely centered circular header controls.'));
-assert(html.includes('id="heroBookmarksCircle"') && html.includes('id="headerMessages"') && !html.includes('data-tab="myMeetings"'));
+assert(!html.includes('id="heroBookmarksCircle"') && html.includes('id="headerMessages"') && !html.includes('data-tab="myMeetings"'));
 
 for(const period of ['today','tomorrow','weekend','next-week','next-month'])assert(html.includes('data-quick-meeting-period="'+period+'"'),'Missing period '+period);
 assert(html.includes('id="heroMeetingCategory"')&&html.includes('data-rauso-hero-go="nearby"'));
@@ -98,3 +98,7 @@ assert(js.includes('rausoSyncFilterTextColors')&&css.includes('RAUSO 3.0.4: colo
 
 assert(css.includes('RAUSO 3.0.5: discover uncommitted meetup offers')&&css.includes('RAUSO 3.0.5: three symmetric personal circles'));
 assert(!html.includes('class="rauso-quick-count"'),'Quick filters must show real offers, not RSVP totals');
+
+assert(!html.includes('eventClockFilter')&&html.includes('id="eventDateFilter"'),'Date only');
+assert(!html.includes('data-rauso-hero-go="discover"')&&html.includes('data-rauso-hero-go="nearby"'));
+assert(css.includes('RAUSO 3.0.6: minimal home UI'));

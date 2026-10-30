@@ -2524,3 +2524,107 @@ html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status>button,
 html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status>button span:not(.nav-count){
  text-align:center!important;
 }
+
+/* RAUSO 3.0.6: minimal home UI, clean circles and accessible date-only discovery. */
+/* Topic circles retain their individual neon color but use a thin, precise outline. */
+html[data-rauso-theme] #categoryStrip .chip,
+html[data-rauso-theme="orange"] #categoryStrip .chip{
+ border:1.5px solid var(--category-color)!important;
+ border-radius:50%!important;background:#08090b!important;background-image:none!important;
+ color:var(--category-color)!important;-webkit-text-stroke:0!important;text-stroke:0!important;
+ box-shadow:0 0 5px color-mix(in srgb,var(--category-color) 28%,transparent)!important;
+ text-shadow:0 0 4px color-mix(in srgb,var(--category-color) 45%,transparent)!important;
+ transform:none!important;
+}
+html[data-rauso-theme] #categoryStrip .chip.selected,
+html[data-rauso-theme="orange"] #categoryStrip .chip.selected{
+ border:1.8px solid var(--category-color)!important;background:#08090b!important;
+ box-shadow:0 0 9px color-mix(in srgb,var(--category-color) 50%,transparent)!important;
+ transform:none!important;
+}
+/* Make red restaurant venue borders and their shadows as restrained as theme circles. */
+html[data-rauso-theme] :is(.place-card,.featured-card)[data-venue-category="restaurants"],
+html[data-rauso-theme="orange"] :is(.place-card,.featured-card)[data-venue-category="restaurants"]{
+ border:1.5px solid var(--category-color,#ef5764)!important;
+ box-shadow:0 1px 7px #0006!important;background:#08090b!important;
+}
+/* The three discovery boxes use a consistent black, orange and white visual language. */
+html[data-rauso-theme] .filters.rauso-date-filters>.field,
+html[data-rauso-theme="orange"] .filters.rauso-date-filters>.field{
+ min-height:66px!important;padding:8px 7px!important;
+ border:1.4px solid #f58d38!important;border-radius:10px!important;
+ background:#09090b!important;box-shadow:none!important;
+}
+html[data-rauso-theme] .filters.rauso-date-filters>.field>span,
+html[data-rauso-theme] .filters.rauso-date-filters>.field :is(select,input){
+ color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important;
+}
+html[data-rauso-theme] .filters.rauso-date-filters>.rauso-date-time-field{
+ align-items:stretch!important;justify-content:center!important;
+}
+html[data-rauso-theme] .filters.rauso-date-filters #eventDateFilter{
+ display:block!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ height:31px!important;min-height:31px!important;border:1px solid #f58d38!important;
+ background:#09090b!important;border-radius:7px!important;color:#fff!important;
+ color-scheme:dark!important;padding:4px 3px!important;font-size:10px!important;
+}
+/* The redundant discover shortcut is gone, so nearby meeting discovery uses the full row. */
+html[data-rauso-theme] .rauso-hero-shortcuts,
+html[data-rauso-theme="orange"] .rauso-hero-shortcuts{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ gap:0!important;max-width:100%!important;
+}
+html[data-rauso-theme] .rauso-hero-shortcuts>button[data-rauso-hero-go="nearby"]{
+ width:100%!important;max-width:100%!important;border:1.4px solid #f58d38!important;
+ color:#fff!important;background:#09090b!important;
+}
+/* Only two equal-sized personal navigation circles remain on the home screen. */
+html[data-rauso-theme] .hero-benefits.rauso-hero-meeting-status,
+html[data-rauso-theme="orange"] .hero-benefits.rauso-hero-meeting-status{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ width:100%!important;max-width:270px!important;
+ margin:13px auto 0!important;justify-items:center!important;align-items:center!important;
+ gap:18px!important;
+}
+/* Restore the orange filled primary action, with a white high-contrast label. */
+html[data-rauso-theme] #heroCreate.rauso-hero-cta,
+html[data-rauso-theme="orange"] #heroCreate.rauso-hero-cta{
+ background:#ee821f!important;background-image:none!important;color:#fff!important;
+ border:1.5px solid #ffae5d!important;border-radius:11px!important;
+ box-shadow:0 1px 8px #f6812940!important;
+}
+html[data-rauso-theme] #heroCreate.rauso-hero-cta .rauso-hero-cta-label,
+html[data-rauso-theme="orange"] #heroCreate.rauso-hero-cta .rauso-hero-cta-label,
+html[data-rauso-theme] #heroCreate.rauso-hero-cta .rauso-plus-mark{
+ color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important;
+}
+/* Header captions glow orange. Bell and settings have clean frameless touch targets. */
+html[data-rauso-theme] .topbar.compact-topbar>button,
+html[data-rauso-theme] .topbar.compact-topbar>button span:not(.notification-badge):not(.nav-count),
+html[data-rauso-theme="orange"] .topbar.compact-topbar>button{
+ color:#ff9945!important;text-shadow:0 0 5px #ff913b99!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar #notificationBell,
+html[data-rauso-theme] .topbar.compact-topbar #headerSettings,
+html[data-rauso-theme="orange"] .topbar.compact-topbar #notificationBell,
+html[data-rauso-theme="orange"] .topbar.compact-topbar #headerSettings{
+ display:grid!important;place-items:center!important;
+ box-sizing:border-box!important;width:32px!important;min-width:32px!important;max-width:32px!important;
+ height:32px!important;min-height:32px!important;max-height:32px!important;
+ margin:auto!important;padding:6px!important;
+ border:none!important;outline:none!important;border-radius:50%!important;
+ background:transparent!important;background-image:none!important;box-shadow:none!important;
+ color:#ff9945!important;text-shadow:none!important;font-size:16px!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar :is(#notificationBell,#headerSettings) .rauso-header-icon{
+ display:block!important;width:18px!important;height:18px!important;fill:none!important;
+ color:#ff9945!important;stroke:#ff9945!important;
+ filter:drop-shadow(0 0 3px #ff8c3a80)!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar :is(#notificationBell,#headerSettings):focus-visible{
+ outline:2px solid #ffb26f!important;outline-offset:3px!important;
+}
+html[data-rauso-theme] .topbar.compact-topbar #notificationBell .notification-badge{
+ position:absolute!important;right:-4px!important;top:-4px!important;z-index:2!important;
+ color:#fff!important;text-shadow:none!important;
+}

@@ -96,7 +96,7 @@ const state = {
  map:null,markers:null,mapOpen:false, session:null,profile:null,user:null,
  favorites:new Set(cache.favorites||[]), bookmarks:{...(cache.bookmarks||{})}, profilePhotoUrl:null, demoProfile:cache.profile||{display_name:'Mein RAUSO-Profil',city:'Wiener Neustadt',bio:'Ich bin gerne unterwegs.',dating_enabled:false,adult_confirmed:false},
  demoEvents:[], demoReactions:cache.reactions||{}, demoConnections:{}, demoDatingLikes:cache.datingLikes||{}, demoMessages:cache.messages||{}, demoBlocks:cache.blocks||{},
- outings:[], people:[], connections:[], datingLikes:[], blocks:[], currentChat:null, eventMode:'all',eventDate:'',eventClock:'',eventTime:'all', eventCategory:'all', eventOpenOnly:false, eventAgeOnly:false, eventNearbyOnly:false, meetFilter:'upcoming', 
+ outings:[], people:[], connections:[], datingLikes:[], blocks:[], currentChat:null, eventMode:'all',eventDate:'',eventTime:'all', eventCategory:'all', eventOpenOnly:false, eventAgeOnly:false, eventNearbyOnly:false, meetFilter:'upcoming', 
 };
 const persist = () => {try{localStorage.setItem(STORE,JSON.stringify({favorites:[...state.favorites],bookmarks:state.bookmarks,profile:state.demoProfile,events:state.demoEvents,reactions:state.demoReactions,connections:state.demoConnections,datingLikes:state.demoDatingLikes,messages:state.demoMessages,blocks:state.demoBlocks,...Object.fromEntries(Object.entries(cache).filter(([k])=>k.startsWith('osm:')))}))}catch{}};
 const myId = () => state.user?.id||'local-user';
@@ -629,7 +629,7 @@ function rausoEventMatchesFilters(e,now=Date.now()){
  if(state.eventCategory!=='all'&&e.category!==state.eventCategory)return false;
  const today=rausoLocalEventDay(now),day=rausoLocalEventDay(start);
  if(state.eventDate&&day!==state.eventDate)return false;
-  if(state.eventClock){const hhmm=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Vienna',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(start));if(hhmm<state.eventClock)return false;}
+  
   if(state.eventTime==='today'&&day!==today)return false;
  if(state.eventTime==='tomorrow'&&day!==rausoOffsetEventDay(today,1))return false;
  if(state.eventTime==='weekend'){
@@ -1614,7 +1614,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='3.0.5';
+const APP_VERSION='3.0.6';
 const UI_PREF='rauso-ui-2';
 const rausoIncognitoKey=()=> 'rauso-incognito:'+myId();
 let rausoIncognito=false;
@@ -1677,23 +1677,23 @@ function addNavMore(){
 function addOfflineState(){if($('networkStatus'))return;const n=document.createElement('div');n.id='networkStatus';n.setAttribute('role','status');document.querySelector('main')?.prepend(n);const update=()=>{n.textContent=navigator.onLine?'':'Offline: Gespeicherte Daten sind sichtbar; aktuelle Orte und Zusagen benötigen Internet.';n.hidden=navigator.onLine};window.addEventListener('online',update);window.addEventListener('offline',update);update()}
 
 function saveDiscoverySettings(){
- try{localStorage.setItem('rauso-discovery-settings',JSON.stringify({region:state.region,radius:state.radius,category:state.cat,eventDate:state.eventDate,eventClock:state.eventClock}))}catch{}
+ try{localStorage.setItem('rauso-discovery-settings',JSON.stringify({region:state.region,radius:state.radius,category:state.cat,eventDate:state.eventDate}))}catch{}
 }
 function restoreDiscoverySettings(){
  let saved={};try{saved=JSON.parse(localStorage.getItem('rauso-discovery-settings')||'{}')||{}}catch{}
  const region=$('regionSelect'),radius=$('radiusSelect');
  if(region&&[...region.options].some(o=>o.value===saved.region)){region.value=saved.region;state.region=saved.region}
  if(radius&&[...radius.options].some(o=>Number(o.value)===Number(saved.radius))){radius.value=String(saved.radius);state.radius=Number(saved.radius)}
- state.priceFilter='all';if(typeof saved.eventDate==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(saved.eventDate))state.eventDate=saved.eventDate;if(typeof saved.eventClock==='string'&&/^\d{2}:\d{2}$/.test(saved.eventClock))state.eventClock=saved.eventClock;if($('eventDateFilter'))$('eventDateFilter').value=state.eventDate;if($('eventClockFilter'))$('eventClockFilter').value=state.eventClock;
+ state.priceFilter='all';if(typeof saved.eventDate==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(saved.eventDate))state.eventDate=saved.eventDate;if($('eventDateFilter'))$('eventDateFilter').value=state.eventDate;
  if(cats[saved.category]){state.cat=saved.category;document.querySelectorAll('[data-cat]').forEach(b=>b.classList.toggle('selected',b.dataset.cat===state.cat))}const categoryDropdown=$('categorySelect');if(categoryDropdown)categoryDropdown.value=state.cat;
 }
 
 function rausoOpenMeetingsFromHero(period,nearby=false){
  state.eventMode='all';state.eventTime=period;state.eventNearbyOnly=nearby;
  state.eventCategory=$('heroMeetingCategory')?.value||'all';
- state.eventDate='';state.eventClock='';
+ state.eventDate='';
  if($('eventDateFilter'))$('eventDateFilter').value='';
- if($('eventClockFilter'))$('eventClockFilter').value='';
+ 
  if($('rausoEventTime'))$('rausoEventTime').value=period;
  if($('rausoEventCategory'))$('rausoEventCategory').value=state.eventCategory;
  if($('rausoEventNearby'))$('rausoEventNearby').checked=nearby;
@@ -1704,7 +1704,7 @@ function rausoOpenMeetingsFromHero(period,nearby=false){
   });
  }
 }
-function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();if($('heroCreate'))$('heroCreate').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});if($('rausoEventTime'))$('rausoEventTime').onchange=e=>{state.eventTime=e.target.value;renderEvents()};if($('rausoEventCategory'))$('rausoEventCategory').onchange=e=>{state.eventCategory=e.target.value;if($('heroMeetingCategory'))$('heroMeetingCategory').value=e.target.value;rausoSyncFilterTextColors();renderEvents()};if($('rausoEventOpen'))$('rausoEventOpen').onchange=e=>{state.eventOpenOnly=e.target.checked;renderEvents()};if($('rausoEventAge'))$('rausoEventAge').onchange=e=>{state.eventAgeOnly=e.target.checked;renderEvents()};if($('rausoEventNearby'))$('rausoEventNearby').onchange=e=>{state.eventNearbyOnly=e.target.checked;renderEvents()};if($('heroMeetingCategory'))$('heroMeetingCategory').onchange=e=>{state.eventCategory=e.target.value;if($('rausoEventCategory'))$('rausoEventCategory').value=e.target.value;rausoSyncFilterTextColors();rausoUpdateQuickPeriodOffers();if(state.tab==='events')renderEvents()};if($('rausoEventReset'))$('rausoEventReset').onclick=()=>{state.eventTime='all';state.eventCategory='all';state.eventOpenOnly=false;state.eventAgeOnly=false;state.eventNearbyOnly=false;state.eventDate='';state.eventClock='';$('eventDateFilter').value='';$('eventClockFilter').value='';saveDiscoverySettings();$('rausoEventTime').value='all';$('rausoEventCategory').value='all';$('rausoEventOpen').checked=false;$('rausoEventAge').checked=false;$('rausoEventNearby').checked=false;if($('heroMeetingCategory'))$('heroMeetingCategory').value='all';renderEvents()};$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('eventDateFilter').onchange=e=>{state.eventDate=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('eventClockFilter').onchange=e=>{state.eventClock=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;rausoSyncFilterTextColors();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
+function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();if($('heroCreate'))$('heroCreate').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});if($('rausoEventTime'))$('rausoEventTime').onchange=e=>{state.eventTime=e.target.value;renderEvents()};if($('rausoEventCategory'))$('rausoEventCategory').onchange=e=>{state.eventCategory=e.target.value;if($('heroMeetingCategory'))$('heroMeetingCategory').value=e.target.value;rausoSyncFilterTextColors();renderEvents()};if($('rausoEventOpen'))$('rausoEventOpen').onchange=e=>{state.eventOpenOnly=e.target.checked;renderEvents()};if($('rausoEventAge'))$('rausoEventAge').onchange=e=>{state.eventAgeOnly=e.target.checked;renderEvents()};if($('rausoEventNearby'))$('rausoEventNearby').onchange=e=>{state.eventNearbyOnly=e.target.checked;renderEvents()};if($('heroMeetingCategory'))$('heroMeetingCategory').onchange=e=>{state.eventCategory=e.target.value;if($('rausoEventCategory'))$('rausoEventCategory').value=e.target.value;rausoSyncFilterTextColors();rausoUpdateQuickPeriodOffers();if(state.tab==='events')renderEvents()};if($('rausoEventReset'))$('rausoEventReset').onclick=()=>{state.eventTime='all';state.eventCategory='all';state.eventOpenOnly=false;state.eventAgeOnly=false;state.eventNearbyOnly=false;state.eventDate='';$('eventDateFilter').value='';saveDiscoverySettings();$('rausoEventTime').value='all';$('rausoEventCategory').value='all';$('rausoEventOpen').checked=false;$('rausoEventAge').checked=false;$('rausoEventNearby').checked=false;if($('heroMeetingCategory'))$('heroMeetingCategory').value='all';renderEvents()};$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('eventDateFilter').onchange=e=>{state.eventDate=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;rausoSyncFilterTextColors();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
  $('categorySelect').onchange=e=>{document.querySelector('[data-cat="'+e.target.value+'"]')?.click();rausoSyncFilterTextColors()};
  $('loadPlaces').onclick=queryPlaces;state.places=[];renderPlaces();renderEvents();renderFamily();renderMyMeetings();renderMessages();loadMessageInbox();renderProfile();injectProfileExtras();queryPlaces();if(hasBackend){api.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(()=>refreshUser().then(()=>{updateOnlinePresence();switchTab(state.tab)}),0)});refreshUser().then(()=>switchTab(state.tab))}
 }
@@ -1736,7 +1736,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  document.querySelectorAll('[data-quick-meeting-period]').forEach(button=>button.onclick=()=>rausoOpenMeetingsFromHero(button.dataset.quickMeetingPeriod));
  if($('heroGoing'))$('heroGoing').onclick=()=>{state.meetFilter='going';switchTab('myMeetings')};
  if($('heroOrganized'))$('heroOrganized').onclick=()=>{state.meetFilter='organized';switchTab('myMeetings')};
- if($('heroBookmarksCircle'))$('heroBookmarksCircle').onclick=()=>switchTab('collections');
+ 
  if(uiPref.start!=='discover')switchTab(uiPref.start)
 });
 })();

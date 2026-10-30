@@ -34,8 +34,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='3\.0\.5'/);
-assert.match(gradle,/versionCode 56; versionName '3\.0\.5'/);
+assert.match(js,/const APP_VERSION='3\.0\.6'/);
+assert.match(gradle,/versionCode 57; versionName '3\.0\.6'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -53,12 +53,12 @@ assert(js.includes('rausoOwnBirthdate')&&js.includes('signupBirth')&&js.includes
 assert(js.includes('rauso-meeting-changes:')&&!js.includes("count+' bevorstehende zugesagte"),'Unread-only meeting changes missing');
 
 /* RAUSO 2.9.0: screenshot-style discovery with actual controls. */
-for(const id of ['heroCreate','eventDateFilter','eventClockFilter','incognitoToggle','headerMessages','heroBookmarksCircle'])assert(html.includes('id="'+id+'"'),'Missing '+id);
+for(const id of ['heroCreate','eventDateFilter','incognitoToggle','headerMessages'])assert(html.includes('id="'+id+'"'),'Missing '+id);
 for(const nav of ['rauso-nav-star','rauso-nav-family','rauso-created-exclamation'])assert(html.includes(nav),'Missing nav symbol '+nav);
 assert.match(css,/RAUSO 2\.9: screenshot-inspired compact discovery/);
 assert.match(css,/\.rauso-place-link\[data-venue-category="thermen"\]/);
 assert.match(css,/#headerMessages>span:first-child/);
-assert(js.includes("$('eventDateFilter').onchange=")&&js.includes("$('eventClockFilter').onchange="));
+assert(js.includes("$('eventDateFilter').onchange=")&&!js.includes("$('eventClockFilter').onchange="));
 assert.match(js,/\$\('heroCreate'\)\.onclick=/);
 assert.match(js,/function rausoMatchesPrice/);
 
@@ -95,7 +95,7 @@ assert(js.includes('data-inbox-group')&&js.includes('data-inbox-view="groups"'),
 assert(js.includes('rausoUnreadGroupTotal')&&js.includes('rausoMarkGroupRead'),'Unread group messages must be counted and marked read');
 assert(js.includes("rauso_group_chat_unread_counts"),'Database unread-count function must be used');
 
-assert(html.includes('✓ Zugesagte Treffen')&&html.includes('id="heroOrganized"')&&html.includes('id="heroBookmarksCircle"'),'Three circular shortcuts required');
+assert(html.includes('✓ Zugesagte Treffen')&&html.includes('id="heroOrganized"')&&!html.includes('id="heroBookmarksCircle"'),'Three circular shortcuts required');
 assert(!html.includes('INKOGNITO</small>')&&html.includes('rauso-incognito-icon'),'Inkognito must have icon only');
 assert(footer.includes('id="headerMessages"')&&!header.includes('id="headerMessages"'),'Message badge moved with button');
 
@@ -110,10 +110,16 @@ assert(html.includes('id="heroMeetingCategory"')&&html.includes('id="rausoEventN
 assert(js.includes('rausoOpenMeetingsFromHero')&&js.includes('rausoNearbyEventMatches'),'Meetup discovery handlers missing');
 assert(css.includes('RAUSO 3.0.3: five small circular date filters'));
 
-/* RAUSO 3.0.5: meetup-counter and colorful filter regression */
+/* RAUSO 3.0.6: meetup-counter and colorful filter regression */
 assert(html.includes('class="rauso-quick-offer"')&&js.includes('rausoQuickMeetupOffers')&&js.includes('rausoUpdateQuickPeriodOffers'));
 assert(js.includes('rausoSyncFilterTextColors')&&css.includes('RAUSO 3.0.4: colored text and live event counts'));
 
-/* RAUSO 3.0.5: black and orange meeting offer cards with three custom glow circles. */
+/* RAUSO 3.0.6: black and orange meeting offer cards with three custom glow circles. */
 assert(css.includes('RAUSO 3.0.5: discover uncommitted meetup offers')&&css.includes('RAUSO 3.0.5: three symmetric personal circles'));
 assert(!html.includes('class="rauso-quick-count"'));
+
+/* RAUSO 3.0.6: date only, two personal circles, clean header and elegant topic borders. */
+assert(!html.includes('eventClockFilter')&&!js.includes('eventClock'),'Clock must be absent in discovery');
+assert(!html.includes('heroBookmarksCircle')&&footer.includes('data-tab="collections"'),'Bookmarks only in bottom navigation');
+assert(!html.includes('data-rauso-hero-go="discover"')&&html.includes('data-rauso-hero-go="nearby"'),'No duplicate discover shortcut');
+assert(css.includes('RAUSO 3.0.6: minimal home UI')&&html.includes('class="rauso-header-icon"'));
