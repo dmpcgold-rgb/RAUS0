@@ -34,8 +34,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='3\.0\.3'/);
-assert.match(gradle,/versionCode 54; versionName '3\.0\.3'/);
+assert.match(js,/const APP_VERSION='3\.0\.4'/);
+assert.match(gradle,/versionCode 55; versionName '3\.0\.4'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -101,7 +101,7 @@ assert(footer.includes('id="headerMessages"')&&!header.includes('id="headerMessa
 
 /* RAUSO 3.0.3: all six top controls must be circular and evenly sized. */
 assert(html.includes('class="topbar compact-topbar"') && html.includes('id="incognitoToggle"'));
-assert(css.includes('RAUSO 3.0.3: precisely centered circular header controls.'));
+assert(css.includes('RAUSO 3.0.2: precisely centered circular header controls.'));
 assert(css.includes('border-radius:50%!important;'));
 
 /* RAUSO 3.0.3: quick meetup circles and adjacent optional category. */
@@ -109,3 +109,7 @@ for(const period of ['today','tomorrow','weekend','next-week','next-month'])asse
 assert(html.includes('id="heroMeetingCategory"')&&html.includes('id="rausoEventNearby"'),'Meetup discovery controls missing');
 assert(js.includes('rausoOpenMeetingsFromHero')&&js.includes('rausoNearbyEventMatches'),'Meetup discovery handlers missing');
 assert(css.includes('RAUSO 3.0.3: five small circular date filters'));
+
+/* RAUSO 3.0.4: meetup-counter and colorful filter regression */
+assert(html.includes('class="rauso-quick-count"')&&js.includes('rausoQuickMeetupCount'));
+assert(js.includes('rausoSyncFilterTextColors')&&css.includes('RAUSO 3.0.4: colored text and live event counts'));
