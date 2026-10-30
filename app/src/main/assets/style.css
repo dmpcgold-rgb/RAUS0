@@ -2308,3 +2308,57 @@ html[data-rauso-theme] .rauso-nearby-context{
  html[data-rauso-theme] .rauso-meeting-quick-category{min-width:88px;padding:6px 4px}
  html[data-rauso-theme] #heroCreate.rauso-hero-cta{padding:9px 12px!important;font-size:12px!important}
 }
+
+/* RAUSO 3.0.4: colored text and live event counts in compact circular filters. */
+html[data-rauso-theme] .rauso-meeting-periods>button{
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;gap:1px!important;color:var(--quick-color)!important;
+ text-shadow:0 0 4px var(--quick-halo)!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods .rauso-quick-label{
+ display:block!important;color:var(--quick-color)!important;
+ font-size:clamp(8px,2.3vw,9.1px)!important;font-weight:800!important;
+ line-height:1.1!important;text-align:center!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods .rauso-quick-count{
+ display:block!important;color:var(--quick-color)!important;
+ font-size:14px!important;font-weight:900!important;line-height:1!important;
+ font-variant-numeric:tabular-nums!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods .rauso-quick-count::after{
+ content:" Treffen";display:block;font-size:6px;font-weight:750;line-height:1.1;letter-spacing:0;
+}
+html[data-rauso-theme] .rauso-meeting-periods>button[data-has-meetings="yes"]{
+ box-shadow:0 0 12px var(--quick-halo),inset 0 0 10px var(--quick-halo)!important;
+}
+html[data-rauso-theme] .rauso-meeting-periods>button[data-has-meetings="no"] .rauso-quick-count{opacity:.78}
+html[data-rauso-theme] .rauso-meeting-quick-category{color:var(--rauso-filter-color,#ffb16b)!important}
+html[data-rauso-theme] #heroMeetingCategory{
+ color:var(--rauso-filter-color,#ffb16b)!important;
+ border-color:var(--rauso-filter-color,#ffb16b)!important;
+}
+html[data-rauso-theme] .filters.rauso-date-filters>.field-category{
+ border-color:var(--rauso-filter-color,#ffb16b)!important;
+}
+html[data-rauso-theme] .filters.rauso-date-filters>.field-category>span,
+html[data-rauso-theme] #categorySelect{
+ color:var(--rauso-filter-color,#ffb16b)!important;
+}
+html[data-rauso-theme] .filters.rauso-date-filters>.rauso-date-time-field{border-color:#bf8cff!important}
+html[data-rauso-theme] .filters.rauso-date-filters>.rauso-date-time-field>span,
+html[data-rauso-theme] .rauso-date-time-field input{color:#d7adff!important}
+html[data-rauso-theme] .filters.rauso-date-filters>.small-field{border-color:#55d9df!important}
+html[data-rauso-theme] .filters.rauso-date-filters>.small-field>span,
+html[data-rauso-theme] #radiusSelect{color:#76f1ed!important}
+html[data-rauso-theme] #categoryStrip .chip{
+ color:var(--category-color)!important;
+ text-shadow:0 0 5px color-mix(in srgb,var(--category-color),transparent 50%)!important;
+}
+html[data-rauso-theme] .rauso-hero-shortcuts [data-rauso-hero-go="discover"]{color:#ffaf5f!important}
+html[data-rauso-theme] .rauso-hero-shortcuts [data-rauso-hero-go="nearby"]{color:#67e6e5!important;border-color:#48c5c5!important}
+html[data-rauso-theme] .rauso-hero-cta-label{color:#fff6e4!important}
+@media(max-width:365px){
+ html[data-rauso-theme] .rauso-meeting-periods .rauso-quick-label{font-size:8px!important}
+ html[data-rauso-theme] .rauso-meeting-periods .rauso-quick-count{font-size:12px!important}
+ html[data-rauso-theme] .rauso-meeting-periods .rauso-quick-count::after{font-size:5.4px}
+}
