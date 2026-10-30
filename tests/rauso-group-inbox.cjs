@@ -28,10 +28,12 @@ const inResult={in:(key,ids)=>{
 const selectResult={select:()=>inResult};
 const mockApi={from:(table)=>{
  assert.equal(table,'rauso_outing_messages');return selectResult;
+},rpc:async(name)=>{
+ assert.equal(name,'rauso_group_chat_unread_counts');return {data:[],error:null};
 }};
-const factory=new Function('state','myId','api','renderMessages',moduleSource+
+const factory=new Function('state','myId','api','renderMessages','rausoUpdateMessageBadge',moduleSource+
  'return {eligible:rausoEligibleGroupOutings,load:rausoLoadGroupInbox,rows:()=>rausoGroupInbox};');
-const inbox=factory(state,()=> 'me',mockApi,()=>{});
+const inbox=factory(state,()=> 'me',mockApi,()=>{},()=>{});
 assert.deepEqual(inbox.eligible().map(x=>x.id),['hosting','joined'],'Pending and declined must never be listed');
 (async()=>{
  await inbox.load();
