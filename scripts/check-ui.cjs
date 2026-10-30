@@ -34,8 +34,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='3\.0\.2'/);
-assert.match(gradle,/versionCode 53; versionName '3\.0\.2'/);
+assert.match(js,/const APP_VERSION='3\.0\.3'/);
+assert.match(gradle,/versionCode 54; versionName '3\.0\.3'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -66,7 +66,7 @@ assert.match(js,/function rausoMatchesPrice/);
 for(const cls of ['rauso-nav-star','rauso-nav-family','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Screenshot UI missing class '+cls);
 }
-assert(js.includes("data-rauso-hero-go")&&js.includes("destination==='friends'"),'Hero shortcuts must navigate');
+assert(js.includes("data-rauso-hero-go")&&js.includes("destination==='nearby'"),'Hero shortcuts must navigate');
 assert(css.includes('RAUSO 2.9: screenshot-inspired compact discovery'),'Reference layout CSS missing');
 
 /* RAUSO 2.9.2: approval actions and pending state. */
@@ -99,7 +99,13 @@ assert(html.includes('✓ Zugesagte Treffen')&&html.includes('id="heroOrganized"
 assert(!html.includes('INKOGNITO</small>')&&html.includes('rauso-incognito-icon'),'Inkognito must have icon only');
 assert(footer.includes('id="headerMessages"')&&!header.includes('id="headerMessages"'),'Message badge moved with button');
 
-/* RAUSO 3.0.2: all six top controls must be circular and evenly sized. */
+/* RAUSO 3.0.3: all six top controls must be circular and evenly sized. */
 assert(html.includes('class="topbar compact-topbar"') && html.includes('id="incognitoToggle"'));
-assert(css.includes('RAUSO 3.0.2: precisely centered circular header controls.'));
+assert(css.includes('RAUSO 3.0.3: precisely centered circular header controls.'));
 assert(css.includes('border-radius:50%!important;'));
+
+/* RAUSO 3.0.3: quick meetup circles and adjacent optional category. */
+for(const period of ['today','tomorrow','weekend','next-week','next-month'])assert(html.includes('data-quick-meeting-period="'+period+'"'),'Missing quick period '+period);
+assert(html.includes('id="heroMeetingCategory"')&&html.includes('id="rausoEventNearby"'),'Meetup discovery controls missing');
+assert(js.includes('rausoOpenMeetingsFromHero')&&js.includes('rausoNearbyEventMatches'),'Meetup discovery handlers missing');
+assert(css.includes('RAUSO 3.0.3: five small circular date filters'));
