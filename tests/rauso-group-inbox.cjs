@@ -16,16 +16,19 @@ const state={user:{id:'me'},tab:'discover',outings:[
  {id:'declined',author_id:'other',mineReaction:'declined',title:'Abgelehnt',starts_at:'2026-11-03T09:00:00Z'}
 ]};
 let requestedIds=[];
-const mockApi={from(table){
- assert.equal(table,'rauso_outing_messages');
- return {select(){return {in(key,ids){
-  assert.equal(key,'outing_id');requestedIds=ids;
-  return {order(){return {limit:async()=>({data:[
-   {outing_id:'joined',sender_id:'other',body:'Treffpunkt steht',created_at:'2026-10-30T09:00:00Z'},
-   {outing_id:'hosting',sender_id:'me',body:'Hallo zusammen',created_at:'2026-10-30T08:00:00Z'}
-  ],error:null})}}};
- }}}};
-}}};
+const mockResponse={data:[
+ {outing_id:'joined',sender_id:'other',body:'Treffpunkt steht',created_at:'2026-10-30T09:00:00Z'},
+ {outing_id:'hosting',sender_id:'me',body:'Hallo zusammen',created_at:'2026-10-30T08:00:00Z'}
+],error:null};
+const terminal={limit:async()=>mockResponse};
+const orderResult={order:()=>terminal};
+const inResult={in:(key,ids)=>{
+ assert.equal(key,'outing_id');requestedIds=ids;return orderResult;
+}};
+const selectResult={select:()=>inResult};
+const mockApi={from:(table)=>{
+ assert.equal(table,'rauso_outing_messages');return selectResult;
+}};
 const factory=new Function('state','myId','api','renderMessages',moduleSource+
  'return {eligible:rausoEligibleGroupOutings,load:rausoLoadGroupInbox,rows:()=>rausoGroupInbox};');
 const inbox=factory(state,()=> 'me',mockApi,()=>{});
