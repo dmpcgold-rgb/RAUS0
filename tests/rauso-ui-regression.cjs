@@ -81,7 +81,7 @@ assert(html.includes('id="heroGoing"')&&html.includes('id="heroOrganized"'));
 assert(css.includes('aspect-ratio:1/1!important;border-radius:50%!important'));
 
 assert(html.includes('✓ Zugesagte Treffen')&&html.includes('id="heroOrganized"')&&html.includes('id="heroBookmarksCircle"'),'Three home shortcuts');
-assert(css.includes('RAUSO 3.0.2: symmetric orange header')&&css.includes('Equal-sized, symmetrical green/orange/black circles'),'Layout and colors');
+assert(css.includes('RAUSO 3.0.1: symmetric orange header')&&css.includes('Equal-sized, symmetrical green/orange/black circles'),'Layout and colors');
 assert(!html.includes('INKOGNITO</small>')&&html.includes('rauso-incognito-icon'),'Icon-only incognito');
 assert(!nav.includes('meetingNavCount')&&html.includes('id="meetingNavCount"'),'Meeting-change badge belongs to home');
 
