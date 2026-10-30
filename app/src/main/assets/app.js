@@ -301,6 +301,14 @@ const rausoViennaPicks = [
  {id:'verified-vienna-lugeck',lat:48.20970,lon:16.37515,website:'https://www.lugeck.com/',name:'Lugeck',addr:'Lugeck 4, 1010 Wien',region:'Wien',type:'Wiener Küche',category:'restaurants',short:'Wirtshaus · Wiener Innenstadt',source:'https://www.lugeck.com/'},
  {id:'verified-vienna-melker-stiftskeller',lat:48.2122736,lon:16.363614,website:'https://www.melkerstiftskeller.at/',name:'Melker Stiftskeller',addr:'Schottengasse 3, 1010 Wien',region:'Wien',type:'Österreichisches Gasthaus',category:'restaurants',short:'Historischer Keller · Wirtshaus',source:'https://www.openstreetmap.org/search?query=Melker%20Stiftskeller%20Wien'},
  {id:'verified-vienna-therme-wien',lat:48.1437114,lon:16.4010266,website:'https://thermewien.at/',name:'Therme Wien',addr:'Kurbadstraße 14, 1100 Wien',region:'Wien · Oberlaa',type:'Therme & Wellness',category:'thermen',short:'Thermalbaden · U1 Oberlaa',source:'https://thermewien.at/kontakt/'},
+ {id:'verified-wn-0',category:"kino",name:"Cineplexx Wiener Neustadt",addr:"Stadionstraße 42, 2700 Wiener Neustadt",region:'Wiener Neustadt',website:"https://cineplexx.at/center/cineplexx-wiener-neustadt/",type:"Kino und Filmvorführungen",short:"Kino und Filmvorführungen"},
+ {id:'verified-wn-1',category:"bowling",name:"Bowlingcenter Rayman’s",addr:"Stadionstraße 42, 2700 Wiener Neustadt",region:'Wiener Neustadt',website:"https://cinenova.at/",type:"Bowling · Cine Nova Center",short:"Bowling · Cine Nova Center"},
+ {id:'verified-wn-2',category:"kultur",name:"Museum St. Peter an der Sperr",addr:"Johannes-von-Nepomuk-Platz 1, 2700 Wiener Neustadt",region:'Wiener Neustadt',website:"https://www.museum-wn.at/de/",type:"Stadtgeschichte · Museum",short:"Stadtgeschichte · Museum"},
+ {id:'verified-wn-3',category:"familie",name:"Jungle Indoor Playland",addr:"Johannes-Gutenberg-Straße 5, 2700 Wiener Neustadt",region:'Wiener Neustadt',website:"",type:"Indoor-Spielplatz",short:"Indoor-Spielplatz"},
+ {id:'verified-wn-4',category:"uebernachten",name:"Hilton Garden Inn Wiener Neustadt",addr:"Promenade 6, 2700 Wiener Neustadt",region:'Wiener Neustadt',website:"https://www.hilton.com/de/locations/austria/wiener-neustadt/",type:"Hotel am Stadtpark",short:"Hotel am Stadtpark"},
+ {id:'verified-wn-5',category:"natur",name:"Akademiepark",addr:"Am Akademiepark, 2700 Wiener Neustadt",region:'Wiener Neustadt',website:"",type:"Park und Spaziergänge",short:"Park und Spaziergänge"},
+ {id:'verified-wn-6',category:"sport",name:"Aqua Nova",addr:"Ferdinand-Graf-von-Zeppelin-Straße 12, 2700 Wiener Neustadt",region:'Wiener Neustadt',website:"",type:"Sport- und Erlebnisbad",short:"Sport- und Erlebnisbad"},
+ {id:'verified-wn-7',category:"spielspass",name:"X-Bowl Wr. Neustadt",addr:"Stadionstraße 36, 2700 Wiener Neustadt",region:'Wiener Neustadt',website:"",type:"Freizeitbowling",short:"Freizeitbowling"},
  {id:'verified-baden-roemertherme',lat:48.0082,lon:16.2316,website:'https://www.roemertherme.at/',name:'Römertherme Baden',addr:'Brusattiplatz 4, 2500 Baden',region:'Baden bei Wien',type:'Therme & Wellness',category:'thermen',short:'Thermalwasser · Baden bei Wien',source:'https://www.openstreetmap.org/search?query=R%C3%B6mertherme%20Baden'}
 ];
 let rausoShowAllHighlights=false;
@@ -312,7 +320,7 @@ function renderViennaHighlights(){
  const list=rausoShowAllHighlights?sorted:[first,different].filter(Boolean);
  el.innerHTML=list.map(p=>{
   const liked=isBookmarked('place',p.id);
-  const label=p.category==='thermen'?'♨ THERMEN':'🍽 RESTAURANTS';
+  const label=(cats[p.category]?.icon||'★')+' '+p.category.toLocaleUpperCase('de-AT');
   return '<article class="featured-card rauso-place-link" data-venue-category="'+esc(p.category)+'" data-featured-open="'+esc(p.id)+'" tabindex="0" role="link" title="Website von '+esc(p.name)+' öffnen">'+
    '<div class="featured-image rauso-place-create" aria-label="Kategoriebezogenes Symbolbild, kein Foto des Ortes"><button type="button" class="rauso-create-venue-btn" data-featured-create="'+esc(p.id)+'" aria-label="Unternehmung bei '+esc(p.name)+' erstellen" title="Unternehmung erstellen"><span class="rauso-plus-mark" aria-hidden="true"></span></button></div>'+
    '<span class="featured-map venue-distance" title="'+esc(rausoDistanceOrigin())+'">★ '+esc(rausoDistanceLabel(p))+'</span>'+
@@ -340,7 +348,7 @@ function renderViennaHighlights(){
   section.insertBefore(toggle,section.querySelector('.featured-note'));
  }
  if(toggle){
-  toggle.textContent=rausoShowAllHighlights?'Weniger Orte anzeigen':'Weitere 4 Orte anzeigen';
+  toggle.textContent=rausoShowAllHighlights?'Weniger Orte anzeigen':'Weitere Beispielorte anzeigen';
   toggle.onclick=()=>{rausoShowAllHighlights=!rausoShowAllHighlights;renderViennaHighlights()}
  }
 }
