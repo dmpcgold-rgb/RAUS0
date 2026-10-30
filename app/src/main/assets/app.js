@@ -41,7 +41,7 @@ function rausoRequestBirthdate(){
   if(rausoAge(value)===null){toast('Bitte gültiges Geburtsdatum eingeben.');return}
   const b=$('birthdateForm').querySelector('button[type=submit]');b.disabled=true;
   try{const {error}=await api.from('rauso_birthdates').insert({user_id:myId(),birth_date:value});if(error)throw error;
-   await rausoLoadOwnBirthdate();closeModal();renderProfile();renderDating();renderEvents();renderFamily();toast('Geburtsdatum dauerhaft gespeichert.');
+   await rausoLoadOwnBirthdate();closeModal();renderProfile();renderEvents();renderFamily();toast('Geburtsdatum dauerhaft gespeichert.');
   }catch(err){b.disabled=false;toast(err.message)}
  };
 }
@@ -96,7 +96,7 @@ const state = {
  map:null,markers:null,mapOpen:false, session:null,profile:null,user:null,
  favorites:new Set(cache.favorites||[]), bookmarks:{...(cache.bookmarks||{})}, profilePhotoUrl:null, demoProfile:cache.profile||{display_name:'Mein RAUSO-Profil',city:'Wiener Neustadt',bio:'Ich bin gerne unterwegs.',dating_enabled:false,adult_confirmed:false},
  demoEvents:[], demoReactions:cache.reactions||{}, demoConnections:{}, demoDatingLikes:cache.datingLikes||{}, demoMessages:cache.messages||{}, demoBlocks:cache.blocks||{},
- outings:[], people:[], connections:[], datingLikes:[], blocks:[], currentChat:null, eventMode:'all', eventTime:'all', eventCategory:'all', eventOpenOnly:false, eventAgeOnly:false, meetFilter:'upcoming', 
+ outings:[], people:[], connections:[], datingLikes:[], blocks:[], currentChat:null, eventMode:'all',eventDate:'',eventClock:'',eventTime:'all', eventCategory:'all', eventOpenOnly:false, eventAgeOnly:false, meetFilter:'upcoming', 
 };
 const persist = () => {try{localStorage.setItem(STORE,JSON.stringify({favorites:[...state.favorites],bookmarks:state.bookmarks,profile:state.demoProfile,events:state.demoEvents,reactions:state.demoReactions,connections:state.demoConnections,datingLikes:state.demoDatingLikes,messages:state.demoMessages,blocks:state.demoBlocks,...Object.fromEntries(Object.entries(cache).filter(([k])=>k.startsWith('osm:')))}))}catch{}};
 const myId = () => state.user?.id||'local-user';
@@ -127,7 +127,7 @@ function switchTab(tab, recordHistory=true){
    rausoTabHistory.push(state.tab);
    if(rausoTabHistory.length>60)rausoTabHistory.shift();
  }
- state.tab=tab;if($('headerMessages'))$('headerMessages').classList.toggle('active',tab==='messages');document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox();if(state.user)loadOutings();else rausoLoadGroupInbox()}if(tab==='dating')renderDating();if(tab==='profile'){renderProfile();injectProfileExtras();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();}
+ state.tab=tab;if($('headerMessages'))$('headerMessages').classList.toggle('active',tab==='messages');document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===tab+'Screen'));document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));window.scrollTo({top:0,behavior:'instant'});if(tab==='discover')renderPlaces();if(tab==='events')renderEvents();refreshMeetingBadge();if(tab==='family')renderFamily();if(tab==='myMeetings')renderMyMeetings();if(tab==='messages'){renderMessages();loadMessageInbox();if(state.user)loadOutings();else rausoLoadGroupInbox()}if(tab==='profile'){renderProfile();injectProfileExtras();addReadiness();addMoreLink()};if(tab==='collections')renderCollections();if(tab==='admin')renderAdmin();if(tab==='shows')renderShows();if(tab==='notifications')renderNotifications();}
 function rausoBack(){
  const dialog=document.querySelector('#modalRoot .modal-overlay');
  if(dialog){
@@ -475,7 +475,7 @@ function renderEventCard(e){
  const categoryIcon=cats[e.category]?.icon||'✦';
  const dateLabel=new Date(e.starts_at).toLocaleDateString('de-AT',{timeZone:'Europe/Vienna',day:'2-digit',month:'short'});
  const status=e.availability?.is_full?'Voll':e.requires_approval?'Mit Freigabe':'Direkte Zusage';
- return `<article class="event-card rauso-discovery-event ${r==='going'?'event-joined':''}" data-outing-id="${esc(e.id)}" data-event-category="${esc(categoryName)}">
+ return `<article class="event-card rauso-discovery-event ${r==='going'?'event-joined rauso-rsvp-green':''}" data-outing-id="${esc(e.id)}" data-event-category="${esc(categoryName)}">
  <div class="rauso-event-visual" aria-label="Kategorie-Symbol, kein Veranstaltungsfoto"><span aria-hidden="true">${esc(categoryIcon)}</span><strong>${esc(dateLabel)}</strong></div>
  <div class="event-top"><span class="pill">${esc(privateMode?'🏡 Privat':categoryIcon)} ${esc(privateMode?meetingMeta[e.meeting_type]||'Privates Treffen':categoryName)}</span><span class="rauso-event-status">${esc(status)}</span></div>
  <h3>${esc(e.title)}</h3>
@@ -606,7 +606,9 @@ function rausoEventMatchesFilters(e,now=Date.now()){
  if(state.eventMode==='public'&&e.visibility==='private')return false;
  if(state.eventCategory!=='all'&&e.category!==state.eventCategory)return false;
  const today=rausoLocalEventDay(now),day=rausoLocalEventDay(start);
- if(state.eventTime==='today'&&day!==today)return false;
+ if(state.eventDate&&day!==state.eventDate)return false;
+  if(state.eventClock){const hhmm=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Vienna',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(start));if(hhmm<state.eventClock)return false;}
+  if(state.eventTime==='today'&&day!==today)return false;
  if(state.eventTime==='tomorrow'&&day!==rausoOffsetEventDay(today,1))return false;
  if(state.eventTime==='weekend'){
   const weekday=new Date(today+'T12:00:00Z').getUTCDay();
@@ -666,14 +668,17 @@ function renderMyMeetings(){
  const reaction=meetingReaction(e),isOwn=e.author_id===myId(),t=transportMeta[e.transport_mode]||transportMeta.auto;
  const status=isOwn?'✦ Von dir organisiert':reaction==='pending'?'⏳ Anfrage wartet auf Freigabe':'✓ Deine Teilnahme zugesagt';
  const statusClass=isOwn?'organized':reaction==='pending'?'pending':'going';
- return `<article class="meeting-card"><div class="meeting-card-head"><span class="meeting-status ${statusClass}">${status}</span><span class="meeting-date">${new Date(e.starts_at).toLocaleDateString('de-AT',{day:'2-digit',month:'short',year:'numeric',timeZone:'Europe/Vienna'})}</span></div><h3>${esc(e.title)}</h3><div class="meeting-detail">🕒 ${esc(fmt(e.starts_at).split(', ').pop())}</div><div class="meeting-detail">★ ${esc(e.place_name)}</div><div class="meeting-detail">👤 ${isOwn?'Du organisierst':esc(e.author||'RAUSO-Mitglied')}</div>${rausoCapacityHtml(e)}${isOwn?rausoPendingReviewHtml(e):''}<div class="meeting-detail">${t[0]} ${t[1]}${e.departure_place?' · Start: '+esc(e.departure_place):''}${e.seats_offered&&e.ride_role==='offer'?' · '+esc(e.seats_offered)+' Mitfahrplätze':''}</div>${e.visibility==='private'?'<p class="locked-note">🔒 Privatadresse wird nicht öffentlich gezeigt.</p>':''}<div class="meeting-actions"><button class="small-btn" data-open-meeting="${esc(e.id)}">Treffen ansehen ↗</button>${rausoCanOpenOutingChat(e)?`<button class="small-btn rauso-groupchat-button" data-outing-chat="${esc(e.id)}">💬 Gruppenchat</button>`:""}${!isOwn&&['going','pending'].includes(reaction)&&Date.parse(e.starts_at)>now?`<button class="small-btn" data-remove-meeting="${esc(e.id)}">${reaction==='pending'?'Anfrage zurückziehen':'Zusage zurücknehmen'}</button>`:''}</div></article>`;
+  if(state.meetFilter==='going')return `<article class="meeting-card rauso-rsvp-green"><h3>${esc(e.title)}</h3><div class="meeting-detail">📅 ${esc(fmt(e.starts_at))}</div><div class="meeting-detail">⌖ ${esc(e.place_name)}</div></article>`;
+ return `<article class="meeting-card ${!isOwn&&reaction==='going'?'rauso-rsvp-green':''}"><div class="meeting-card-head"><span class="meeting-status ${statusClass}">${status}</span><span class="meeting-date">${new Date(e.starts_at).toLocaleDateString('de-AT',{day:'2-digit',month:'short',year:'numeric',timeZone:'Europe/Vienna'})}</span></div><h3>${esc(e.title)}</h3><div class="meeting-detail">🕒 ${esc(fmt(e.starts_at).split(', ').pop())}</div><div class="meeting-detail">★ ${esc(e.place_name)}</div><div class="meeting-detail">👤 ${isOwn?'Du organisierst':esc(e.author||'RAUSO-Mitglied')}</div>${rausoCapacityHtml(e)}${isOwn?rausoPendingReviewHtml(e):''}<div class="meeting-detail">${t[0]} ${t[1]}${e.departure_place?' · Start: '+esc(e.departure_place):''}${e.seats_offered&&e.ride_role==='offer'?' · '+esc(e.seats_offered)+' Mitfahrplätze':''}</div>${e.visibility==='private'?'<p class="locked-note">🔒 Privatadresse wird nicht öffentlich gezeigt.</p>':''}<div class="meeting-actions"><button class="small-btn" data-open-meeting="${esc(e.id)}">Treffen ansehen ↗</button>${rausoCanOpenOutingChat(e)?`<button class="small-btn rauso-groupchat-button" data-outing-chat="${esc(e.id)}">💬 Gruppenchat</button>`:""}${!isOwn&&['going','pending'].includes(reaction)&&Date.parse(e.starts_at)>now?`<button class="small-btn" data-remove-meeting="${esc(e.id)}">${reaction==='pending'?'Anfrage zurückziehen':'Zusage zurücknehmen'}</button>`:''}${isOwn?`<button type="button" class="small-btn rauso-delete-outing" data-delete-outing="${esc(e.id)}">🗑 Löschen</button>`:''}</div></article>`;
  }).join(''):'<div class="empty"><strong>Hier ist noch nichts geplant.</strong>Wenn du bei einem Treffen „Bin dabei“ auswählst oder selbst eines erstellst, erscheint es hier automatisch.<div style="margin-top:13px"><button id="browseFromMeetings" class="primary-btn">Treffen entdecken</button></div></div>'}`;
  rausoWireApprovalButtons(root);
  root.querySelectorAll('[data-outing-chat]').forEach(b=>b.onclick=()=>rausoOpenOutingChat(b.dataset.outingChat));
  root.querySelectorAll('[data-open-meeting]').forEach(b=>b.onclick=()=>openMeetingFromMine(b.dataset.openMeeting));
  root.querySelectorAll('[data-remove-meeting]').forEach(b=>b.onclick=()=>{const e=eventList().find(x=>x.id===b.dataset.removeMeeting);if(e)reactOuting(e.id,meetingReaction(e))});
+  root.querySelectorAll('[data-delete-outing]').forEach(b=>b.onclick=()=>rausoDeleteOwnOuting(b.dataset.deleteOuting));
  const browse=$('browseFromMeetings');if(browse)browse.onclick=()=>switchTab('events');
 }
+async function rausoDeleteOwnOuting(id){const e=eventList().find(x=>String(x.id)===String(id));if(!state.user||!e||e.author_id!==myId()){toast('Nur eigene Treffen können gelöscht werden.');return}if(!confirm('Treffen „'+e.title+'“ endgültig löschen? Zusagen und Gruppennachrichten werden ebenfalls gelöscht.'))return;try{const {data,error}=await api.from('rauso_outings').delete().eq('id',id).eq('author_id',myId()).select('id');if(error)throw error;if(!data?.length)throw Error('Keine Löschberechtigung.');state.outings=state.outings.filter(x=>String(x.id)!==String(id));renderMyMeetings();renderEvents();renderFamily();refreshMeetingBadge();toast('Treffen gelöscht.');await loadOutings()}catch(err){toast('Löschen fehlgeschlagen: '+err.message)}}
 function openMeetingFromMine(id){
  const event=eventList().find(e=>e.id===id);if(!event)return;
  if(Date.parse(event.starts_at)<Date.now()-3600000){
@@ -785,12 +790,12 @@ async function loadOutings(){
   api.from('rauso_outings').select('*').order('starts_at',{ascending:true}).limit(80),
   api.from('rauso_rsvps').select('outing_id,user_id,status'),
   api.from('rauso_profiles').select('id,display_name'),
-  api.from('rauso_presence').select('user_id,last_seen_at'),
+  api.from('rauso_presence').select('user_id,last_seen_at,is_incognito'),
   api.rpc('rauso_outing_availability')
  ]);
  if(error){toast('Treffen konnten nicht geladen werden: '+error.message);return}
  const names=Object.fromEntries((members.data||[]).map(p=>[p.id,p.display_name]));
- const online=new Set((presence.data||[]).filter(p=>Date.now()-new Date(p.last_seen_at).getTime()<90000).map(p=>p.user_id));
+ const online=new Set((presence.data||[]).filter(p=>p.is_incognito!==true&&Date.now()-new Date(p.last_seen_at).getTime()<90000).map(p=>p.user_id));
  const mine=Object.fromEntries((reacts.data||[]).filter(r=>r.user_id===myId()).map(r=>[r.outing_id,r.status]));
  const availability=Object.fromEntries((capacity.data||[]).map(c=>[c.outing_id,c]));
  const attendees={};const pendingByOuting={};const confirmedVisible={};
@@ -804,7 +809,7 @@ async function loadOutings(){
 }
 function avatar(p){return `<span class="avatar">${esc((p.display_name||'?').replace(' (Demo)','').slice(0,1).toUpperCase())}</span>`}
 async function loadSocial(){
- if(demoMode()){renderMessages();renderDating();return}
+ if(demoMode()){renderMessages();return}
  const [people,friends]=await Promise.all([
   api.from('rauso_profiles').select('id,display_name,city,bio,interests').limit(100),
   api.from('rauso_friendships').select('id,sender_id,recipient_id,status,created_at').limit(500)
@@ -813,7 +818,7 @@ async function loadSocial(){
  state.people=(people.data||[]).filter(p=>p.id!==myId());
  state.connections=(friends.data||[]).map(c=>({...c,receiver_id:c.recipient_id}));
  state.datingLikes=[];state.blocks=[];
- renderMessages();renderDating();
+ renderMessages();
 }
 function availablePeople(){const blocked=demoMode()?Object.keys(state.demoBlocks).filter(k=>state.demoBlocks[k]):state.blocks.map(x=>x.blocker_id===myId()?x.blocked_id:x.blocker_id);return (demoMode()?demoPeople:state.people).filter(p=>!blocked.includes(p.id))}
 function connection(p){if(demoMode())return state.demoConnections[p.id]||'';const c=state.connections.find(c=>c.sender_id===p.id||c.receiver_id===p.id);return c?.status||''}
@@ -1041,7 +1046,7 @@ function renderMessages(){
    '<button type="button" data-inbox-view="contacts" class="'+(rausoInboxView==='contacts'?'active':'')+'">Kontakte</button>'+ 
    '<button type="button" data-inbox-view="groups" class="'+(rausoInboxView==='groups'?'active':'')+'">Gruppen ('+rausoGroupInbox.length+')</button></div>'+
   '<div class="searchbox rauso-message-search"><span>⌕</span><input type="search" id="inboxSearch" autocomplete="off" placeholder="Nachricht oder Name suchen" value="'+esc(rausoInboxSearch)+'"></div>'+
-  '<p class="rauso-chat-hint">Private und Gruppenchats · Ungelesen wird pro Konto gezählt und beim Öffnen als gelesen markiert.</p>'+
+  
   '<div id="rausoInboxRows" class="rauso-inbox-list"></div></div>'+
   '<details class="surface" id="rausoFindPeople"><summary>★ Freunde finden und Anfragen senden</summary>'+
   '<div class="searchbox"><span>⌕</span><input id="peopleSearch" placeholder="Namen suchen" autocomplete="off"></div>'+ 
@@ -1093,21 +1098,20 @@ async function requestEventFriendship(eventId){
  if(event.author_id===myId()){toast('Das ist deine eigene Veranstaltung.');return}
  await requestContact(event.author_id);
 }
-function mutualLike(id){if(demoMode())return state.demoDatingLikes[id]==='match';return state.datingLikes.some(l=>l.liker_id===myId()&&l.liked_id===id)&&state.datingLikes.some(l=>l.liker_id===id&&l.liked_id===myId())}
 function openChat(id){
  let p=availablePeople().find(p=>p.id===id);
  if(!p)p=state.people.find(p=>p.id===id);
  if(!p)p={id,display_name:'RAUSO-Mitglied'};
  const past=rausoInboxMessages.some(m=>m.sender_id===id||m.recipient_id===id);
- if(connection(p)!=='accepted'&&!mutualLike(id)&&!past){
-  toast('Chat erst nach bestätigtem Kontakt oder gegenseitigem Dating-Like.');return
+ if(connection(p)!=='accepted'&&!past){
+  toast('Chat erst nach bestätigtem Kontakt.');return
  }
  state.currentChat=id;
  modal('Chat mit '+p.display_name,
   '<div id="chatMessages" class="chat-board"></div>'+
   '<form id="chatForm" class="sendline"><input id="chatInput" maxlength="2000" required placeholder="Nachricht schreiben …" autocomplete="off">'+
   '<button type="submit">➤</button></form>'+
-  '<p class="quiet">'+(demoMode()?'Demo-Nachrichten sind nur lokal sichtbar.':'Rot = ungelesen, Grün = gelesen. Lesestatus wird nur beim Öffnen des Chats aktualisiert.')+'</p>');
+  '<p class="quiet">'+(demoMode()?'Demo-Nachrichten sind nur lokal sichtbar.':'')+'</p>');
  loadChat();$('chatForm').onsubmit=sendChat
 }
 async function loadChat(){
@@ -1181,12 +1185,6 @@ async function sendChat(e){
 function personOptions(id){const p=availablePeople().find(p=>p.id===id);if(!p)return;modal(`${p.display_name} · Optionen`,`<div class="stack"><p class="quiet">Du kannst Nutzer blockieren oder unangemessenes Verhalten melden.</p><button id="blockPerson" class="outline-btn">⛔ ${demoMode()?'Testprofil ausblenden':'Nutzer blockieren'}</button><button id="reportPerson" class="outline-btn">⚑ Profil melden</button></div>`);$('blockPerson').onclick=()=>blockPerson(id);$('reportPerson').onclick=()=>reportPerson(id)}
 async function blockPerson(id){try{if(demoMode()){state.demoBlocks[id]=true;persist()}else{const {error}=await api.from('blocks').insert({blocker_id:myId(),blocked_id:id});if(error)throw error;await loadSocial()}closeModal();renderMessages();toast('Profil ausgeblendet.')}catch(err){toast(err.message)}}
 function reportPerson(id){modal('Profil melden',`<form id="reportForm" class="stack"><div class="input-group"><label for="reason">Grund der Meldung</label><textarea id="reason" required minlength="5" maxlength="500" placeholder="Beschreibe das Problem"></textarea></div><button class="primary-btn" type="submit">Meldung senden</button></form>`);$('reportForm').onsubmit=async e=>{e.preventDefault();if(demoMode()){toast('Demo: Meldung wurde nicht an einen Server gesendet.');closeModal();return}const {error}=await api.from('reports').insert({reporter_id:myId(),target_id:id,reason:$('reason').value.trim()});if(error)toast(error.message);else{closeModal();toast('Meldung eingereicht.')}}}
-function renderDating(){const main=$('datingContent');if(!demoMode()&&!rausoAdult()){main.innerHTML='<div class="surface stack"><h2>Dating ab 18 Jahren</h2><p class="quiet">Dating ist nur ab 18 Jahren mit hinterlegtem Geburtsdatum möglich.</p></div>';return}const opt=profile().dating_enabled===true;if(!opt){main.innerHTML=`<div class="surface stack"><div style="font-size:47px">♡</div><h2>Dating ist ausgeschaltet</h2><p class="quiet">Dein Profil erscheint nicht im Dating-Bereich. Du kannst Dating jederzeit freiwillig einschalten – nur für Erwachsene ab 18 Jahren.</p><p class="quiet">Mindestalter 18 Jahre · Prüfung anhand deines Geburtsdatums.</p><button class="primary-btn" id="activateDating">Dating aktivieren</button><p class="quiet">Freundschaften und normale Unternehmungen funktionieren unabhängig davon.</p></div>`;$('activateDating').onclick=()=>{if(!rausoAdult()){toast('Dating ist erst ab 18 Jahren erlaubt.');return}setDating(true,true)};return}
- const people=availablePeople().filter(p=>p.dating_enabled&&p.adult_confirmed);main.innerHTML=`<div class="status-banner">${demoMode()?'Dating-Demo: Diese Profile sind nur Beispiele. Es entstehen keine echten Matches.':'Dating aktiv: Dein Profil ist für andere angemeldete Dating-Nutzer sichtbar.'}</div><div class="section-head"><h2>Menschen kennenlernen</h2><button class="outline-btn" id="deactivateDating">Dating aus</button></div><div class="stack">${people.length?people.map(p=>`<article class="surface"><div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city)}</small></div></div><p class="quiet">${esc(p.bio||'Lust, neue Leute kennenzulernen.')}</p><div class="place-actions"><button class="small-btn ${likedPerson(p.id)?'active':''}" data-date-like="${esc(p.id)}">${likedPerson(p.id)?'♥ Gefällt mir':'♡ Like'}</button>${mutualLike(p.id)?`<button class="small-btn" data-chat="${esc(p.id)}">✉ Match-Chat</button>`:''}<button class="small-btn" data-options="${esc(p.id)}">⋯</button></div></article>`).join(''):'<div class="empty">Derzeit keine Dating-Profile gefunden.</div>'}</div>`;
- $('deactivateDating').onclick=()=>setDating(false,false);main.querySelectorAll('[data-date-like]').forEach(b=>b.onclick=()=>dateLike(b.dataset.dateLike));wirePeople(main)}
-function likedPerson(id){return demoMode()?!!state.demoDatingLikes[id]:state.datingLikes.some(l=>l.liker_id===myId()&&l.liked_id===id)}
-async function dateLike(id){if(!mustVerify('Dating-Likes'))return;if(demoMode()){state.demoDatingLikes[id]=state.demoDatingLikes[id]?'':(id==='demo-u2'?'match':'liked');persist();renderDating();renderMessages();toast(state.demoDatingLikes[id]==='match'?'Demo-Match! Du kannst den Test-Chat ausprobieren.':'Demo-Like gespeichert.');return}try{const req=likedPerson(id)?api.from('dating_likes').delete().eq('liker_id',myId()).eq('liked_id',id):api.from('dating_likes').insert({liker_id:myId(),liked_id:id});const {error}=await req;if(error)throw error;await loadSocial();toast(mutualLike(id)?'Match! Ihr könnt jetzt schreiben.':'Like gespeichert.')}catch(err){toast(err.message)}}
-async function setDating(enabled,adult){if(enabled&&!rausoAdult()){toast('Dating ist erst ab 18 Jahren möglich.');return}if(enabled&&!mustVerify('Dating aktivieren'))return;try{if(demoMode()){state.demoProfile={...state.demoProfile,dating_enabled:enabled,adult_confirmed:adult};persist()}else{const {error}=await api.from('rauso_profiles').update({dating_enabled:enabled,adult_confirmed:enabled?adult:profile().adult_confirmed}).eq('id',myId());if(error)throw error;state.profile={...state.profile,dating_enabled:enabled,adult_confirmed:adult}}renderDating();renderProfile();toast(enabled?'Dating aktiviert.':'Dating deaktiviert.')}catch(err){toast(err.message)}}
 const rausoInterestChoices=['Thermen','Restaurants','Kino','Ausflüge','Familie','Bowling','Spiele','Natur','Kultur','Sport','Anime','Reisen'];
 let rausoMemberCityFilter='';
 let rausoMemberInterestFilter='all';
@@ -1213,7 +1211,8 @@ function showAuth(){
    '<div class="input-group" id="signupBirthWrap" hidden><label for="signupBirth">Geburtsdatum (Pflichtfeld, später nicht änderbar)</label>'+
    '<input id="signupBirth" type="date" min="1900-01-01" max="'+new Date().toISOString().slice(0,10)+'">'+
    '<small>Das Geburtsdatum wird nur für dein Konto gespeichert.</small></div>'+
-  '<div class="input-group"><label for="authEmail">E-Mail</label><input id="authEmail" type="email" required autocomplete="email"></div>'+
+  '<div class="input-group" id="signupGenderWrap" hidden><label for="signupGender">Geschlecht</label><select id="signupGender"><option value="">Bitte auswählen</option><option value="mann">Mann</option><option value="frau">Frau</option></select></div>'+
+   '<div class="input-group"><label for="authEmail">E-Mail</label><input id="authEmail" type="email" required autocomplete="email"></div>'+
   '<div class="input-group"><label for="authPassword">Passwort (mind. 8 Zeichen)</label>'+
   '<input id="authPassword" type="password" minlength="8" required autocomplete="current-password"></div>'+
   '<div class="form-actions"><button class="primary-btn" type="submit" id="authSubmit">Anmelden</button>'+
@@ -1223,7 +1222,7 @@ function showAuth(){
  let register=false;
  $('authForm').onsubmit=e=>{e.preventDefault();runAuth(register)};
  $('signup').onclick=()=>{
-  register=true;$('signupNameWrap').hidden=false;$('signupName').required=true;$('signupBirthWrap').hidden=false;$('signupBirth').required=true;
+  register=true;$('signupNameWrap').hidden=false;$('signupName').required=true;$('signupBirthWrap').hidden=false;$('signupBirth').required=true;$('signupGenderWrap').hidden=false;$('signupGender').required=true;
   $('authSubmit').textContent='Konto registrieren';$('signup').textContent='Zur Anmeldung';
   $('signup').onclick=()=>showAuth();
   $('signupName').focus()
@@ -1245,10 +1244,12 @@ async function runAuth(signup){
  const email=$('authEmail')?.value.trim(),password=$('authPassword')?.value;
  const name=signup?$('signupName')?.value.trim():'';
  const birth=signup?$('signupBirth')?.value:'';
+  const gender=signup?$('signupGender')?.value:'';
  if(signup&&!rausoValidDisplayName(name)){toast('Profilname verpflichtend: 2–40 Zeichen und kein Platzhalter.');$('signupName').focus();return}
  const options={emailRedirectTo:'rauso://auth/callback'};
  if(signup&&rausoAge(birth)===null){toast('Bitte gültiges Geburtsdatum eintragen.');$('signupBirth').focus();return}
- if(signup)options.data={display_name:name,birth_date:birth};
+ if(signup&&!['mann','frau'].includes(gender)){toast('Bitte Mann oder Frau auswählen.');return}
+  if(signup)options.data={display_name:name,birth_date:birth,gender};
  const {data,error}=signup
   ?await api.auth.signUp({email,password,options})
   :await api.auth.signInWithPassword({email,password});
@@ -1298,7 +1299,7 @@ function attachRausoRealtime(){
 }
 async function refreshUser(){
  const {data:{user}}=await api.auth.getUser();
- state.user=user||null;rausoGroupInbox=[];rausoGroupUnread={};rausoLastGroupRead={};rausoGroupReadBusy.clear();rausoUpdateMessageBadge();rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
+ state.user=user||null;try{rausoIncognito=localStorage.getItem(rausoIncognitoKey())==='true'}catch{rausoIncognito=false}rausoUpdateIncognitoButton();rausoGroupInbox=[];rausoGroupUnread={};rausoLastGroupRead={};rausoGroupReadBusy.clear();rausoUpdateMessageBadge();rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
  if(!user){
   state.profile=null;state.profilePhotoUrl=null;updateHeaderAccount();rausoInboxMessages=[];rausoGroupInbox=[];rausoUpdateMessageBadge();renderMessages();return
  }
@@ -1309,7 +1310,7 @@ async function refreshUser(){
   const metadataName=String(user.user_metadata?.display_name||'').trim();
   if(rausoValidDisplayName(metadataName)){
    const {data:created,error:insertError}=await api.from('rauso_profiles')
-    .insert({id:user.id,display_name:metadataName,city:'',bio:''}).select('*').single();
+    .insert({id:user.id,display_name:metadataName,city:'',bio:'',gender:['mann','frau'].includes(user.user_metadata?.gender)?user.user_metadata.gender:null}).select('*').single();
    if(insertError){console.warn('Profil:',insertError.message);state.profile=null}
    else state.profile=created;
   }else state.profile=null
@@ -1347,7 +1348,7 @@ async function pollRausoNotifications(announce=true){
    .select('id,type,body,is_read,created_at,actor_id,outing_id')
    .eq('user_id',myId()).order('created_at',{ascending:false}).limit(80);
   if(error){console.warn('Notifications:',error.message);return}
-  const notifications=data||[];
+  const notifications=(data||[]).filter(n=>n.type!=='message');
   const unread=notifications.filter(n=>!n.is_read);
   const badge=$('notificationCount');
   if(badge){badge.textContent=unread.length>99?'99+':String(unread.length);badge.classList.toggle('hidden',unread.length===0)}
@@ -1368,15 +1369,15 @@ async function renderNotifications(){
   .select('id,type,body,is_read,created_at,actor_id,outing_id')
   .eq('user_id',myId()).order('created_at',{ascending:false}).limit(80);
  if(error){el.innerHTML='<div class="status-banner">Benachrichtigungen nicht verfügbar: '+esc(error.message)+'</div>';return}
- drawRausoNotifications(data||[]);
+ drawRausoNotifications((data||[]).filter(n=>n.type!=='message'));
 }
 function drawRausoNotifications(notifications){
  const el=$('notificationsContent');if(!el)return;
- el.innerHTML='<div class="surface"><h2>🔔 Benachrichtigungen</h2><p class="quiet">Neue Freundschaftsanfragen, Nachrichten, Zusagen und Absagen erscheinen hier während die App geöffnet ist. Benachrichtigungen bei geschlossener App erfordern zusätzlich einen Push-Dienst.</p><button id="readAllNotifs" class="outline-btn">Alle als gelesen markieren</button></div>'+
+ el.innerHTML='<div class="surface"><h2>🔔 Benachrichtigungen</h2><p class="quiet">Freundschaftsanfragen, Zusagen und Absagen stehen hier. Chatnachrichten erscheinen ausschließlich unter Nachrichten. Benachrichtigungen bei geschlossener App erfordern zusätzlich einen Push-Dienst.</p><button id="readAllNotifs" class="outline-btn">Alle als gelesen markieren</button></div>'+
   (notifications.length?notifications.map(n=>{
    const action=n.type==='friend_request'&&n.actor_id?
      '<div class="notification-actions"><button class="small-btn join-btn" data-accept-request="'+esc(n.actor_id)+'">✓ Annehmen</button><button class="small-btn" data-decline-request="'+esc(n.actor_id)+'">✕ Ablehnen</button></div>':'';
-   return '<article class="surface notification-item '+(n.is_read?'':'unread-notification')+'"><strong>'+esc(n.type==='friend_request'?'👥 Freundschaftsanfrage':n.type==='friend_accepted'?'👥 Freundschaft bestätigt':n.type==='friend_declined'?'👥 Anfrage abgelehnt':n.type==='message'?'✉ Neue Nachricht':n.type==='rsvp'?'📅 Veranstaltung':'🔔 Mitteilung')+'</strong>'+
+   return '<article class="surface notification-item '+(n.is_read?'':'unread-notification')+'"><strong>'+esc(n.type==='friend_request'?'👥 Freundschaftsanfrage':n.type==='friend_accepted'?'👥 Freundschaft bestätigt':n.type==='friend_declined'?'👥 Anfrage abgelehnt':n.type==='rsvp'?'📅 Veranstaltung':'🔔 Mitteilung')+'</strong>'+
     '<p>'+esc(n.body)+'</p><small>'+esc(fmt(n.created_at))+'</small>'+action+
     (n.is_read?'':'<button class="small-btn" data-notif-read="'+esc(n.id)+'">Gelesen</button>')+
     '</article>';
@@ -1392,7 +1393,7 @@ function drawRausoNotifications(notifications){
   if(error)toast(error.message);else{await renderNotifications();await pollRausoNotifications(false)}
  });
  const all=$('readAllNotifs');if(all)all.onclick=async()=>{
-  const {error}=await api.from('rauso_notifications').update({is_read:true}).eq('user_id',myId()).eq('is_read',false);
+  const {error}=await api.from('rauso_notifications').update({is_read:true}).eq('user_id',myId()).eq('is_read',false).neq('type','message');
   if(error)toast(error.message);else{await renderNotifications();await pollRausoNotifications(false)}
  };
 }
@@ -1518,8 +1519,12 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.9.9';
+const APP_VERSION='3.0.0';
 const UI_PREF='rauso-ui-2';
+const rausoIncognitoKey=()=> 'rauso-incognito:'+myId();
+let rausoIncognito=false;
+function rausoUpdateIncognitoButton(){const b=$('incognitoToggle');if(!b)return;b.setAttribute('aria-checked',String(rausoIncognito));b.setAttribute('aria-label','Inkognito '+(rausoIncognito?'an':'aus'));b.title=rausoIncognito?'Online-Status verborgen':'Online-Status sichtbar'}
+async function rausoSetIncognito(enabled){if(!state.user){showAuth();return}const before=rausoIncognito;rausoIncognito=!!enabled;rausoUpdateIncognitoButton();if(navigator.onLine){const {error}=await api.from('rauso_presence').upsert({user_id:myId(),last_seen_at:new Date().toISOString(),is_incognito:rausoIncognito},{onConflict:'user_id'});if(error){rausoIncognito=before;rausoUpdateIncognitoButton();toast('Inkognito konnte nicht gespeichert werden: '+error.message);return}}try{localStorage.setItem(rausoIncognitoKey(),String(rausoIncognito))}catch{}toast(rausoIncognito?'Inkognito aktiviert':'Inkognito deaktiviert')}
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
 const saveUi=()=>{try{localStorage.setItem(UI_PREF,JSON.stringify(uiPref))}catch(e){console.warn('Settings storage unavailable',e)}};
@@ -1560,7 +1565,7 @@ function addMoreLink(){
  b.textContent='☰ Weitere Bereiche: Programm & Hinweise';
  b.onclick=()=> {
   const pages=[['🎟 Programm','shows'],
-   ['🔔 Benachrichtigungen','notifications'],['♡ Dating (ab 18)','dating'],
+   ['🔔 Benachrichtigungen','notifications'],
    ['⚙ Verwaltung (Berechtigung erforderlich)','admin']];
   modal('Weitere Bereiche','<div class="stack">'+pages.map(([label,tab])=>
    '<button class="outline-btn" data-more-tab="'+esc(tab)+'">'+esc(label)+'</button>').join('')+'</div>');
@@ -1577,24 +1582,24 @@ function addNavMore(){
 function addOfflineState(){if($('networkStatus'))return;const n=document.createElement('div');n.id='networkStatus';n.setAttribute('role','status');document.querySelector('main')?.prepend(n);const update=()=>{n.textContent=navigator.onLine?'':'Offline: Gespeicherte Daten sind sichtbar; aktuelle Orte und Zusagen benötigen Internet.';n.hidden=navigator.onLine};window.addEventListener('online',update);window.addEventListener('offline',update);update()}
 
 function saveDiscoverySettings(){
- try{localStorage.setItem('rauso-discovery-settings',JSON.stringify({region:state.region,radius:state.radius,category:state.cat,priceFilter:state.priceFilter}))}catch{}
+ try{localStorage.setItem('rauso-discovery-settings',JSON.stringify({region:state.region,radius:state.radius,category:state.cat,eventDate:state.eventDate,eventClock:state.eventClock}))}catch{}
 }
 function restoreDiscoverySettings(){
  let saved={};try{saved=JSON.parse(localStorage.getItem('rauso-discovery-settings')||'{}')||{}}catch{}
  const region=$('regionSelect'),radius=$('radiusSelect');
  if(region&&[...region.options].some(o=>o.value===saved.region)){region.value=saved.region;state.region=saved.region}
  if(radius&&[...radius.options].some(o=>Number(o.value)===Number(saved.radius))){radius.value=String(saved.radius);state.radius=Number(saved.radius)}
- if(['all','free','paid'].includes(saved.priceFilter)){state.priceFilter=saved.priceFilter;if($('priceFilter'))$('priceFilter').value=saved.priceFilter}
+ state.priceFilter='all';if(typeof saved.eventDate==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(saved.eventDate))state.eventDate=saved.eventDate;if(typeof saved.eventClock==='string'&&/^\d{2}:\d{2}$/.test(saved.eventClock))state.eventClock=saved.eventClock;if($('eventDateFilter'))$('eventDateFilter').value=state.eventDate;if($('eventClockFilter'))$('eventClockFilter').value=state.eventClock;
  if(cats[saved.category]){state.cat=saved.category;document.querySelectorAll('[data-cat]').forEach(b=>b.classList.toggle('selected',b.dataset.cat===state.cat))}const categoryDropdown=$('categorySelect');if(categoryDropdown)categoryDropdown.value=state.cat;
 }
 
-function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();if($('heroCreate'))$('heroCreate').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});if($('rausoEventTime'))$('rausoEventTime').onchange=e=>{state.eventTime=e.target.value;renderEvents()};if($('rausoEventCategory'))$('rausoEventCategory').onchange=e=>{state.eventCategory=e.target.value;renderEvents()};if($('rausoEventOpen'))$('rausoEventOpen').onchange=e=>{state.eventOpenOnly=e.target.checked;renderEvents()};if($('rausoEventAge'))$('rausoEventAge').onchange=e=>{state.eventAgeOnly=e.target.checked;renderEvents()};if($('rausoEventReset'))$('rausoEventReset').onclick=()=>{state.eventTime='all';state.eventCategory='all';state.eventOpenOnly=false;state.eventAgeOnly=false;$('rausoEventTime').value='all';$('rausoEventCategory').value='all';$('rausoEventOpen').checked=false;$('rausoEventAge').checked=false;renderEvents()};$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('priceFilter').onchange=e=>{state.priceFilter=e.target.value;saveDiscoverySettings();renderPlaces()};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
+function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();if($('heroCreate'))$('heroCreate').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});if($('rausoEventTime'))$('rausoEventTime').onchange=e=>{state.eventTime=e.target.value;renderEvents()};if($('rausoEventCategory'))$('rausoEventCategory').onchange=e=>{state.eventCategory=e.target.value;renderEvents()};if($('rausoEventOpen'))$('rausoEventOpen').onchange=e=>{state.eventOpenOnly=e.target.checked;renderEvents()};if($('rausoEventAge'))$('rausoEventAge').onchange=e=>{state.eventAgeOnly=e.target.checked;renderEvents()};if($('rausoEventReset'))$('rausoEventReset').onclick=()=>{state.eventTime='all';state.eventCategory='all';state.eventOpenOnly=false;state.eventAgeOnly=false;state.eventDate='';state.eventClock='';$('eventDateFilter').value='';$('eventClockFilter').value='';saveDiscoverySettings();$('rausoEventTime').value='all';$('rausoEventCategory').value='all';$('rausoEventOpen').checked=false;$('rausoEventAge').checked=false;renderEvents()};$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('eventDateFilter').onchange=e=>{state.eventDate=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('eventClockFilter').onchange=e=>{state.eventClock=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
  $('categorySelect').onchange=e=>{document.querySelector('[data-cat="'+e.target.value+'"]')?.click()};
  $('loadPlaces').onclick=queryPlaces;state.places=[];renderPlaces();renderEvents();renderFamily();renderMyMeetings();renderMessages();loadMessageInbox();renderProfile();injectProfileExtras();queryPlaces();if(hasBackend){api.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(()=>refreshUser().then(()=>{updateOnlinePresence();switchTab(state.tab)}),0)});refreshUser().then(()=>switchTab(state.tab))}
 }
 async function updateOnlinePresence(){
  if(!state.user||!navigator.onLine)return;
- try{await api.from('rauso_presence').upsert({user_id:myId(),last_seen_at:new Date().toISOString()},{onConflict:'user_id'})}catch{}
+ try{await api.from('rauso_presence').upsert({user_id:myId(),last_seen_at:new Date().toISOString(),is_incognito:rausoIncognito},{onConflict:'user_id'})}catch{}
 }
 setInterval(()=>{if(!document.hidden)updateOnlinePresence()},30000);
 setInterval(()=>{if(!document.hidden&&state.user)loadMessageInbox()},15000);
@@ -1606,6 +1611,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(!uiPref.referenceDesign24){uiPref.theme='orange';uiPref.autoTheme=false;uiPref.referenceDesign24=true;saveUi()}
  setAppearance();init();addNavMore();addOfflineState();addReadiness();
  if($('headerFriends'))$('headerFriends').onclick=openFriendsPanel;
+  if($('incognitoToggle'))$('incognitoToggle').onclick=()=>rausoSetIncognito(!rausoIncognito);rausoUpdateIncognitoButton();
  if($('headerMessages'))$('headerMessages').onclick=()=>switchTab('messages');
  document.querySelectorAll('[data-rauso-hero-go]').forEach(button=>{
   button.onclick=()=>{
