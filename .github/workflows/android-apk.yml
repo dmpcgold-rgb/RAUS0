@@ -8,6 +8,7 @@ on:
       - 'build.gradle'
       - 'settings.gradle'
       - 'scripts/**'
+      - 'tests/**'
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
 
