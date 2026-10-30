@@ -32,8 +32,8 @@ assert.match(js,/function rausoOpenBookmark/);
 assert.match(js,/id="savedPlaceSite"/);
 assert.match(js,/id="savedPlaceCreate"/);
 assert.match(js,/Orange Herzen/);
-assert.match(js,/const APP_VERSION='2\.9\.7'/);
-assert.match(gradle,/versionCode 48; versionName '2\.9\.7'/);
+assert.match(js,/const APP_VERSION='2\.9\.8'/);
+assert.match(gradle,/versionCode 49; versionName '2\.9\.8'/);
 for(const target of ['com.whatsapp','com.instagram.android','com.facebook.katana']){
  assert.ok(java.includes(target),'Missing Android share target '+target);
 }
@@ -84,3 +84,7 @@ assert(js.includes('rausoEventMatchesFilters')&&js.includes('rausoAttendeePrevie
 
 /* RAUSO social discovery protection */
 assert(js.includes('rausoCanOpenOutingChat')&&js.includes('rausoMatchesMember'),'Social filters and group chat should exist');
+
+/* RAUSO 2.9.8 group chats in Nachrichten */
+assert(js.includes('rausoGroupInbox')&&js.includes('rausoLoadGroupInbox'),'Group chat inbox integration must remain');
+assert(js.includes('data-inbox-group')&&js.includes('data-inbox-view="groups"'),'Group list and filter must exist');
