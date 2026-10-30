@@ -71,7 +71,7 @@ assert.equal(f.rausoQuickMeetupCount(upcoming,'tomorrow','familie',now),0,'Empty
 assert.equal(f.rausoQuickMeetupCount(upcoming,'next-week','all',now),0,'Next week count');
 assert.equal(f.rausoQuickMeetupCount([event('2026-11-02T12:00:00Z')],'next-week','all',now),1,'Next week boundary');
 assert.equal(f.rausoQuickMeetupCount([event('2026-11-01T12:00:00Z')],'next-month','all',now),1,'Next month boundary');
-assert(html.includes('class="rauso-quick-count"')&&css.includes('RAUSO 3.0.4: colored text'));
+assert(html.includes('class="rauso-quick-offer"')&&css.includes('RAUSO 3.0.5: discover uncommitted meetup offers'));
 
 /* RAUSO 3.0.5: offer discovery is independent from RSVP. */
 const offers=[event('2026-10-31T11:00:00Z',{title:'Wandertour',author:'Alex',mineReaction:null}),event('2026-10-31T12:00:00Z',{title:'Therme',author:'Sam',mineReaction:'going'})];
