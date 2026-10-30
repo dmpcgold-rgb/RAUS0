@@ -38,6 +38,7 @@ jobs:
           node tests/rauso-ui-regression.cjs
           node tests/rauso-event-discovery.cjs
           node tests/rauso-social-groupchat.cjs
+          node tests/rauso-group-inbox.cjs
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
