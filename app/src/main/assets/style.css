@@ -2051,3 +2051,13 @@ html[data-rauso-theme] .filters.rauso-date-filters>.field select{font-size:10px!
 html[data-rauso-theme] .rauso-date-time-field input{width:100%;min-width:0;min-height:23px;box-sizing:border-box;padding:2px;background:#08090b;color:#fff;color-scheme:dark;border:1px solid #777;border-radius:5px;font-size:10px}
 html[data-rauso-theme] .rauso-inbox-list .rauso-chat-row{background:#08090b!important;border:1px solid #ddd!important}
 @media(max-width:380px){html[data-rauso-theme] .compact-topbar #headerFriends .header-bookmarks-text{display:none!important}html[data-rauso-theme] .compact-topbar :is(#headerMessages,#notificationBell,#headerSettings,#accountShortcut){width:30px!important;min-width:30px!important;max-width:30px!important;flex-basis:30px!important}html[data-rauso-theme] .rauso-incognito-toggle{flex-basis:48px;width:48px;min-width:48px}}
+
+/* Match the highest-specificity legacy photo rules: no pictorial cards. */
+html[data-rauso-theme] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image).rauso-place-create,
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image).rauso-place-create,
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category="thermen"] :is(.place-cover,.featured-image).rauso-place-create,
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category="restaurants"] :is(.place-cover,.featured-image).rauso-place-create,
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category="kino"] :is(.place-cover,.featured-image).rauso-place-create{
+ background:#08090b!important;background-color:#08090b!important;background-image:none!important;
+}
+html[data-rauso-theme="orange"] .rauso-place-link[data-venue-category] :is(.place-cover,.featured-image).rauso-place-create::after{display:none!important;content:none!important}
