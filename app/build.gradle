@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 android {
  namespace 'at.rauso.app'
  compileSdk 36
- defaultConfig { applicationId 'at.rauso.app'; minSdk 26; targetSdk 36; versionCode 47; versionName '2.9.6' }
+ defaultConfig { applicationId 'at.rauso.app'; minSdk 26; targetSdk 36; versionCode 48; versionName '2.9.7' }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
  buildTypes { release { minifyEnabled false } }
 }
