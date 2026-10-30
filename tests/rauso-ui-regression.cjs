@@ -64,7 +64,7 @@ assert(js.includes('rausoMatchesPrice')&&js.includes('rausoShowAllHighlights'),'
 for(const cls of ['rauso-nav-smile','rauso-nav-star','rauso-nav-family','rauso-nav-dating-heart','rauso-created-exclamation','rauso-neon-envelope','rauso-hero-shortcuts']){
  assert(html.includes(cls),'Missing visual token '+cls);
 }
-assert(js.includes("const APP_VERSION='2.9.6'"),'JS version should be 2.9.2');
+assert(js.includes("const APP_VERSION='2.9.7'"),'JS version should be 2.9.2');
 assert(js.includes("destination==='friends'")&&js.includes("destination==='events'"),'Hero shortcuts must navigate');
 assert(css.includes('background-image:none!important;'),'Pill category backgrounds must stay image-free');
 
