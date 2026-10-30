@@ -7,9 +7,9 @@ const css=fs.readFileSync('app/src/main/assets/style.css','utf8');
 const start=js.indexOf('function rausoLocalEventDay(');
 const end=js.indexOf('function renderEvents(){',start);
 assert(start>=0&&end>start,'Pure discovery predicates missing');
-const functions=new Function('state','rausoOwnBirthdate','rausoEventAgeEligibility','myId',js.slice(start,end)+';return {rausoLocalEventDay,rausoEventMatchesFilters};');
+const functions=new Function('state','rausoOwnBirthdate','rausoEventAgeEligibility','myId','rausoReferencePoint','km','regionData',js.slice(start,end)+';return {rausoLocalEventDay,rausoEventMatchesFilters};');
 const state={eventMode:'all',eventTime:'all',eventCategory:'all',eventOpenOnly:false,eventAgeOnly:false};
-const f=functions(state,'1992-12-05',()=>({ok:true}),()=> 'myself');
+const f=functions(state,'1992-12-05',()=>({ok:true}),()=> 'myself',()=>[47.815,16.245],(a,b,c,d)=>Math.hypot(a-c,b-d)*111,{'wiener-neustadt':[47.815,16.245],wien:[48.208,16.373]});
 const now=Date.parse('2026-10-30T09:00:00Z'); // Friday in Austria
 const event=(iso,extras={})=>({id:'some-event',author_id:'another',starts_at:iso,visibility:'public',category:'thermen',availability:{is_full:false},...extras});
 assert.equal(f.rausoLocalEventDay('2026-06-01T22:30:00Z'),'2026-06-02','Vienna summer UTC day rollover');
@@ -31,9 +31,9 @@ assert(!f.rausoEventMatchesFilters(event(sat.starts_at,{availability:{is_full:tr
 assert(f.rausoEventMatchesFilters(sat,now),'Available should be included');
 state.eventOpenOnly=false;state.eventAgeOnly=true;
 assert(f.rausoEventMatchesFilters(sat,now),'Eligibility pass');
-const bad=functions(state,'1992-12-05',()=>({ok:false}),()=> 'myself');
+const bad=functions(state,'1992-12-05',()=>({ok:false}),()=> 'myself',()=>[47.815,16.245],(a,b,c,d)=>Math.hypot(a-c,b-d)*111,{'wiener-neustadt':[47.815,16.245],wien:[48.208,16.373]});
 assert(!bad.rausoEventMatchesFilters(sat,now),'Age filter must respect eligibility');
-const unknown=functions(state,null,()=>({ok:true}),()=> 'myself');
+const unknown=functions(state,null,()=>({ok:true}),()=> 'myself',()=>[47.815,16.245],(a,b,c,d)=>Math.hypot(a-c,b-d)*111,{'wiener-neustadt':[47.815,16.245],wien:[48.208,16.373]});
 assert(!unknown.rausoEventMatchesFilters(sat,now),'Unknown birthdate must not bypass age filter');
 for(const id of ['rausoEventTime','rausoEventCategory','rausoEventOpen','rausoEventAge','rausoEventReset','rausoEventResultCount']) assert(html.includes('id="'+id+'"'),'Missing UI '+id);
 assert(js.includes('const extra={category:val.category,family_friendly:val.family_friendly'),'Creator extra fields must be submitted');
@@ -42,3 +42,16 @@ assert(!js.includes("category:'ausfluege',transport_mode:'zufuss',family_friendl
 assert(js.includes('confirmedVisible')&&js.includes('rausoAttendeePreview'),'Visible confirmed attendees must be supported');
 assert(css.includes('RAUSO 2.9.6: event discovery and participant cards'),'Event design styles missing');
 console.log('RAUSO event discovery timezone, filter, capacity, age, migration compatibility and UI tests passed');
+
+/* RAUSO 3.0.3: date ranges and approximate nearby filter. */
+state.eventAgeOnly=false;state.eventTime='next-week';
+assert(f.rausoEventMatchesFilters(event('2026-11-02T12:00:00Z'),now),'Next Monday included');
+assert(f.rausoEventMatchesFilters(event('2026-11-08T12:00:00Z'),now),'Next Sunday included');
+assert(!f.rausoEventMatchesFilters(event('2026-11-09T12:00:00Z'),now),'Next Monday+1w excluded');
+state.eventTime='next-month';
+assert(f.rausoEventMatchesFilters(event('2026-11-01T12:00:00Z'),now),'Next month included');
+assert(!f.rausoEventMatchesFilters(event('2026-12-01T12:00:00Z'),now),'Month after next excluded');
+state.eventTime='all';state.eventNearbyOnly=true;state.radius=25000;
+assert(f.rausoEventMatchesFilters(event('2026-11-02T12:00:00Z',{place_name:'Wiener Neustadt Innenstadt'}),now),'Near town included');
+assert(!f.rausoEventMatchesFilters(event('2026-11-02T12:00:00Z',{place_name:'Wien Innenstadt'}),now),'Far town excluded');
+assert(!f.rausoEventMatchesFilters(event('2026-11-02T12:00:00Z',{place_name:'Geheimer Treffpunkt'}),now),'Unknown place excluded');
