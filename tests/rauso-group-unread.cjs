@@ -53,7 +53,7 @@ const mod=create(state,()=> 'me',api,e=>e?.mineReaction==='going',()=>state.outi
  await mod.load();
  assert.equal(mod.total(),2,'No new authenticated RPC after logout');
  assert(js.includes("const num=privateNum+rausoUnreadGroupTotal()"),'Kuvert must aggregate both unread sources');
- assert(js.includes("rausoInboxView==='unread'||rausoInboxView==='groups'"),'Unread must include groups');
+ assert(js.includes("rausoInboxView==='groups'||rausoInboxView==='unread'"),'Unread must include groups');
  assert(js.includes("if((data||[]).length)await rausoMarkGroupRead(id,data[0].created_at)"),'Read marks must use displayed server timestamp');
  assert(js.includes("order('created_at',{ascending:false}).limit(100)"),'Load latest group-chat messages');
  assert(sql.includes('ENABLE ROW LEVEL SECURITY'),'Server read markers need RLS');
