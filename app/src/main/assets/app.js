@@ -846,6 +846,45 @@ let rausoInboxBusy=false;
 let rausoInboxSearch='';
 
 let rausoGroupInbox=[];
+
+let rausoGroupUnread={};
+let rausoGroupUnreadBusy=false;
+let rausoGroupReadBusy=new Set();
+let rausoLastGroupRead={};
+function rausoUnreadGroupTotal(){
+ return Object.values(rausoGroupUnread).reduce((sum,n)=>sum+(Number(n)||0),0);
+}
+function rausoUnreadGroupCount(id){return Number(rausoGroupUnread[id])||0}
+async function rausoLoadGroupUnread(){
+ if(rausoGroupUnreadBusy||!state.user)return;
+ const viewerId=myId();
+ rausoGroupUnreadBusy=true;
+ try{
+  const {data,error}=await api.rpc('rauso_group_chat_unread_counts');
+  if(!state.user||myId()!==viewerId)return;
+  if(error){console.warn('Ungelesene Gruppennachrichten:',error.message);return}
+  rausoGroupUnread=Object.fromEntries((data||[]).map(row=>[String(row.outing_id),Math.max(0,Number(row.unread_count)||0)]));
+  rausoUpdateMessageBadge();
+  if(state.tab==='messages')renderMessages();
+ }finally{rausoGroupUnreadBusy=false}
+}
+async function rausoMarkGroupRead(id,createdAt){
+ if(!state.user||!createdAt||!rausoCanOpenOutingChat(eventList().find(e=>String(e.id)===String(id))))return;
+ const date=Date.parse(createdAt),previous=Date.parse(rausoLastGroupRead[id]||'');
+ if(!Number.isFinite(date)||(Number.isFinite(previous)&&previous>=date)||rausoGroupReadBusy.has(id))return;
+ const viewerId=myId();
+ rausoGroupReadBusy.add(id);
+ try{
+  const {error}=await api.from('rauso_outing_chat_reads').upsert({
+   outing_id:id,user_id:viewerId,last_read_at:createdAt
+  },{onConflict:'outing_id,user_id'});
+  if(error){console.warn('Gruppen-Lesestatus:',error.message);return}
+  if(!state.user||myId()!==viewerId)return;
+  rausoLastGroupRead[id]=createdAt;
+  await rausoLoadGroupUnread();
+ }finally{rausoGroupReadBusy.delete(id)}
+}
+
 let rausoGroupInboxBusy=false;
 function rausoEligibleGroupOutings(){
  if(!state.user)return [];
@@ -854,9 +893,9 @@ function rausoEligibleGroupOutings(){
 // The table's RLS restricts preview reads to organizers and confirmed participants.
 async function rausoLoadGroupInbox(){
  if(rausoGroupInboxBusy)return;
- if(!state.user){rausoGroupInbox=[];if(state.tab==='messages')renderMessages();return}
+ if(!state.user){rausoGroupInbox=[];rausoGroupUnread={};rausoUpdateMessageBadge();if(state.tab==='messages')renderMessages();return}
  const allowed=rausoEligibleGroupOutings();
- if(!allowed.length){rausoGroupInbox=[];if(state.tab==='messages')renderMessages();return}
+ if(!allowed.length){rausoGroupInbox=[];rausoGroupUnread={};rausoUpdateMessageBadge();if(state.tab==='messages')renderMessages();return}
  const viewerId=myId();
  rausoGroupInboxBusy=true;
  try{
@@ -878,6 +917,7 @@ async function rausoLoadGroupInbox(){
    if(aTime!==bTime)return bTime-aTime;
    return (Date.parse(a.startsAt)||0)-(Date.parse(b.startsAt)||0);
   });
+  await rausoLoadGroupUnread();
   if(state.tab==='messages')renderMessages();
  }finally{rausoGroupInboxBusy=false}
 }
@@ -885,7 +925,8 @@ async function rausoLoadGroupInbox(){
 function rausoReadColor(message){return message.read_at?'read':'unread'}
 function rausoReadLabel(message){return message.read_at?'✓ Gelesen':'✓ Ungelesen'}
 function rausoUpdateMessageBadge(){
- const num=rausoInboxMessages.filter(m=>m.recipient_id===myId()&&!m.read_at).length;
+ const privateNum=rausoInboxMessages.filter(m=>m.recipient_id===myId()&&!m.read_at).length;
+ const num=privateNum+rausoUnreadGroupTotal();
  const headerBadge=$('headerMessageCount');
  if(headerBadge){headerBadge.textContent=num>99?'99+':String(num);headerBadge.classList.toggle('hidden',num===0)}
  const headerButton=$('headerMessages');
@@ -947,24 +988,26 @@ function renderInboxRows(){
   return (person?.display_name||row.id).toLocaleLowerCase('de-AT').includes(query)||
    String(row.last.body||'').toLocaleLowerCase('de-AT').includes(query);
  });
- const groupRows=(rausoInboxView==='all'||rausoInboxView==='groups'?rausoGroupInbox:[])
-  .filter(row=>(row.title+' '+row.place+' '+(row.last?.body||'')).toLocaleLowerCase('de-AT').includes(query));
+ const groupRows=(rausoInboxView==='all'||rausoInboxView==='groups'||rausoInboxView==='unread'?rausoGroupInbox:[])
+  .filter(row=>(rausoInboxView!=='unread'||rausoUnreadGroupCount(row.id)>0)&&
+   (row.title+' '+row.place+' '+(row.last?.body||'')).toLocaleLowerCase('de-AT').includes(query));
  const mixed=[
   ...privateRows.map(item=>({kind:'direct',item,time:Date.parse(item.last.created_at)||0,unread:item.unread||0})),
-  ...groupRows.map(item=>({kind:'group',item,time:Date.parse(item.last?.created_at)||0,unread:0}))
+  ...groupRows.map(item=>({kind:'group',item,time:Date.parse(item.last?.created_at)||0,unread:rausoUnreadGroupCount(item.id)}))
  ];
  if(rausoInboxView==='all')mixed.sort((a,b)=>Number(b.unread>0)-Number(a.unread>0)||b.time-a.time);
  target.innerHTML=mixed.map(row=>{
   if(row.kind==='group'){
    const group=row.item,last=group.last;
    const preview=last?(last.sender_id===myId()?'Du: ':'')+last.body:'Noch keine Nachrichten – Gruppe öffnen';
-   return '<button type="button" class="rauso-chat-row rauso-group-inbox-row" data-inbox-group="'+esc(group.id)+'" aria-label="Gruppenchat '+esc(group.title)+' öffnen">'+
+   const groupUnread=rausoUnreadGroupCount(group.id);
+   return '<button type="button" class="rauso-chat-row rauso-group-inbox-row '+(groupUnread?'unread':'')+'" data-inbox-group="'+esc(group.id)+'" aria-label="Gruppenchat '+esc(group.title)+(groupUnread?' – '+groupUnread+' ungelesene Nachrichten':'')+' öffnen">'+
     '<span class="avatar rauso-group-avatar" aria-hidden="true">👥</span>'+
     '<span class="profile-meta"><strong>'+esc(group.title)+'</strong>'+
     '<small class="rauso-group-inbox-label">Gruppenchat · '+esc(group.place)+'</small>'+
     '<small>'+esc(preview.length>75?preview.slice(0,75)+'…':preview)+'</small></span>'+
     '<span class="rauso-chat-tail">'+(last?'<span class="rauso-chat-time">'+esc(rausoMessageDate(last.created_at))+'</span>':'')+
-    '<span class="rauso-group-inbox-badge">Gruppe</span></span></button>';
+    (groupUnread?'<span class="rauso-unread-count">'+(groupUnread>99?'99+':groupUnread)+'</span>':'<span class="rauso-group-inbox-badge">Gruppe</span>')+'</span></button>';
   }
   const item=row.item;
   const p=state.people.find(p=>p.id===item.id)||{id:item.id,display_name:'RAUSO-Mitglied',city:''};
@@ -982,12 +1025,14 @@ function renderInboxRows(){
 function renderMessages(){
  const list=availablePeople();
  const rows=rausoChatRows();
- const unread=rausoInboxMessages.filter(m=>m.recipient_id===myId()&&!m.read_at).length;
+ const privateUnread=rausoInboxMessages.filter(m=>m.recipient_id===myId()&&!m.read_at).length;
+ const groupUnread=rausoUnreadGroupTotal();
+ const unread=privateUnread+groupUnread;
  const el=$('messagesContent');if(!el)return;
  el.innerHTML=
   (demoMode()?'<div class="status-banner">Vorschau: Nachrichten werden nicht an andere Personen gesendet. <button class="small-btn" id="contactsLogin">Jetzt anmelden</button></div>':'')+
   '<div class="surface"><div class="rauso-inbox-summary"><div><h2 class="inbox-overview-heading">Chats</h2>'+
-  '<p class="quiet">'+(rows.length+rausoGroupInbox.length)+' Gespräche · '+unread+' private Nachrichten ungelesen</p></div>'+
+  '<p class="quiet">'+(rows.length+rausoGroupInbox.length)+' Gespräche · '+unread+' ungelesen (davon '+groupUnread+' in Gruppen)</p></div>'+
   '<button type="button" class="primary-btn" id="chooseChatRecipient"><span class="rauso-plus-mark" aria-hidden="true"></span> Schreiben</button></div>'+
   '<div class="rauso-inbox-tabs">'+
    '<button type="button" data-inbox-view="all" class="'+(rausoInboxView==='all'?'active':'')+'">Alle</button>'+
@@ -995,7 +1040,7 @@ function renderMessages(){
    '<button type="button" data-inbox-view="contacts" class="'+(rausoInboxView==='contacts'?'active':'')+'">Kontakte</button>'+ 
    '<button type="button" data-inbox-view="groups" class="'+(rausoInboxView==='groups'?'active':'')+'">Gruppen ('+rausoGroupInbox.length+')</button></div>'+
   '<div class="searchbox rauso-message-search"><span>⌕</span><input type="search" id="inboxSearch" autocomplete="off" placeholder="Nachricht oder Name suchen" value="'+esc(rausoInboxSearch)+'"></div>'+
-  '<p class="rauso-chat-hint">Private Chats und Gruppen bestätigter Treffen · Ungelesen/Lesestatus derzeit nur für private Chats.</p>'+
+  '<p class="rauso-chat-hint">Private und Gruppenchats · Ungelesen wird pro Konto gezählt und beim Öffnen als gelesen markiert.</p>'+
   '<div id="rausoInboxRows" class="rauso-inbox-list"></div></div>'+
   '<details class="surface" id="rausoFindPeople"><summary>★ Freunde finden und Anfragen senden</summary>'+
   '<div class="searchbox"><span>⌕</span><input id="peopleSearch" placeholder="Namen suchen" autocomplete="off"></div>'+ 
@@ -1454,7 +1499,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='2.9.8';
+const APP_VERSION='2.9.9';
 const UI_PREF='rauso-ui-2';
 const readPref=()=>{try{return JSON.parse(localStorage.getItem(UI_PREF)||'{}')}catch{return {}}};
 const uiPref={theme:'orange',autoTheme:false,start:'discover',...readPref()};
