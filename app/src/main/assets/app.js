@@ -96,7 +96,7 @@ const state = {
  map:null,markers:null,mapOpen:false, session:null,profile:null,user:null,
  favorites:new Set(cache.favorites||[]), bookmarks:{...(cache.bookmarks||{})}, profilePhotoUrl:null, demoProfile:cache.profile||{display_name:'Mein RAUSO-Profil',city:'Wiener Neustadt',bio:'Ich bin gerne unterwegs.',dating_enabled:false,adult_confirmed:false},
  demoEvents:[], demoReactions:cache.reactions||{}, demoConnections:{}, demoDatingLikes:cache.datingLikes||{}, demoMessages:cache.messages||{}, demoBlocks:cache.blocks||{},
- outings:[], people:[], connections:[], datingLikes:[], blocks:[], currentChat:null, eventMode:'all',eventDate:'',eventClock:'',eventTime:'all', eventCategory:'all', eventOpenOnly:false, eventAgeOnly:false, meetFilter:'upcoming', 
+ outings:[], people:[], connections:[], datingLikes:[], blocks:[], currentChat:null, eventMode:'all',eventDate:'',eventClock:'',eventTime:'all', eventCategory:'all', eventOpenOnly:false, eventAgeOnly:false, eventNearbyOnly:false, meetFilter:'upcoming', 
 };
 const persist = () => {try{localStorage.setItem(STORE,JSON.stringify({favorites:[...state.favorites],bookmarks:state.bookmarks,profile:state.demoProfile,events:state.demoEvents,reactions:state.demoReactions,connections:state.demoConnections,datingLikes:state.demoDatingLikes,messages:state.demoMessages,blocks:state.demoBlocks,...Object.fromEntries(Object.entries(cache).filter(([k])=>k.startsWith('osm:')))}))}catch{}};
 const myId = () => state.user?.id||'local-user';
@@ -607,6 +607,20 @@ function rausoLocalEventDay(value){
 function rausoOffsetEventDay(isoDay,delta){
  const d=new Date(isoDay+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+delta);return d.toISOString().slice(0,10);
 }
+// Approximate public meetup locations by town center only when exact coordinates are absent.
+function rausoNearbyEventMatches(e){
+ const origin=rausoReferencePoint();if(!origin)return false;
+ let lat=Number(e.lat),lon=Number(e.lon);
+ if(!Number.isFinite(lat)||!Number.isFinite(lon)||!lat||!lon){
+  const place=String(e.place_name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  const aliases={'wiener-neustadt':['wiener neustadt','wr neustadt'],'st-poelten':['st polten','sankt polten'],'wr-neudorf':['wiener neudorf','wr neudorf','modling'],'st-johann':['st johann','sankt johann'],'zell':['zell am see'],'neusiedl':['neusiedl am see']};
+  const cities=Object.entries(regionData).flatMap(([key,coords])=>(aliases[key]||[key.replaceAll('-',' ')]).map(label=>({label,coords}))).sort((a,b)=>b.label.length-a.label.length);
+  const city=cities.find(c=>(' '+place+' ').includes(' '+c.label+' '));
+  if(!city)return false;
+  [lat,lon]=city.coords;
+ }
+ return km(origin[0],origin[1],lat,lon)*1000<=Number(state.radius||25000);
+}
 function rausoEventMatchesFilters(e,now=Date.now()){
  const start=Date.parse(e.starts_at);
  if(!Number.isFinite(start)||start<now-3600000)return false;
@@ -623,6 +637,17 @@ function rausoEventMatchesFilters(e,now=Date.now()){
   const saturday=rausoOffsetEventDay(today,weekday===0?-1:6-weekday);
   if(day!==saturday&&day!==rausoOffsetEventDay(saturday,1))return false;
  }
+ if(state.eventTime==='next-week'){
+  const weekday=new Date(today+'T12:00:00Z').getUTCDay();
+  const monday=rausoOffsetEventDay(today,8-(weekday||7));
+  if(day<monday||day>rausoOffsetEventDay(monday,6))return false;
+ }
+ if(state.eventTime==='next-month'){
+  const [year,month]=today.split('-').map(Number);
+  const nextMonth=new Date(Date.UTC(year,month,1)).toISOString().slice(0,7);
+  if(day.slice(0,7)!==nextMonth)return false;
+ }
+ if(state.eventNearbyOnly&&!rausoNearbyEventMatches(e))return false;
  if(state.eventOpenOnly&&(!e.availability||e.availability.is_full===true))return false;
  if(state.eventAgeOnly&&(!rausoOwnBirthdate||!rausoEventAgeEligibility(e).ok))return false;
  return true;
@@ -634,6 +659,7 @@ function renderEvents(){
  (list.length?list.map(renderEventCard).join(''):'<div class="empty"><strong>Keine passenden Treffen</strong>'+esc(label)+'</div>');
  document.querySelectorAll('[data-event-mode]').forEach(b=>b.classList.toggle('active',b.dataset.eventMode===state.eventMode));
  const count=$('rausoEventResultCount');if(count)count.textContent=list.length+' passende Treffen';
+ const info=$('rausoNearbyContext');if(info){info.classList.toggle('hidden',!state.eventNearbyOnly);info.textContent=state.eventNearbyOnly?'⌖ '+(Number(state.radius||25000)/1000)+' km ab '+(rausoGps?'deinem freigegebenen Standort':'dem Zentrum der gewählten Region')+'. Treffen ohne erkennbare Ortsangabe werden nicht angezeigt.':'';}
  wireEventButtons($('eventList'),list);
 }
 // Participation is a user's own RSVP. "going" is not an organizer-confirmed booking.
@@ -1527,7 +1553,7 @@ function injectProfileExtras(){const el=$('profileContent');if(!el)return;if(!$(
 
 
 // RAUSO 2.0: persistent appearance, compact navigation, personalized discovery and offline state.
-const APP_VERSION='3.0.2';
+const APP_VERSION='3.0.3';
 const UI_PREF='rauso-ui-2';
 const rausoIncognitoKey=()=> 'rauso-incognito:'+myId();
 let rausoIncognito=false;
@@ -1601,7 +1627,23 @@ function restoreDiscoverySettings(){
  if(cats[saved.category]){state.cat=saved.category;document.querySelectorAll('[data-cat]').forEach(b=>b.classList.toggle('selected',b.dataset.cat===state.cat))}const categoryDropdown=$('categorySelect');if(categoryDropdown)categoryDropdown.value=state.cat;
 }
 
-function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();if($('heroCreate'))$('heroCreate').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});if($('rausoEventTime'))$('rausoEventTime').onchange=e=>{state.eventTime=e.target.value;renderEvents()};if($('rausoEventCategory'))$('rausoEventCategory').onchange=e=>{state.eventCategory=e.target.value;renderEvents()};if($('rausoEventOpen'))$('rausoEventOpen').onchange=e=>{state.eventOpenOnly=e.target.checked;renderEvents()};if($('rausoEventAge'))$('rausoEventAge').onchange=e=>{state.eventAgeOnly=e.target.checked;renderEvents()};if($('rausoEventReset'))$('rausoEventReset').onclick=()=>{state.eventTime='all';state.eventCategory='all';state.eventOpenOnly=false;state.eventAgeOnly=false;state.eventDate='';state.eventClock='';$('eventDateFilter').value='';$('eventClockFilter').value='';saveDiscoverySettings();$('rausoEventTime').value='all';$('rausoEventCategory').value='all';$('rausoEventOpen').checked=false;$('rausoEventAge').checked=false;renderEvents()};$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('eventDateFilter').onchange=e=>{state.eventDate=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('eventClockFilter').onchange=e=>{state.eventClock=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
+function rausoOpenMeetingsFromHero(period,nearby=false){
+ state.eventMode='all';state.eventTime=period;state.eventNearbyOnly=nearby;
+ state.eventCategory=$('heroMeetingCategory')?.value||'all';
+ state.eventDate='';state.eventClock='';
+ if($('eventDateFilter'))$('eventDateFilter').value='';
+ if($('eventClockFilter'))$('eventClockFilter').value='';
+ if($('rausoEventTime'))$('rausoEventTime').value=period;
+ if($('rausoEventCategory'))$('rausoEventCategory').value=state.eventCategory;
+ if($('rausoEventNearby'))$('rausoEventNearby').checked=nearby;
+ saveDiscoverySettings();switchTab('events');
+ if(nearby&&navigator.geolocation&&!rausoGps){
+  navigator.geolocation.getCurrentPosition(pos=>{rausoGps=[pos.coords.latitude,pos.coords.longitude];renderEvents()},()=>{},{
+   enableHighAccuracy:false,timeout:9000,maximumAge:300000
+  });
+ }
+}
+function init(){restoreDiscoverySettings();if($('distanceLocation'))$('distanceLocation').onclick=rausoRequestLocation;if($('notificationBell'))$('notificationBell').onclick=()=>state.user?switchTab('notifications'):showAuth();document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$('accountShortcut').onclick=()=>state.user?switchTab('profile'):showAuth();$('headerSettings').onclick=openSettings;updateHeaderAccount();$('heroPlan').onclick=()=>createOuting();if($('heroCreate'))$('heroCreate').onclick=()=>createOuting();$('createEvent').onclick=()=>createOuting();$('createPrivate').onclick=()=>createOuting(null,{private:true});$('familyCreate').onclick=()=>createOuting(null,{family:true});$('familyExplore').onclick=()=>{switchTab('discover');const btn=document.querySelector('[data-cat="familie"]');btn.click()};document.querySelectorAll('[data-event-mode]').forEach(b=>b.onclick=()=>{state.eventMode=b.dataset.eventMode;renderEvents()});if($('rausoEventTime'))$('rausoEventTime').onchange=e=>{state.eventTime=e.target.value;renderEvents()};if($('rausoEventCategory'))$('rausoEventCategory').onchange=e=>{state.eventCategory=e.target.value;if($('heroMeetingCategory'))$('heroMeetingCategory').value=e.target.value;renderEvents()};if($('rausoEventOpen'))$('rausoEventOpen').onchange=e=>{state.eventOpenOnly=e.target.checked;renderEvents()};if($('rausoEventAge'))$('rausoEventAge').onchange=e=>{state.eventAgeOnly=e.target.checked;renderEvents()};if($('rausoEventNearby'))$('rausoEventNearby').onchange=e=>{state.eventNearbyOnly=e.target.checked;renderEvents()};if($('heroMeetingCategory'))$('heroMeetingCategory').onchange=e=>{state.eventCategory=e.target.value;if($('rausoEventCategory'))$('rausoEventCategory').value=e.target.value;if(state.tab==='events')renderEvents()};if($('rausoEventReset'))$('rausoEventReset').onclick=()=>{state.eventTime='all';state.eventCategory='all';state.eventOpenOnly=false;state.eventAgeOnly=false;state.eventNearbyOnly=false;state.eventDate='';state.eventClock='';$('eventDateFilter').value='';$('eventClockFilter').value='';saveDiscoverySettings();$('rausoEventTime').value='all';$('rausoEventCategory').value='all';$('rausoEventOpen').checked=false;$('rausoEventAge').checked=false;$('rausoEventNearby').checked=false;if($('heroMeetingCategory'))$('heroMeetingCategory').value='all';renderEvents()};$('refreshEvents').onclick=()=>demoMode()?renderEvents():loadOutings();document.querySelectorAll('[data-meeting-filter]').forEach(b=>b.onclick=()=>{state.meetFilter=b.dataset.meetingFilter;renderMyMeetings()});$('regionSelect').onchange=e=>{state.region=e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('radiusSelect').onchange=e=>{state.radius=+e.target.value;saveDiscoverySettings();state.places=[];state.placesLive=false;renderPlaces();queryPlaces()};$('eventDateFilter').onchange=e=>{state.eventDate=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('eventClockFilter').onchange=e=>{state.eventClock=e.target.value;saveDiscoverySettings();state.eventMode='all';state.eventTime='all';state.eventCategory=state.cat;switchTab('events')};$('placeSearch').oninput=e=>{state.query=e.target.value;renderPlaces()};$('clearSearch').onclick=()=>{$('placeSearch').value='';state.query='';renderPlaces()};$('mapToggle').onclick=showMap;$('categoryStrip').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{state.cat=b.dataset.cat;saveDiscoverySettings();document.querySelectorAll('[data-cat]').forEach(x=>x.classList.toggle('selected',x===b));if($('categorySelect'))$('categorySelect').value=state.cat;state.places=[];state.placesLive=false;renderPlaces();queryPlaces()});
  $('categorySelect').onchange=e=>{document.querySelector('[data-cat="'+e.target.value+'"]')?.click()};
  $('loadPlaces').onclick=queryPlaces;state.places=[];renderPlaces();renderEvents();renderFamily();renderMyMeetings();renderMessages();loadMessageInbox();renderProfile();injectProfileExtras();queryPlaces();if(hasBackend){api.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(()=>refreshUser().then(()=>{updateOnlinePresence();switchTab(state.tab)}),0)});refreshUser().then(()=>switchTab(state.tab))}
 }
@@ -1624,13 +1666,13 @@ document.addEventListener('DOMContentLoaded',()=>{
  document.querySelectorAll('[data-rauso-hero-go]').forEach(button=>{
   button.onclick=()=>{
    const destination=button.dataset.rausoHeroGo;
-   if(destination==='friends'){openFriendsPanel();return}
-   if(destination==='events'){switchTab('events');return}
+   if(destination==='nearby'){rausoOpenMeetingsFromHero('all',true);return}
    switchTab('discover');
    document.querySelector('.discover-heading')?.scrollIntoView({behavior:'smooth',block:'start'});
   };
  });
 
+ document.querySelectorAll('[data-quick-meeting-period]').forEach(button=>button.onclick=()=>rausoOpenMeetingsFromHero(button.dataset.quickMeetingPeriod));
  if($('heroGoing'))$('heroGoing').onclick=()=>{state.meetFilter='going';switchTab('myMeetings')};
  if($('heroOrganized'))$('heroOrganized').onclick=()=>{state.meetFilter='organized';switchTab('myMeetings')};
  if($('heroBookmarksCircle'))$('heroBookmarksCircle').onclick=()=>switchTab('collections');
