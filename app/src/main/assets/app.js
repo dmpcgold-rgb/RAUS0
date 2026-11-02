@@ -912,7 +912,7 @@ async function loadSocial(){
  renderMessages();
 }
 function availablePeople(){if(!state.user)return [];const blocked=state.blocks.map(x=>x.blocker_id===myId()?x.blocked_id:x.blocker_id);return state.people.filter(p=>!blocked.includes(p.id))}
-function connection(p){if(demoMode())return state.demoConnections[p.id]||'';const c=state.connections.find(c=>c.sender_id===p.id||c.receiver_id===p.id);return c?.status||''}
+function connection(p){if(!state.user)return '';const c=state.connections.find(c=>c.sender_id===p.id||c.receiver_id===p.id);return c?.status||''}
 
 async function openFriendsPanel(){
  if(!state.user){showAuth();return}
@@ -934,7 +934,7 @@ async function openFriendsPanel(){
  root.querySelectorAll('[data-friend-chat]').forEach(b=>b.onclick=()=>{const id=b.dataset.friendChat;closeModal();openChat(id)});
  $('findFriends').onclick=()=>{closeModal();switchTab('messages');$('rausoFindPeople').open=true;$('peopleSearch')?.focus()};
 }
-function connectionRow(p){const status=connection(p),mine=demoMode()?status==='pending-out':state.connections.some(c=>c.sender_id===myId()&&c.receiver_id===p.id&&c.status==='pending');let action=status==='accepted'?`<button class="small-btn" data-chat="${esc(p.id)}">✉ Chat</button>`:(status==='pending-in'||(status==='pending'&&!mine))?`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`:(status==='pending'||status==='pending-out')?'<span class="quiet">Anfrage gesendet</span>':`<button class="small-btn" data-add="${esc(p.id)}"><span class="rauso-plus-mark" aria-hidden="true"></span> Kontakt</button>`;if(demoMode()&&status==='pending-in')action=`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`;
+function connectionRow(p){const status=connection(p),mine=state.connections.some(c=>c.sender_id===myId()&&c.receiver_id===p.id&&c.status==='pending');let action=status==='accepted'?`<button class="small-btn" data-chat="${esc(p.id)}">✉ Chat</button>`:(status==='pending-in'||(status==='pending'&&!mine))?`<button class="small-btn" data-accept="${esc(p.id)}">✓ Annehmen</button>`:(status==='pending'||status==='pending-out')?'<span class="quiet">Anfrage gesendet</span>':`<button class="small-btn" data-add="${esc(p.id)}"><span class="rauso-plus-mark" aria-hidden="true"></span> Kontakt</button>`;
  return `<div class="profile-row">${avatar(p)}<div class="profile-meta"><strong>${esc(p.display_name)}</strong><small>${esc(p.city||'Österreich')}</small>${Array.isArray(p.interests)&&p.interests.length?`<span class="rauso-member-interests">${p.interests.slice(0,3).map(tag=>`<em>${esc(tag)}</em>`).join('')}</span>`:''}</div>${action}<button class="small-btn" aria-label="Mehr Optionen" data-options="${esc(p.id)}">⋯</button></div>`}
 
 let rausoInboxMessages=[];
@@ -1254,10 +1254,7 @@ async function sendChat(e){
  if(button){button.disabled=true;button.textContent='…'}
  if(input)input.disabled=true;
  try{
-  if(demoMode()){
-   (state.demoMessages[recipient]??=[]).push({sender_id:myId(),recipient_id:recipient,body,created_at:new Date().toISOString(),read_at:null});
-   persist();
-  }else{
+  {
    if(!navigator.onLine)throw new Error('Keine Internetverbindung. Nachricht nicht versendet.');
    const {error}=await api.from('rauso_messages').insert({sender_id:myId(),recipient_id:recipient,body});
    if(error)throw error;
