@@ -1,0 +1,59 @@
+name: RAUSO encrypted database backup
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for backup (e.g. pre-update)'
+        required: false
+        default: 'manual'
+permissions:
+  contents: read
+jobs:
+  encrypted-backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check backup configuration
+        env:
+          DATABASE_URL: ${{ secrets.RAUSO_DATABASE_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.RAUSO_BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$DATABASE_URL" || -z "$BACKUP_PASSPHRASE" ]]; then
+            echo "::error::Set RAUSO_DATABASE_URL and RAUSO_BACKUP_PASSPHRASE repository secrets before backups can run."
+            exit 1
+          fi
+      - name: Create and encrypt database dump
+        env:
+          DATABASE_URL: ${{ secrets.RAUSO_DATABASE_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.RAUSO_BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/rauso-backup"
+          BACKUP_DIR="$RUNNER_TEMP/rauso-backup"
+          # Match Supabase PostgreSQL's server version with the official client image.
+          docker run --rm \
+            --env DATABASE_URL \
+            --volume "$BACKUP_DIR:/backup" \
+            postgres:17 \
+            bash -euo pipefail -c 'pg_dump --dbname="$DATABASE_URL" --format=custom --no-owner --no-privileges --file=/backup/rauso.dump && pg_restore --list /backup/rauso.dump > /dev/null'
+          test -s "$BACKUP_DIR/rauso.dump"
+          printf '%s' "$BACKUP_PASSPHRASE" > "$RUNNER_TEMP/rauso-passphrase"
+          chmod 600 "$RUNNER_TEMP/rauso-passphrase"
+          gpg --batch --yes --pinentry-mode loopback --symmetric --cipher-algo AES256 \
+            --passphrase-file "$RUNNER_TEMP/rauso-passphrase" \
+            --output "$BACKUP_DIR/rauso.dump.gpg" "$BACKUP_DIR/rauso.dump"
+          test -s "$BACKUP_DIR/rauso.dump.gpg"
+          (cd "$BACKUP_DIR" && sha256sum rauso.dump.gpg > SHA256SUMS)
+          rm -f "$BACKUP_DIR/rauso.dump" "$RUNNER_TEMP/rauso-passphrase"
+      - name: Store encrypted backup for 30 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: rausodb-encrypted-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/rauso-backup/rauso.dump.gpg
+            ${{ runner.temp }}/rauso-backup/SHA256SUMS
+          retention-days: 30
+          if-no-files-found: error
