@@ -1177,27 +1177,28 @@ function openChat(id){
  loadChat();$('chatForm').onsubmit=sendChat
 }
 async function loadChat(){
- const target=$('chatMessages'),chatId=state.currentChat;
- if(!target||!chatId)return;
+ const target=$('chatMessages'),chatId=state.currentChat,accountId=state.user?.id;
+ if(!target||!chatId||!accountId)return;
  let messages;
  if(!state.user){showAuth();return}else{
   const {data,error}=await api.from('rauso_messages').select('id,sender_id,recipient_id,body,created_at,read_at')
-   .or('and(sender_id.eq.'+myId()+',recipient_id.eq.'+chatId+'),and(sender_id.eq.'+chatId+',recipient_id.eq.'+myId()+')')
+   .or('and(sender_id.eq.'+accountId+',recipient_id.eq.'+chatId+'),and(sender_id.eq.'+chatId+',recipient_id.eq.'+accountId+')')
    .order('created_at',{ascending:true}).limit(150);
+  if(state.user?.id!==accountId||state.currentChat!==chatId||!target.isConnected)return;
   if(error){toast(error.message);return}messages=data||[];
-  const unread=messages.filter(m=>m.recipient_id===myId()&&!m.read_at).map(m=>m.id);
+  const unread=messages.filter(m=>m.recipient_id===accountId&&!m.read_at).map(m=>m.id);
   if(unread.length&&state.currentChat===chatId&&$('chatMessages')){
    const readAt=new Date().toISOString();
    const {error:readError}=await api.from('rauso_messages').update({read_at:readAt})
-    .eq('recipient_id',myId()).in('id',unread);
+    .eq('recipient_id',accountId).in('id',unread);
    if(!readError){
     messages.forEach(m=>{if(unread.includes(m.id))m.read_at=readAt});
    }else console.warn('Lesestatus:',readError.message);
   }
  }
- if(!$('chatMessages')||state.currentChat!==chatId)return;
+ if(!target.isConnected||$('chatMessages')!==target||state.currentChat!==chatId||state.user?.id!==accountId)return;
  target.innerHTML=messages.map(m=>{
-  const mine=m.sender_id===myId();
+  const mine=m.sender_id===accountId;
   return '<div class="bubble '+(mine?'mine':'')+'">'+esc(m.body)+
    '<small>'+esc(rausoMessageTime(m.created_at))+
    '<span class="rauso-read-status '+rausoReadColor(m)+'" title="'+(mine?'Empfänger':'Du')+
