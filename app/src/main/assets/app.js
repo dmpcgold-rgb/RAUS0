@@ -1044,24 +1044,27 @@ async function loadMessageInbox(){
  if(!state.user){
   const examples=[];
   Object.entries(state.demoMessages||{}).forEach(([id,messages])=>
-   messages.forEach(m=>examples.push({...m,sender_id:m.sender_id||myId(),recipient_id:id})));
+   messages.forEach(m=>examples.push({...m,sender_id:m.sender_id||accountId,recipient_id:id})));
   rausoInboxMessages=examples.sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));
   rausoUpdateMessageBadge();
   if(state.tab==='messages')renderMessages();
   return;
  }
+ const accountId=myId();
  rausoInboxBusy=true;
  try{
   const {data,error}=await api.from('rauso_messages')
    .select('id,sender_id,recipient_id,body,created_at,read_at')
-   .or('sender_id.eq.'+myId()+',recipient_id.eq.'+myId())
+   .or('sender_id.eq.'+accountId+',recipient_id.eq.'+accountId)
    .order('created_at',{ascending:false}).limit(400);
   if(error){console.warn('Nachrichten:',error.message);if(state.tab==='messages')toast('Nachrichten konnten nicht geladen werden.');return}
+  if(state.user?.id!==accountId)return;
   rausoInboxMessages=data||[];
-  const missing=[...new Set(rausoInboxMessages.map(m=>m.sender_id===myId()?m.recipient_id:m.sender_id))]
+  const missing=[...new Set(rausoInboxMessages.map(m=>m.sender_id===accountId?m.recipient_id:m.sender_id))]
    .filter(pid=>!state.people.some(p=>p.id===pid));
   if(missing.length){
    const {data:people}=await api.from('rauso_profiles').select('id,display_name,city,bio').in('id',missing.slice(0,100));
+   if(state.user?.id!==accountId)return;
    if(people?.length)state.people=[...state.people,...people.filter(p=>!state.people.some(a=>a.id===p.id))];
   }
   rausoUpdateMessageBadge();
@@ -1717,7 +1720,7 @@ setInterval(()=>{if(!document.hidden&&state.user)loadMessageInbox()},15000);
 setInterval(()=>{if(!document.hidden&&state.user&&state.tab==='messages')rausoLoadGroupInbox()},15000);
 setInterval(()=>{if(!document.hidden&&state.user&&state.tab!=='messages')rausoLoadGroupUnread()},30000);
 setInterval(()=>{if(!document.hidden&&$('rausoOutingChatMessages'))rausoLoadOutingChat()},15000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateOnlinePresence()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateOnlinePresence();if(state.user){loadMessageInbox();pollRausoNotifications(false)}}});
 document.addEventListener('DOMContentLoaded',()=>{
  if(!uiPref.referenceDesign24){uiPref.theme='orange';uiPref.autoTheme=false;uiPref.referenceDesign24=true;saveUi()}
  setAppearance();init();addNavMore();addOfflineState();addReadiness();
