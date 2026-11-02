@@ -1,0 +1,36 @@
+# RAUSO – verschlüsselte Datenbank-Backups
+
+## Status
+Der GitHub-Actions-Workflow `.github/workflows/rauso-encrypted-backup.yml` ist angelegt.
+**Backups laufen erst, wenn die beiden Repository-Secrets eingerichtet und ein Workflow-Lauf erfolgreich war.**
+Der Zeitplan ist täglich 02:17 UTC (in Österreich 03:17 MEZ / 04:17 MESZ).
+Die GitHub-Artefakte sind auf 30 Tage Aufbewahrung eingestellt.
+
+## GitHub-Secrets einrichten
+Repository > Settings > Secrets and variables > Actions > New repository secret:
+
+- `RAUSO_DATABASE_URL`: der **Datenbank-Verbindungsstring** aus dem RAUSO-Projekt in Supabase > Connect (PostgreSQL). Verwende eine dafür geeignete direkte oder Session-Pooler-Verbindung mit SSL und einen Datenbankbenutzer, der die benötigten Schemas lesen darf. Niemals im Code eintragen.
+- `RAUSO_BACKUP_PASSPHRASE`: ein langes, zufällig generiertes Backup-Passwort. **An einem zweiten sicheren Ort aufbewahren.** Ohne dieses Passwort können die Backups nicht entschlüsselt werden.
+
+Diese Secrets werden weder in `config.js` noch in APKs abgelegt.
+
+## Erstes Backup prüfen
+GitHub > Actions > RAUSO encrypted database backup > Run workflow. Der Lauf muss grün sein; unter Artifacts muss `rausodb-encrypted-...` mit `rauso.dump.gpg` und `SHA256SUMS` verfügbar sein.
+Der Workflow prüft die Struktur des PostgreSQL-Dumps vor der Verschlüsselung.
+Ein vollständiger Wiederherstellungstest auf einer **separaten** Testdatenbank ist zusätzlich erforderlich.
+
+## Wiederherstellung
+1. GitHub-Artefakt auf einen abgesicherten Rechner herunterladen.
+2. SHA256SUMS prüfen: `sha256sum -c SHA256SUMS`.
+3. `gpg --output rausodb.dump --decrypt rausodb.dump.gpg` (Backup-Passwort eingeben).
+4. `pg_restore --list rausodb.dump` prüfen.
+5. **Nur auf einer separaten Testdatenbank** die Wiederherstellung ausprobieren. Niemals ohne vorherige neue Sicherung direkt auf der produktiven RAUSO-Datenbank wiederherstellen.
+6. Die produktive Wiederherstellung muss Auth-Konfiguration, Datenbankrollen, Erweiterungen und Funktionen berücksichtigen. `pg_dump` sichert keine Upload-Dateien aus Supabase Storage; diese müssen separat geschützt werden.
+
+## Vor großen Änderungen
+Den Workflow manuell mit reason `pre-update` starten und erst nach erfolgreicher Sicherung fortfahren. Ein automatischer Vorab-Backup-Zwang für jede App-Code-Änderung ist damit noch **nicht** eingerichtet.
+
+## Datenschutz und Grenzen
+Backups enthalten potentiell personenbezogene Daten, Konten und private Nachrichten. Die GitHub-Artefakte dürfen nur berechtigten Repo-Mitgliedern zugänglich sein, die Secrets dürfen nicht veröffentlicht werden.
+Eine GitHub-Artefakt-Aufbewahrung von 30 Tagen ist kein unabhängiges Offsite-Backup: Wird das Repository oder der GitHub-Zugang gelöscht, können auch die Backups verloren gehen.
+Für Betriebssicherheit ist eine zweite verschlüsselte Speicherstelle empfehlenswert.
