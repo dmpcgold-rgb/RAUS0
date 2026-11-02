@@ -60,40 +60,15 @@ const cats = {
  anime:{icon:'★',expr:'["shop"~"^(anime|comics)$"]'},
  familie:{icon:'👨‍👩‍👧',expr:'["leisure"~"^(playground|park)$"]'}
 };
-const samplePlaces = [
- {id:'demo-r1',name:'Altes Backhaus',region:'Wiener Neustadt',category:'restaurants',lat:47.8158,lon:16.2426,type:'Restaurant · Beispielvorschau'},
- {id:'demo-r2',name:'Café-Restaurant zum Einhorn',region:'Wiener Neustadt',category:'restaurants',lat:47.8127,lon:16.2441,type:'Restaurant · Beispielvorschau'},
- {id:'demo-r3',name:'Restaurant O.L.Y.M.P.',region:'Wiener Neustadt',category:'restaurants',lat:47.8153,lon:16.245,type:'Restaurant · Beispielvorschau'},
- {id:'demo-p1',name:'Therme Wien',region:'Wien',category:'thermen',lat:48.143,lon:16.402,type:'Therme · Beispielvorschau'},
- {id:'demo-p2',name:'Schloss Schönbrunn',region:'Wien',category:'ausfluege',lat:48.184,lon:16.312,type:'Sehenswürdigkeit · Beispielvorschau'},
- {id:'demo-p3',name:'Lainzer Tiergarten',region:'Wien',category:'natur',lat:48.183,lon:16.240,type:'Natur · Beispielvorschau'},
- {id:'demo-p4',name:'Tiergarten Schönbrunn',region:'Wien',category:'familie',lat:48.182,lon:16.303,type:'Familie · Beispielvorschau'},
- {id:'demo-p5',name:'Kunsthistorisches Museum',region:'Wien',category:'kultur',lat:48.204,lon:16.361,type:'Museum · Beispielvorschau'},
- {id:'demo-p6',name:'Rax-Seilbahn',region:'Niederösterreich',category:'ausfluege',lat:47.719,lon:15.779,type:'Ausflug · Beispielvorschau'},
- {id:'demo-p7',name:'Stadtpark Wiener Neustadt',region:'Wiener Neustadt',category:'natur',lat:47.815,lon:16.240,type:'Park · Beispielvorschau'},
- {id:'demo-p8',name:'Schloss Hof',region:'Niederösterreich',category:'familie',lat:48.214,lon:16.938,type:'Ausflug · Beispielvorschau'},
- {id:'demo-p9',name:'Grazer Schlossberg',region:'Graz',category:'ausfluege',lat:47.076,lon:15.438,type:'Ausflug · Beispielvorschau'},
- {id:'demo-p10',name:'Haus der Natur',region:'Salzburg',category:'kultur',lat:47.802,lon:13.037,type:'Museum · Beispielvorschau'},
- {id:'demo-p11',name:'Alpenzoo Innsbruck',region:'Innsbruck',category:'familie',lat:47.284,lon:11.398,type:'Zoo · Beispielvorschau'}
-];
-const demoPeople = []; // Keine Musterprofile im Produktivbetrieb
-const datePlus = n => {const d=new Date();d.setDate(d.getDate()+n);d.setHours(16,0,0,0);return d.toISOString()};
-const demoEventDefaults = [
- {id:'demo-e1',author_id:'demo-u1',author:'Alex (Demo)',title:'Gemütlicher Thermennachmittag',place_name:'Therme Wien',description:'Beispiel-Treffen: zusammen Wellness genießen.',starts_at:datePlus(3),category:'thermen',family_friendly:false,demo:true},
- {id:'demo-e2',author_id:'demo-u2',author:'Sam (Demo)',title:'Wandern und Aussicht genießen',place_name:'Rax',description:'Beispiel-Treffen: eine kleine Wandergruppe.',starts_at:datePlus(6),category:'natur',family_friendly:false,demo:true,transport_mode:'zug'},
- {id:'demo-e3',author_id:'demo-u3',author:'Kim (Demo)',title:'Mit Kindern in den Tierpark',place_name:'Familien-Ausflug · Wiener Neustadt',description:'Beispiel-Treffen für Eltern und Kinder. Treffpunkt vor Ort.',starts_at:datePlus(4),category:'familie',family_friendly:true,demo:true,transport_mode:'zufuss'},
- {id:'demo-e4',author_id:'demo-u2',author:'Sam (Demo)',title:'Zusammen kochen und plaudern',place_name:'Wien · genauere Gegend nach Zusage',description:'Demo eines privaten Treffens. Keine echte Einladung.',starts_at:datePlus(5),category:'familie',family_friendly:false,demo:true,visibility:'private',meeting_type:'kochen',transport_mode:'ubahn'}
-];
 const state = {
  tab:'discover',cat:'thermen',region:'wiener-neustadt',radius:25000,priceFilter:'all',query:'',places:[],placesLive:false,placeLoading:false,
  map:null,markers:null,mapOpen:false, session:null,profile:null,user:null,
- favorites:new Set(cache.favorites||[]), bookmarks:{...(cache.bookmarks||{})}, profilePhotoUrl:null, demoProfile:cache.profile||{display_name:'Mein RAUSO-Profil',city:'Wiener Neustadt',bio:'Ich bin gerne unterwegs.',dating_enabled:false,adult_confirmed:false},
- demoEvents:[], demoReactions:cache.reactions||{}, demoConnections:{}, demoDatingLikes:cache.datingLikes||{}, demoMessages:cache.messages||{}, demoBlocks:cache.blocks||{},
+ favorites:new Set(cache.favorites||[]), bookmarks:{...(cache.bookmarks||{})}, profilePhotoUrl:null,
  outings:[], people:[], connections:[], datingLikes:[], blocks:[], currentChat:null, eventMode:'all',eventDate:'',eventTime:'all', eventCategory:'all', eventOpenOnly:false, eventAgeOnly:false, eventNearbyOnly:false, meetFilter:'upcoming', 
 };
-const persist = () => {try{localStorage.setItem(STORE,JSON.stringify({favorites:[...state.favorites],bookmarks:state.bookmarks,profile:state.demoProfile,events:state.demoEvents,reactions:state.demoReactions,connections:state.demoConnections,datingLikes:state.demoDatingLikes,messages:state.demoMessages,blocks:state.demoBlocks,...Object.fromEntries(Object.entries(cache).filter(([k])=>k.startsWith('osm:')))}))}catch{}};
+const persist = () => {try{localStorage.setItem(STORE,JSON.stringify({favorites:[...state.favorites],bookmarks:state.bookmarks,...Object.fromEntries(Object.entries(cache).filter(([k])=>k.startsWith('osm:')))}))}catch{}};
 const myId = () => state.user?.id||'local-user';
-const profile = () => state.profile||state.demoProfile;
+const profile = () => state.profile||{display_name:'RAUSO-Mitglied',city:'',bio:'',interests:[]};
 function mustVerify(action){
  if(state.user){
   if(rausoBirthdateReady&&!rausoOwnBirthdate){rausoRequestBirthdate();toast('Bitte zuerst das Geburtsdatum speichern.');return false}
