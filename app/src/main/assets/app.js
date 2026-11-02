@@ -1044,7 +1044,7 @@ async function loadMessageInbox(){
  if(!state.user){
   const examples=[];
   Object.entries(state.demoMessages||{}).forEach(([id,messages])=>
-   messages.forEach(m=>examples.push({...m,sender_id:m.sender_id||accountId,recipient_id:id})));
+   messages.forEach(m=>examples.push({...m,sender_id:m.sender_id||myId(),recipient_id:id})));
   rausoInboxMessages=examples.sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));
   rausoUpdateMessageBadge();
   if(state.tab==='messages')renderMessages();
