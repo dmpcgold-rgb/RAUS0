@@ -8,6 +8,8 @@ assert.ok(!js.includes('demoEventDefaults'), 'No example meetings in production'
 assert.ok(!js.includes('demoPeople'), 'No example users in production');
 assert.ok(!js.includes('state.demo'), 'No local demo messages or contacts');
 assert.ok(!js.includes('samplePlaces'), 'No hard-coded sample locations');
+assert.ok(js.includes('state.user?.id!==accountId||state.currentChat!==chatId'), 'Ignore stale private-chat responses');
+assert.ok(js.includes("$('chatMessages')!==target"), 'Ignore results from replaced chat windows');
 const java=fs.readFileSync('app/src/main/java/at/rauso/app/MainActivity.java','utf8');
 for(const id of ['headerFriends','headerMessages','headerMessageCount','bookmarkNavCount','heroGoing','heroOrganized','accountShortcut','messagesContent'])assert(html.includes('id="'+id+'"'),'Missing '+id);
 for(const id of ['headerBookmarks','heroDiscover','heroConnect','heroExperience','wishlistShortcut'])assert(!html.includes('id="'+id+'"'),'Legacy '+id);
