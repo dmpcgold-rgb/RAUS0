@@ -1367,6 +1367,7 @@ function attachRausoRealtime(){
 }
 async function refreshUser(){
  const {data:{user}}=await api.auth.getUser();
+ if(state.user?.id!==(user?.id||undefined)){state.people=[];state.connections=[];rausoInboxMessages=[];rausoInboxRefreshQueued=false}
  state.user=user||null;try{rausoIncognito=localStorage.getItem(rausoIncognitoKey())==='true'}catch{rausoIncognito=false}rausoUpdateIncognitoButton();rausoGroupInbox=[];rausoGroupUnread={};rausoLastGroupRead={};rausoGroupReadBusy.clear();rausoUpdateMessageBadge();rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
  if(!user){
   state.profile=null;state.profilePhotoUrl=null;updateHeaderAccount();rausoInboxMessages=[];rausoGroupInbox=[];rausoUpdateMessageBadge();renderMessages();return
