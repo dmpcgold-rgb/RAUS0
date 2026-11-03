@@ -3,12 +3,22 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Download latest successful encrypted RAUSO backup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow rausо-encrypted-backup.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          test -n "$run_id"
+          mkdir -p "$RUNNER_TEMP/restore-input"
+          gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/restore-input"
       - name: Start isolated PostgreSQL
         run: |
           docker run -d --name rausodb-test -e POSTGRES_PASSWORD=test -p 127.0.0.1:55432:5432 postgres:17
