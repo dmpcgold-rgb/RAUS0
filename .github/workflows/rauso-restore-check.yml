@@ -1,0 +1,37 @@
+name: RAUSO restore smoke test
+on:
+  workflow_dispatch:
+    inputs:
+      backup_run_id:
+        description: Successful backup workflow run ID
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  restore-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch encrypted backup artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.backup_run_id }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/rauso-restore"
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --pattern 'rausodb-encrypted-*' --dir "$RUNNER_TEMP/rauso-restore"
+      - name: Check artifact integrity
+        run: |
+          set -euo pipefail
+          find "$RUNNER_TEMP/rauso-restore" -name SHA256SUMS -execdir sha256sum --check SHA256SUMS \;
+      - name: Test decryptability
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.RAUSO_BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          test -n "$BACKUP_PASSPHRASE"
+          FILE="$(find "$RUNNER_TEMP/rauso-restore" -name rausodb.dump.gpg -o -name rausodb.dump.gpg | head -n 1)"
+          test -f "$FILE"
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --decrypt "$FILE" > "$RUNNER_TEMP/rauso-restored.dump"
+          test -s "$RUNNER_TEMP/rauso-restored.dump"
