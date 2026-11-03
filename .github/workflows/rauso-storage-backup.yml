@@ -1,0 +1,51 @@
+name: RAUSO encrypted Storage backup
+on:
+  schedule:
+    - cron: '47 2 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  storage-backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate backup secrets
+        env:
+          STORAGE_KEY: ${{ secrets.RAUSO_STORAGE_SERVICE_ROLE_KEY }}
+          PASSPHRASE: ${{ secrets.RAUSO_BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          test -n "$STORAGE_KEY" || { echo "::error::Missing RAUSO_STORAGE_SERVICE_ROLE_KEY"; exit 1; }
+          test -n "$PASSPHRASE" || { echo "::error::Missing RAUSO_BACKUP_PASSPHRASE"; exit 1; }
+      - name: Download all Storage files and encrypt archive
+        env:
+          RAUSO_STORAGE_SERVICE_ROLE_KEY: ${{ secrets.RAUSO_STORAGE_SERVICE_ROLE_KEY }}
+          RAUSO_BACKUP_PASSPHRASE: ${{ secrets.RAUSO_BACKUP_PASSPHRASE }}
+          RAUSO_STORAGE_ARCHIVE: ${{ runner.temp }}/rauso-storage/storage.tar
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/rauso-storage"
+          python3 scripts/backup_rauso_storage.py
+          test -s "$RAUSO_STORAGE_ARCHIVE"
+          printf '%s' "$RAUSO_BACKUP_PASSPHRASE" > "$RUNNER_TEMP/rauso-storage/passphrase"
+          gpg --batch --yes --pinentry-mode loopback --symmetric --cipher-algo AES256 \
+            --passphrase-file "$RUNNER_TEMP/rauso-storage/passphrase" \
+            --output "$RUNNER_TEMP/rauso-storage/storage.tar.gpg" \
+            "$RAUSO_STORAGE_ARCHIVE"
+          gpg --batch --yes --pinentry-mode loopback --quiet --decrypt \
+            --passphrase-file "$RUNNER_TEMP/rauso-storage/passphrase" \
+            "$RUNNER_TEMP/rauso-storage/storage.tar.gpg" | cmp - "$RAUSO_STORAGE_ARCHIVE"
+          (cd "$RUNNER_TEMP/rauso-storage" && sha256sum storage.tar.gpg > SHA256SUMS)
+          rm -f "$RAUSO_STORAGE_ARCHIVE" "$RUNNER_TEMP/rauso-storage/passphrase"
+      - name: Store encrypted Storage backup for 30 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: rauso-storage-encrypted-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/rauso-storage/storage.tar.gpg
+            ${{ runner.temp }}/rauso-storage/SHA256SUMS
+          retention-days: 30
+          if-no-files-found: error
