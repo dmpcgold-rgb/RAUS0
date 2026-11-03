@@ -16,8 +16,8 @@ Diese Secrets werden weder in `config.js` noch in APKs abgelegt.
 
 ## Erstes Backup prüfen
 GitHub > Actions > RAUSO encrypted database backup > Run workflow. Der Lauf muss grün sein; unter Artifacts muss `rausodb-encrypted-...` mit `rauso.dump.gpg` und `SHA256SUMS` verfügbar sein.
-Der Workflow prüft die Struktur des PostgreSQL-Dumps vor der Verschlüsselung.
-Ein vollständiger Wiederherstellungstest auf einer **separaten** Testdatenbank ist zusätzlich erforderlich.
+Der Workflow prüft die Struktur des PostgreSQL-Dumps vor der Verschlüsselung. **Zusätzlich entschlüsselt er die erzeugte GPG-Datei testweise und vergleicht den Inhalt Byte für Byte mit dem ursprünglichen Dump.** Schlägt dieser Vergleich fehl, wird kein Backup-Artefakt hochgeladen. Dabei wird die produktive Datenbank nicht verändert.
+Ein vollständiger Wiederherstellungstest auf einer **separaten** Testdatenbank ist zusätzlich erforderlich. Die automatische Byte-Prüfung ersetzt keinen vollständigen Restore-Test.
 
 ## Wiederherstellung
 1. GitHub-Artefakt auf einen abgesicherten Rechner herunterladen.
