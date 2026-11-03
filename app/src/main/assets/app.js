@@ -870,15 +870,23 @@ async function loadOutings(){
  rausoMeetingDataReady=true;renderEvents();refreshMeetingBadge();if(state.tab==='myMeetings')renderMyMeetings();if(state.tab==='messages')rausoLoadGroupInbox();
 }
 function avatar(p){return `<span class="avatar">${esc((p.display_name||'?').replace(' (Demo)','').slice(0,1).toUpperCase())}</span>`}
+let rausoSocialRequestId=0;
 async function loadSocial(){
- if(!state.user){state.people=[];state.connections=[];renderMessages();return}
+ const requestId=++rausoSocialRequestId,accountId=state.user?.id;
+ if(!accountId){state.people=[];state.connections=[];renderMessages();return}
  const [people,friends]=await Promise.all([
   api.from('rauso_profiles').select('id,display_name,city,bio,interests').limit(100),
   api.from('rauso_friendships').select('id,sender_id,recipient_id,status,created_at').limit(500)
  ]);
- if(people.error)toast('Mitglieder konnten nicht geladen werden: '+people.error.message);
- state.people=(people.data||[]).filter(p=>p.id!==myId());
- state.connections=(friends.data||[]).map(c=>({...c,receiver_id:c.recipient_id}));
+ if(state.user?.id!==accountId||requestId!==rausoSocialRequestId)return;
+ if(people.error)console.warn('Mitglieder:',people.error.message);
+ else {
+  const fresh=(people.data||[]).filter(p=>p.id!==accountId);
+  const seen=new Set(fresh.map(p=>p.id));
+  state.people=[...fresh,...state.people.filter(p=>!seen.has(p.id)&&p.id!==accountId)];
+ }
+ if(friends.error)console.warn('Kontakte:',friends.error.message);
+ else state.connections=(friends.data||[]).map(c=>({...c,receiver_id:c.recipient_id}));
  state.datingLikes=[];state.blocks=[];
  renderMessages();
 }
@@ -911,6 +919,7 @@ function connectionRow(p){const status=connection(p),mine=state.connections.some
 let rausoInboxMessages=[];
 let rausoInboxView='all';
 let rausoInboxBusy=false;
+let rausoInboxRefreshQueued=false;
 let rausoInboxSearch='';
 
 let rausoGroupInbox=[];
@@ -1007,7 +1016,7 @@ function rausoMessageTime(value){
  try{return new Date(value).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'})}catch{return ''}
 }
 async function loadMessageInbox(){
- if(rausoInboxBusy)return;
+ if(rausoInboxBusy){rausoInboxRefreshQueued=true;return}
  if(!state.user){
   rausoInboxMessages=[];
   rausoUpdateMessageBadge();
@@ -1033,7 +1042,10 @@ async function loadMessageInbox(){
   }
   rausoUpdateMessageBadge();
   if(state.tab==='messages')renderMessages();
- }finally{rausoInboxBusy=false}
+ }finally{
+  rausoInboxBusy=false;
+  if(rausoInboxRefreshQueued){rausoInboxRefreshQueued=false;loadMessageInbox()}
+ }
 }
 function rausoChatRows(){
  const list=new Map();
