@@ -46,6 +46,12 @@ jobs:
             --passphrase-file "$RUNNER_TEMP/rauso-passphrase" \
             --output "$BACKUP_DIR/rauso.dump.gpg" "$BACKUP_DIR/rauso.dump"
           test -s "$BACKUP_DIR/rauso.dump.gpg"
+          # Verify that the encrypted backup can be decrypted with the stored
+          # passphrase and that its contents exactly match the database dump.
+          # Never print or upload the unencrypted dump or the passphrase.
+          gpg --batch --yes --pinentry-mode loopback --quiet --decrypt \
+            --passphrase-file "$RUNNER_TEMP/rauso-passphrase" \
+            "$BACKUP_DIR/rauso.dump.gpg" | cmp - "$BACKUP_DIR/rauso.dump"
           (cd "$BACKUP_DIR" && sha256sum rauso.dump.gpg > SHA256SUMS)
           rm -f "$BACKUP_DIR/rauso.dump" "$RUNNER_TEMP/rauso-passphrase"
       - name: Store encrypted backup for 30 days
