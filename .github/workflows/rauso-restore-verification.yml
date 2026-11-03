@@ -39,5 +39,12 @@ jobs:
         run: |
           docker cp "$RUNNER_TEMP/rauso-test.dump" rausodb-test:/tmp/rauso-test.dump
           docker exec rausodb-test pg_restore --list /tmp/rauso-test.dump >/dev/null
+      - name: Restore RAUSO public tables in disposable database
+        run: |
+          set -euo pipefail
+          docker exec rausodb-test psql -U postgres -v ON_ERROR_STOP=1 -c "CREATE SCHEMA auth; CREATE SCHEMA extensions; CREATE SCHEMA storage;"
+          docker exec rausodb-test pg_restore -U postgres -d postgres --schema=public --no-owner --no-privileges --exit-on-error /tmp/rauso-test.dump
+          result="$(docker exec rausodb-test psql -U postgres -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('rauso_profiles','rauso_outings','rauso_messages','rauso_friendships')")"
+          test "$result" = "4"
       - name: Verify isolated PostgreSQL
         run: docker exec rausodb-test psql -U postgres -tAc "SELECT 1" | grep -qx 1
