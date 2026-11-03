@@ -26,5 +26,18 @@ jobs:
             docker exec rausodb-test pg_isready -U postgres && break
             sleep 1
           done
+      - name: Decrypt backup for verification
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.RAUSO_BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          file="$(find "$RUNNER_TEMP/restore-input" -name 'rauso.dump.gpg' -type f -print -quit)"
+          test -n "$file"
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --quiet --pinentry-mode loopback --passphrase-fd 0 --decrypt --output "$RUNNER_TEMP/rauso-test.dump" "$file"
+          test -s "$RUNNER_TEMP/rauso-test.dump"
+      - name: Validate backup archive
+        run: |
+          docker cp "$RUNNER_TEMP/rauso-test.dump" rausodb-test:/tmp/rauso-test.dump
+          docker exec rausodb-test pg_restore --list /tmp/rauso-test.dump >/dev/null
       - name: Verify isolated PostgreSQL
         run: docker exec rausodb-test psql -U postgres -tAc "SELECT 1" | grep -qx 1
