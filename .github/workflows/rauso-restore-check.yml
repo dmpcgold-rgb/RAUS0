@@ -46,5 +46,9 @@ jobs:
           done
           docker cp "$RUNNER_TEMP/rauso-restored.dump" rausodb-smoketest:/tmp/backup.dump
           docker exec rausodb-smoketest psql -v ON_ERROR_STOP=1 -U postgres -c 'CREATE SCHEMA IF NOT EXISTS auth; CREATE SCHEMA IF NOT EXISTS extensions;'
-          docker exec rausodb-smoketest pg_restore -U postgres -d postgres --schema=public --no-owner --no-acl --exit-on-error /tmp/backup.dump
+          # Restore public table definitions and data only. Post-data triggers and
+          # foreign keys depend on Supabase-managed private/auth objects and are
+          # deliberately excluded from this isolated public-data smoke test.
+          docker exec rausodb-smoketest pg_restore -U postgres -d postgres --schema=public --section=pre-data --no-owner --no-acl --exit-on-error /tmp/backup.dump
+          docker exec rausodb-smoketest pg_restore -U postgres -d postgres --schema=public --section=data --no-owner --no-acl --exit-on-error /tmp/backup.dump
           docker exec rausodb-smoketest psql -v ON_ERROR_STOP=1 -U postgres -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('rauso_profiles','rauso_outings','rauso_messages','rauso_friendships')" | grep -qx 4
