@@ -40,8 +40,7 @@ jobs:
           DIR="$(dirname "$(find "$RUNNER_TEMP/rauso-storage-check" -name storage.tar.gpg -print -quit)")"
           (cd "$DIR" && sha256sum --check SHA256SUMS)
           printf '%s' "$BACKUP_PASSPHRASE" > "$RUNNER_TEMP/rauso-storage-check-passphrase"
-          trap 'rm -f "$RUNNER_TEMP/rauso-storage-restored.tar" "$RUNNER_TEMP/rauso-storage-check-passphrase"' EXIT
+          trap 'rm -f "$RUNNER_TEMP/rauso-storage-check-passphrase"' EXIT
           gpg --batch --yes --pinentry-mode loopback --quiet --decrypt \
             --passphrase-file "$RUNNER_TEMP/rauso-storage-check-passphrase" \
-            --output "$RUNNER_TEMP/rauso-storage-restored.tar" "$DIR/storage.tar.gpg"
-          python3 scripts/verify_rauso_storage.py "$RUNNER_TEMP/rauso-storage-restored.tar"
+            "$DIR/storage.tar.gpg" | python3 scripts/verify_rauso_storage_backup.py
