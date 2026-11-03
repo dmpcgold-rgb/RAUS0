@@ -34,3 +34,8 @@ Den Workflow manuell mit reason `pre-update` starten und erst nach erfolgreicher
 Backups enthalten potentiell personenbezogene Daten, Konten und private Nachrichten. Die GitHub-Artefakte dürfen nur berechtigten Repo-Mitgliedern zugänglich sein, die Secrets dürfen nicht veröffentlicht werden.
 Eine GitHub-Artefakt-Aufbewahrung von 30 Tagen ist kein unabhängiges Offsite-Backup: Wird das Repository oder der GitHub-Zugang gelöscht, können auch die Backups verloren gehen.
 Für Betriebssicherheit ist eine zweite verschlüsselte Speicherstelle empfehlenswert.
+
+## Automatischer Restore-Test (separater Workflow)
+Der Workflow `.github/workflows/rauso-restore-verification.yml` startet nach einem erfolgreichen RAUSO-Datenbank-Backup automatisch und lässt sich zusätzlich manuell ausführen. Er lädt das verschlüsselte Backup, entschlüsselt es nur auf dem kurzlebigen GitHub-Runner und versucht, die `public`-Tabellen in einer **lokalen, isolierten PostgreSQL-17-Testinstanz** wiederherzustellen. Anschließend prüft er das Vorhandensein der Tabellen `rauso_profiles`, `rauso_outings`, `rauso_messages` und `rauso_friendships`.
+
+**Wichtig:** Der erste erfolgreiche Restore-Lauf muss noch bestätigt werden. Einige Supabase-spezifische Rollen, Erweiterungen und Funktionen können die Wiederherstellung auf einem reinen PostgreSQL-Server verhindern. Ein roter Restore-Test bedeutet deshalb nicht automatisch, dass das verschlüsselte Backup unbrauchbar ist; seine Protokolle müssen ausgewertet werden. Der Test ist keine vollständige Wiederherstellung von Supabase Auth, Storage-Dateien oder Projektkonfiguration. Die produktive Datenbank wird niemals als Restore-Ziel verwendet.
