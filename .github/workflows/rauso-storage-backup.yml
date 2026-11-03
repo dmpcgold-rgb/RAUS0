@@ -28,6 +28,7 @@ jobs:
           set -euo pipefail
           umask 077
           mkdir -p "$RUNNER_TEMP/rauso-storage"
+          python3 -m py_compile scripts/backup_rauso_storage.py
           python3 scripts/backup_rauso_storage.py
           test -s "$RAUSO_STORAGE_ARCHIVE"
           printf '%s' "$RAUSO_BACKUP_PASSPHRASE" > "$RUNNER_TEMP/rauso-storage/passphrase"
