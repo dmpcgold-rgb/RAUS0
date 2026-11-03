@@ -1,11 +1,15 @@
 name: RAUSO restore verification
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ['RAUSO encrypted database backup']
+    types: [completed]
 permissions:
   contents: read
   actions: read
 jobs:
   verify:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -15,7 +19,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow rauso-encrypted-backup.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          run_id="${{ github.event.workflow_run.id }}"
+          if [[ -z "$run_id" ]]; then
+            run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow rauso-encrypted-backup.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          fi
           test -n "$run_id"
           mkdir -p "$RUNNER_TEMP/restore-input"
           gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/restore-input"
