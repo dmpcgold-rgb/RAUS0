@@ -1343,6 +1343,25 @@ async function rausoCompleteProfile(){
  };
 }
 async function logout(){rausoMeetingDataReady=false;if(rausoNotificationsChannel){api.removeChannel(rausoNotificationsChannel);rausoNotificationsChannel=null}await api.auth.signOut();state.user=null;rausoOwnBirthdate=null;rausoBirthdateReady=false;state.profile=null;state.outings=[];state.people=[];state.connections=[];rausoInboxMessages=[];rausoUpdateMessageBadge();updateHeaderAccount();switchTab('discover')}
+let rausoRecentLiveMessages=new Set();
+let rausoRecentFriendRequests=new Set();
+function rausoNotifyIncomingMessage(message,accountId){
+ if(state.user?.id!==accountId||message.recipient_id!==accountId||document.hidden||!message.id)return;
+ if(rausoRecentLiveMessages.has(message.id))return;
+ rausoRecentLiveMessages.add(message.id);
+ if(rausoRecentLiveMessages.size>150)rausoRecentLiveMessages.delete(rausoRecentLiveMessages.values().next().value);
+ if($('chatMessages')&&state.currentChat===message.sender_id)return;
+ const sender=state.people.find(p=>p.id===message.sender_id);
+ toast('✉ Neue Nachricht von '+(sender?.display_name||'einem RAUSO-Mitglied'));
+}
+function rausoNotifyFriendRequest(change,accountId){
+ const request=change.new;
+ if(state.user?.id!==accountId||document.hidden||!request||request.recipient_id!==accountId||request.status!=='pending')return;
+ if(change.eventType!=='INSERT'||rausoRecentFriendRequests.has(request.id))return;
+ rausoRecentFriendRequests.add(request.id);
+ if(rausoRecentFriendRequests.size>100)rausoRecentFriendRequests.delete(rausoRecentFriendRequests.values().next().value);
+ toast('👥 Neue Kontaktanfrage erhalten');
+}
 let rausRealtimeChannel=null;
 let rausRefreshPending=false;
 function scheduleRausoRefresh(){
@@ -1362,15 +1381,25 @@ function attachRausoRealtime(){
  rausRealtimeChannel=api.channel('rauso-live-'+accountId)
   .on('postgres_changes',{event:'*',schema:'public',table:'rauso_rsvps'},scheduleRausoRefresh)
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'rauso_notifications',filter:'user_id=eq.'+accountId},scheduleRausoRefresh)
-  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_friendships'},()=>{if(state.user?.id===accountId)loadSocial()})
-  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_messages'},event=>{const m=event.new||event.old;if(state.user?.id===accountId&&m&&(m.sender_id===accountId||m.recipient_id===accountId)){loadMessageInbox();if($('chatMessages')&&state.currentChat&&(m.sender_id===state.currentChat||m.recipient_id===state.currentChat))loadChat();pollRausoNotifications(true)}})
+  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_friendships'},event=>{
+   if(state.user?.id!==accountId)return;
+   rausoNotifyFriendRequest(event,accountId);
+   loadSocial();
+  })
+  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_messages'},event=>{
+   const m=event.new||event.old;
+   if(state.user?.id!==accountId||!m||(m.sender_id!==accountId&&m.recipient_id!==accountId))return;
+   if(event.eventType==='INSERT')rausoNotifyIncomingMessage(m,accountId);
+   loadMessageInbox();
+   if($('chatMessages')&&state.currentChat&&(m.sender_id===state.currentChat||m.recipient_id===state.currentChat))loadChat();
+  })
   .subscribe(status=>{
    if(status==='SUBSCRIBED'&&state.user?.id===accountId){loadSocial();loadMessageInbox();pollRausoNotifications(false)}
   });
 }
 async function refreshUser(){
  const {data:{user}}=await api.auth.getUser();
- if(state.user?.id!==(user?.id||undefined)){state.people=[];state.connections=[];rausoInboxMessages=[];rausoInboxRefreshQueued=false}
+ if(state.user?.id!==(user?.id||undefined)){state.people=[];state.connections=[];rausoInboxMessages=[];rausoInboxRefreshQueued=false;rausoRecentLiveMessages.clear();rausoRecentFriendRequests.clear();rausoNotificationKnown.clear();rausoNotificationInitialized=false}
  state.user=user||null;try{rausoIncognito=localStorage.getItem(rausoIncognitoKey())==='true'}catch{rausoIncognito=false}rausoUpdateIncognitoButton();rausoGroupInbox=[];rausoGroupUnread={};rausoLastGroupRead={};rausoGroupReadBusy.clear();rausoUpdateMessageBadge();rausoOwnBirthdate=null;rausoBirthdateReady=false;rausoMeetingDataReady=false;state.profilePhotoUrl=null;attachRausoRealtime();updateHeaderAccount();
  if(!user){
   state.profile=null;state.profilePhotoUrl=null;updateHeaderAccount();rausoInboxMessages=[];rausoGroupInbox=[];rausoUpdateMessageBadge();renderMessages();return
