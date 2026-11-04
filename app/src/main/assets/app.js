@@ -1358,12 +1358,15 @@ function attachRausoRealtime(){
  if(!api)return;
  if(rausRealtimeChannel){api.removeChannel(rausRealtimeChannel);rausRealtimeChannel=null}
  if(!state.user)return;
- rausRealtimeChannel=api.channel('rauso-live-'+state.user.id)
+ const accountId=state.user.id;
+ rausRealtimeChannel=api.channel('rauso-live-'+accountId)
   .on('postgres_changes',{event:'*',schema:'public',table:'rauso_rsvps'},scheduleRausoRefresh)
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'rauso_notifications',filter:'user_id=eq.'+state.user.id},scheduleRausoRefresh)
-  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_friendships'},()=>{if(state.user)loadSocial()})
-  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_messages'},event=>{const m=event.new||event.old;if(state.user&&m&&(m.sender_id===state.user.id||m.recipient_id===state.user.id)){loadMessageInbox();if($('chatMessages')&&state.currentChat&&(m.sender_id===state.currentChat||m.recipient_id===state.currentChat))loadChat();pollRausoNotifications(true)}})
-  .subscribe();
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'rauso_notifications',filter:'user_id=eq.'+accountId},scheduleRausoRefresh)
+  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_friendships'},()=>{if(state.user?.id===accountId)loadSocial()})
+  .on('postgres_changes',{event:'*',schema:'public',table:'rauso_messages'},event=>{const m=event.new||event.old;if(state.user?.id===accountId&&m&&(m.sender_id===accountId||m.recipient_id===accountId)){loadMessageInbox();if($('chatMessages')&&state.currentChat&&(m.sender_id===state.currentChat||m.recipient_id===state.currentChat))loadChat();pollRausoNotifications(true)}})
+  .subscribe(status=>{
+   if(status==='SUBSCRIBED'&&state.user?.id===accountId){loadSocial();loadMessageInbox();pollRausoNotifications(false)}
+  });
 }
 async function refreshUser(){
  const {data:{user}}=await api.auth.getUser();
@@ -1467,7 +1470,7 @@ function drawRausoNotifications(notifications){
  };
 }
 setInterval(()=>{if(!document.hidden&&state.user)pollRausoNotifications(true)},7500);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.user)pollRausoNotifications(false)});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.user){loadMessageInbox();loadSocial();pollRausoNotifications(false)}});
 async function renderShows(){const el=$('showsContent');el.innerHTML=`<div class="surface stack"><h2>Verlässliche Veranstaltungstermine</h2><p>Derzeit kein lizenzierter Datenlieferant konfiguriert. Es werden ausdrücklich keine erfundenen Filmzeiten, Tickets oder freien Plätze angezeigt.</p><button id="showPlaceSearch" class="outline-btn">🎬 Kinos in meiner Region finden</button><button id="showEvents" class="outline-btn">Offizielle Veranstaltungsseiten öffnen</button></div>`;$('showPlaceSearch').onclick=()=>{switchTab('discover');document.querySelector('[data-cat="kino"]').click()};$('showEvents').onclick=()=>window.open('https://www.wien.info/de/aktuell/veranstaltungen','_blank','noopener')}
 async function renderAdmin(){
  const zone=$('adminContent');if(!zone)return;
