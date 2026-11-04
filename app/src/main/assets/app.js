@@ -888,6 +888,9 @@ async function loadSocial(){
  if(friends.error)console.warn('Kontakte:',friends.error.message);
  else state.connections=(friends.data||[]).map(c=>({...c,receiver_id:c.recipient_id}));
  state.datingLikes=[];state.blocks=[];
+ const incoming=state.connections.filter(c=>c.status==='pending'&&c.recipient_id===accountId).length;
+ const friendsButton=$('headerFriends');
+ if(friendsButton)friendsButton.setAttribute('aria-label',incoming?incoming+' neue Kontaktanfragen – Freunde öffnen':'Freunde und Kontaktanfragen öffnen');
  renderMessages();
 }
 function availablePeople(){if(!state.user)return [];const blocked=state.blocks.map(x=>x.blocker_id===myId()?x.blocked_id:x.blocker_id);return state.people.filter(p=>!blocked.includes(p.id))}
