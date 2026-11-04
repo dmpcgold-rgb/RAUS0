@@ -1414,11 +1414,13 @@ let rausoNotificationInitialized=false;
 let rausoNotificationPolling=false;
 async function pollRausoNotifications(announce=true){
  if(!state.user||!api||rausoNotificationPolling||document.hidden)return;
+ const accountId=state.user.id;
  rausoNotificationPolling=true;
  try{
   const {data,error}=await api.from('rauso_notifications')
    .select('id,type,body,is_read,created_at,actor_id,outing_id')
-   .eq('user_id',myId()).order('created_at',{ascending:false}).limit(80);
+   .eq('user_id',accountId).order('created_at',{ascending:false}).limit(80);
+  if(state.user?.id!==accountId)return;
   if(error){console.warn('Notifications:',error.message);return}
   const notifications=(data||[]).filter(n=>n.type!=='message');
   const unread=notifications.filter(n=>!n.is_read);
